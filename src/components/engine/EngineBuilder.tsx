@@ -18,6 +18,7 @@ import { renderShareCard, shareOrDownload } from "@/lib/shareCard";
 import { Card, Button, Badge, EmptyState, TextInput, AssumptionNote, StatCard } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { AssetChart } from "@/components/AssetChart";
+import { BottomSheet } from "@/components/BottomSheet";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
 import { EngineFlow } from "./EngineFlow";
@@ -242,8 +243,8 @@ export function EngineBuilder() {
           </p>
         </div>
 
-        {/* 인스펙터 */}
-        <Card className="h-fit">
+        {/* 인스펙터 (데스크톱 컬럼) */}
+        <Card className="hidden h-fit lg:block">
           {selected ? (
             <Inspector
               bucket={selected}
@@ -272,6 +273,21 @@ export function EngineBuilder() {
           </div>
         </Card>
       </div>
+
+      {/* 인스펙터 (모바일 바텀시트) */}
+      <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="버킷 편집">
+        {selected && (
+          <Inspector
+            bucket={selected}
+            onChange={(patch) => updateBucket(selected.id, patch)}
+            onDelete={() => {
+              removeBucket(selected.id);
+              setSelectedId(null);
+            }}
+            onDuplicate={() => duplicate(selected)}
+          />
+        )}
+      </BottomSheet>
 
       {/* 결과 패널 */}
       <Card>
