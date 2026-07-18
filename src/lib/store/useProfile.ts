@@ -38,6 +38,7 @@ interface ProfileState {
 
   completeOnboarding: () => void;
   resetAll: () => void;
+  replaceProfile: (p: Profile) => void;
   setHasHydrated: (v: boolean) => void;
 }
 
@@ -128,6 +129,7 @@ export const useProfile = create<ProfileState>()(
         })),
 
       resetAll: () => set({ profile: emptyProfile() }),
+      replaceProfile: (p) => set({ profile: p }),
       setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {

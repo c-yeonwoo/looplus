@@ -1,10 +1,13 @@
 import { AppShell } from "@/components/AppShell";
 import { HydrationGate } from "@/components/HydrationGate";
+import { Providers } from "@/components/Providers";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <HydrationGate>
-      <AppShell>{children}</AppShell>
+      <Providers>
+        <AppShell>{children}</AppShell>
+      </Providers>
     </HydrationGate>
   );
 }
