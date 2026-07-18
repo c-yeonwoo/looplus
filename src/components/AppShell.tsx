@@ -48,10 +48,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={n.href}
                 href={n.href}
                 className={clsx(
-                  "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors",
                   isActive(n.href)
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-ink-600 hover:bg-ink-100",
+                    ? "bg-gold-50 font-semibold text-gold-600"
+                    : "font-medium text-ink-600 hover:bg-ink-100",
                 )}
               >
                 <Icon name={n.icon} size={18} />
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             href={n.href}
             className={clsx(
               "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]",
-              isActive(n.href) ? "text-brand-700" : "text-ink-500",
+              isActive(n.href) ? "font-semibold text-gold-600" : "text-ink-500",
             )}
           >
             <Icon name={n.icon} size={20} />

@@ -201,7 +201,7 @@ export function EngineBuilder() {
                   onClick={() => setSens(k)}
                   className={
                     "rounded-md px-2.5 py-1 font-semibold transition-colors " +
-                    (sens === k ? "bg-brand-600 text-white" : "text-ink-500 hover:bg-ink-100")
+                    (sens === k ? "bg-gold-400 text-brand-900" : "text-ink-500 hover:bg-ink-100")
                   }
                 >
                   {SENSITIVITY[k].label}

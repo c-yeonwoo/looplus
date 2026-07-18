@@ -49,9 +49,9 @@ function OnboardingInner() {
               className={clsx(
                 "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors",
                 i === step
-                  ? "bg-brand-600 text-white"
+                  ? "bg-gold-400 text-brand-900"
                   : i < step
-                    ? "bg-brand-100 text-brand-700"
+                    ? "bg-gold-100 text-gold-600"
                     : "bg-ink-100 text-ink-400",
               )}
             >
@@ -119,7 +119,7 @@ function OnboardingInner() {
 function StepHeader({ n, title, desc }: { n: number; title: string; desc: string }) {
   return (
     <div className="mb-4 flex items-start gap-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-100 text-sm font-bold text-gold-600">
         {n}
       </span>
       <div>
