@@ -130,7 +130,7 @@ export function AssetChart({
               x2={W - padR}
               y1={y(goalNetworth)}
               y2={y(goalNetworth)}
-              stroke="#d9a316"
+              stroke="#f4b91e"
               strokeWidth="1.2"
               strokeDasharray="5 4"
             />
@@ -138,7 +138,7 @@ export function AssetChart({
               x={W - padR}
               y={y(goalNetworth) - 4}
               fontSize="9"
-              fill="#d9a316"
+              fill="#f4b91e"
               textAnchor="end"
             >
               목표 {formatKRW(goalNetworth)}
