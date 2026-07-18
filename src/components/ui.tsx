@@ -60,9 +60,9 @@ export function Button({
 }) {
   const styles: Record<BtnVariant, string> = {
     primary:
-      "bg-brand-700 text-white hover:bg-brand-800 disabled:bg-ink-200 disabled:text-ink-400",
+      "bg-gold-400 text-brand-900 hover:bg-gold-500 disabled:bg-ink-200 disabled:text-ink-400",
     ghost: "text-ink-600 hover:bg-ink-100",
-    outline: "border border-ink-300 text-ink-700 hover:border-ink-400 hover:bg-ink-50",
+    outline: "border border-ink-300 text-ink-800 hover:border-gold-400 hover:bg-gold-50",
     danger: "border border-red-200 text-red-600 hover:bg-red-50",
   };
   return (
@@ -200,7 +200,7 @@ export function AssumptionNote({ children }: { children?: ReactNode }) {
 /** 번호가 매겨진 섹션 헤딩 (①②③ 대체) */
 export function NumberChip({ n }: { n: number }) {
   return (
-    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">
+    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gold-100 text-[11px] font-bold text-gold-600">
       {n}
     </span>
   );
