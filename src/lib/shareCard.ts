@@ -28,10 +28,10 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob> {
   ctx.scale(dpr, dpr);
 
   const brand = "#17181c";
-  const gold = "#d9a316";
+  const gold = "#f4b91e";
   const ink900 = "#0f172a";
   const ink400 = "#94a3b8";
-  const goal = "#d9a316";
+  const goal = "#f4b91e";
 
   // 배경
   ctx.fillStyle = "#ffffff";
