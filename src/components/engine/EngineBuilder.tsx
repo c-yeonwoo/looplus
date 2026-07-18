@@ -40,6 +40,7 @@ export function EngineBuilder() {
   const [scenarioName, setScenarioName] = useState("");
   const [sens, setSens] = useState<SensitivityKey>("base");
   const [sharing, setSharing] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(true);
 
   const monthlyIncome = snapshot.incomeSources.reduce((s, i) => s + i.monthly, 0);
   const sum = ratioSum(buckets);
@@ -141,14 +142,35 @@ export function EngineBuilder() {
         </Badge>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[176px_minmax(0,1fr)_248px]">
-        {/* 팔레트 */}
-        <Card className="h-fit">
-          <Palette onAdd={addBucket} nextPosition={buckets.length} />
-        </Card>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        {/* 팔레트 — 기본 펼침, 접기 가능 */}
+        {paletteOpen ? (
+          <Card pad={false} className="shrink-0 lg:w-[188px]">
+            <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
+              <span className="text-sm font-bold text-ink-800">팔레트</span>
+              <button
+                onClick={() => setPaletteOpen(false)}
+                aria-label="팔레트 접기"
+                className="text-ink-400 hover:text-ink-700"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <div className="p-3">
+              <Palette onAdd={addBucket} nextPosition={buckets.length} />
+            </div>
+          </Card>
+        ) : (
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-50"
+          >
+            <Icon name="plus" size={16} /> 팔레트
+          </button>
+        )}
 
-        {/* 캔버스 */}
-        <div className="space-y-2">
+        {/* 메인 — 캔버스 + 결과 (동일 너비) */}
+        <div className="min-w-0 flex-1 space-y-4">
           <EngineCanvas
             buckets={buckets}
             monthlyIncome={monthlyIncome}
@@ -157,59 +179,9 @@ export function EngineBuilder() {
             onAdd={addBucket}
             onRecommend={() => setEngine(suggestEngineFromSnapshot(snapshot))}
           />
-          <p className="text-xs text-ink-400">
-            ＊ 노드를 클릭하면 오른쪽 인스펙터에서 비율·수익률·lock을 편집합니다. 수치는 예시·가정.
-          </p>
-        </div>
 
-        {/* 인스펙터 (데스크톱 컬럼) */}
-        <Card className="hidden h-fit lg:block">
-          {selected ? (
-            <Inspector
-              bucket={selected}
-              onChange={(patch) => updateBucket(selected.id, patch)}
-              onDelete={() => {
-                removeBucket(selected.id);
-                setSelectedId(null);
-              }}
-              onDuplicate={() => duplicate(selected)}
-            />
-          ) : (
-            <div className="py-8 text-center text-sm text-ink-400">
-              버킷을 선택하면
-              <br />
-              여기서 편집합니다.
-            </div>
-          )}
-          <div
-            className={`mt-4 rounded-xl border px-3 py-2 text-center text-xs font-semibold ${
-              sumOk
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-amber-200 bg-amber-50 text-amber-700"
-            }`}
-          >
-            비율 합계: {Math.round(sum)}% {sumOk ? "✓" : sum > 100 ? "초과" : "미달"}
-          </div>
-        </Card>
-      </div>
-
-      {/* 인스펙터 (모바일 바텀시트) */}
-      <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="버킷 편집">
-        {selected && (
-          <Inspector
-            bucket={selected}
-            onChange={(patch) => updateBucket(selected.id, patch)}
-            onDelete={() => {
-              removeBucket(selected.id);
-              setSelectedId(null);
-            }}
-            onDuplicate={() => duplicate(selected)}
-          />
-        )}
-      </BottomSheet>
-
-      {/* 결과 패널 */}
-      <Card>
+          {/* 결과 패널 */}
+          <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
             <Icon name="trending-up" size={16} className="text-brand-600" />
@@ -351,10 +323,61 @@ export function EngineBuilder() {
           )}
         </div>
 
-        <div className="mt-4">
-          <AssumptionNote />
+          <div className="mt-4">
+            <AssumptionNote />
+          </div>
+          </Card>
         </div>
-      </Card>
+
+        {/* 인스펙터 — 노드 클릭 시에만 (데스크톱 우측) */}
+        {selected && (
+          <Card className="hidden shrink-0 lg:block lg:w-[268px]">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-bold text-ink-800">버킷 편집</span>
+              <button
+                onClick={() => setSelectedId(null)}
+                aria-label="닫기"
+                className="text-ink-400 hover:text-ink-700"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <Inspector
+              bucket={selected}
+              onChange={(patch) => updateBucket(selected.id, patch)}
+              onDelete={() => {
+                removeBucket(selected.id);
+                setSelectedId(null);
+              }}
+              onDuplicate={() => duplicate(selected)}
+            />
+            <div
+              className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs font-semibold ${
+                sumOk
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700"
+              }`}
+            >
+              비율 합계: {Math.round(sum)}% {sumOk ? "✓" : sum > 100 ? "초과" : "미달"}
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* 인스펙터 — 모바일 바텀시트 */}
+      <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="버킷 편집">
+        {selected && (
+          <Inspector
+            bucket={selected}
+            onChange={(patch) => updateBucket(selected.id, patch)}
+            onDelete={() => {
+              removeBucket(selected.id);
+              setSelectedId(null);
+            }}
+            onDuplicate={() => duplicate(selected)}
+          />
+        )}
+      </BottomSheet>
     </div>
   );
 }

@@ -15,11 +15,7 @@ export function Card({
 }) {
   return (
     <div
-      className={clsx(
-        "rounded-2xl border border-ink-200 bg-white shadow-sm",
-        pad && "p-5",
-        className,
-      )}
+      className={clsx("rounded-xl border border-ink-200 bg-white", pad && "p-5", className)}
     >
       {children}
     </div>
@@ -64,10 +60,10 @@ export function Button({
 }) {
   const styles: Record<BtnVariant, string> = {
     primary:
-      "bg-brand-600 text-white hover:bg-brand-700 disabled:bg-ink-300 disabled:text-ink-500",
+      "bg-brand-700 text-white hover:bg-brand-800 disabled:bg-ink-200 disabled:text-ink-400",
     ghost: "text-ink-600 hover:bg-ink-100",
-    outline: "border border-ink-300 text-ink-700 hover:bg-ink-50",
-    danger: "border border-red-300 text-red-600 hover:bg-red-50",
+    outline: "border border-ink-300 text-ink-700 hover:border-ink-400 hover:bg-ink-50",
+    danger: "border border-red-200 text-red-600 hover:bg-red-50",
   };
   return (
     <button
@@ -75,7 +71,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
         styles[variant],
         className,
       )}
@@ -122,10 +118,10 @@ export function NumberInput({
   placeholder?: string;
 }) {
   return (
-    <div className="flex items-center rounded-xl border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+    <div className="flex items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
       <input
         inputMode="numeric"
-        className="w-full rounded-xl bg-transparent px-3 py-2 text-sm text-ink-900 outline-none"
+        className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-ink-900 outline-none"
         value={Number.isFinite(value) ? String(value) : ""}
         placeholder={placeholder ?? "0"}
         onChange={(e) => {
@@ -152,7 +148,7 @@ export function TextInput({
   return (
     <input
       className={clsx(
-        "w-full rounded-xl border border-ink-300 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500",
+        "w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500",
         className,
       )}
       value={value}
@@ -220,7 +216,7 @@ export function StatCard({
   sub?: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-4">
+    <div className="rounded-xl border border-ink-200 bg-white p-4">
       <div className="text-xs text-ink-400">{label}</div>
       <div className="tnum mt-1 text-xl font-bold text-ink-900">{value}</div>
       {sub && <div className="mt-0.5 text-xs text-ink-500">{sub}</div>}
@@ -240,8 +236,8 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-ink-50 px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-ink-400 shadow-sm">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-ink-300 bg-ink-50/60 px-6 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-ink-200 bg-white text-ink-400">
         <Icon name={icon} size={24} />
       </span>
       <h3 className="mt-3 text-base font-bold text-ink-700">{title}</h3>

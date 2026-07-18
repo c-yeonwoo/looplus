@@ -32,10 +32,7 @@ export function Palette({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-bold text-ink-700">팔레트 · 버킷</div>
-      <p className="text-xs text-ink-400">
-        드래그해서 캔버스에 놓거나, 카드를 탭해서 추가하세요.
-      </p>
+      <p className="text-xs text-ink-400">드래그하거나 탭해서 캔버스에 추가</p>
 
       {CAT_ORDER.map((cat) => (
         <div key={cat}>
