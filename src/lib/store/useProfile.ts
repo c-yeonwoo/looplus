@@ -8,9 +8,12 @@ import type {
   FinancialSnapshot,
   Profile,
   Scenario,
+  Tracking,
   Vision,
 } from "../types";
+import { emptyTracking } from "../types";
 import { emptyProfile } from "./defaults";
+import { hasCheckedInThisWeek } from "../tracking";
 
 const MAX_SCENARIOS = 5; // 열린 결정 → 시나리오 저장 최대 5개
 
@@ -36,10 +39,20 @@ interface ProfileState {
   loadScenario: (id: string) => void;
   deleteScenario: (id: string) => void;
 
+  addAction: (text: string) => void;
+  toggleAction: (id: string) => void;
+  removeAction: (id: string) => void;
+  weeklyCheckIn: () => void;
+
   completeOnboarding: () => void;
   resetAll: () => void;
   replaceProfile: (p: Profile) => void;
   setHasHydrated: (v: boolean) => void;
+}
+
+/** 구버전 localStorage 프로필에 tracking이 없을 수 있어 보정 */
+function ensureTracking(p: Profile): Tracking {
+  return p.tracking ?? emptyTracking();
 }
 
 function touch(p: Profile): Profile {
@@ -119,6 +132,61 @@ export const useProfile = create<ProfileState>()(
             scenarios: st.profile.scenarios.filter((x) => x.id !== id),
           }),
         })),
+
+      addAction: (text) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          const action = {
+            id: sid(),
+            text: text.trim(),
+            done: false,
+            createdAt: new Date().toISOString(),
+          };
+          return {
+            profile: touch({ ...st.profile, tracking: { ...t, actions: [action, ...t.actions] } }),
+          };
+        }),
+
+      toggleAction: (id) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: {
+                ...t,
+                actions: t.actions.map((a) =>
+                  a.id === id
+                    ? { ...a, done: !a.done, doneAt: !a.done ? new Date().toISOString() : undefined }
+                    : a,
+                ),
+              },
+            }),
+          };
+        }),
+
+      removeAction: (id) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: { ...t, actions: t.actions.filter((a) => a.id !== id) },
+            }),
+          };
+        }),
+
+      weeklyCheckIn: () =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          if (hasCheckedInThisWeek(t.checkIns)) return {};
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: { ...t, checkIns: [...t.checkIns, new Date().toISOString()] },
+            }),
+          };
+        }),
 
       completeOnboarding: () =>
         set((st) => ({

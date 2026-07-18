@@ -111,12 +111,32 @@ export interface Scenario {
   createdAt: string;
 }
 
+/** F. 실천·트래킹 (리텐션 루프) */
+export interface ActionItem {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+  doneAt?: string;
+}
+
+export interface Tracking {
+  actions: ActionItem[];
+  /** 주간 점검 완료일(ISO date) 목록 → 스트릭 계산 */
+  checkIns: string[];
+}
+
+export function emptyTracking(): Tracking {
+  return { actions: [], checkIns: [] };
+}
+
 /** 전체 사용자 프로필 (localStorage / Supabase 공용 shape) */
 export interface Profile {
   vision: Vision | null;
   snapshot: FinancialSnapshot | null;
   engine: EngineConfig;
   scenarios: Scenario[];
+  tracking: Tracking;
   onboardedAt: string | null;
   updatedAt: string;
 }

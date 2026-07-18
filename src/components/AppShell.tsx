@@ -13,11 +13,11 @@ const NAV: { href: string; label: string; icon: IconName; core?: boolean; soon?:
   { href: "/engine", label: "엔진", icon: "engine", core: true },
   { href: "/diagnosis", label: "진단", icon: "diagnosis" },
   { href: "/goals", label: "목표·비전", icon: "target" },
+  { href: "/tracking", label: "실천", icon: "check-circle" },
   { href: "/spending", label: "지출관리", icon: "wallet", soon: true },
 ];
 
 const LATER: { label: string; icon: IconName }[] = [
-  { label: "실천·트래킹", icon: "check-circle" },
   { label: "커뮤니티", icon: "users" },
 ];
 

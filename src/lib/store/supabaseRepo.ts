@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  ActionItem,
   Bucket,
   BucketCategory,
   IncomeSource,
@@ -67,7 +68,7 @@ export async function loadProfile(
 ): Promise<Profile | null> {
   const { data: prof, error } = await sb
     .from("profiles")
-    .select("onboarded_at")
+    .select("onboarded_at, action_items, check_ins")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -83,6 +84,10 @@ export async function loadProfile(
   const profile = emptyProfile();
   profile.onboardedAt = prof.onboarded_at ?? null;
   profile.updatedAt = new Date().toISOString();
+  profile.tracking = {
+    actions: (prof.action_items as ActionItem[]) ?? [],
+    checkIns: (prof.check_ins as string[]) ?? [],
+  };
 
   if (visionRes.data) {
     const v = visionRes.data;
@@ -125,10 +130,16 @@ export async function saveProfile(
   userId: string,
   profile: Profile,
 ): Promise<void> {
-  // profiles
-  await sb
-    .from("profiles")
-    .upsert({ id: userId, onboarded_at: profile.onboardedAt }, { onConflict: "id" });
+  // profiles (+ tracking)
+  await sb.from("profiles").upsert(
+    {
+      id: userId,
+      onboarded_at: profile.onboardedAt,
+      action_items: profile.tracking?.actions ?? [],
+      check_ins: profile.tracking?.checkIns ?? [],
+    },
+    { onConflict: "id" },
+  );
 
   // vision
   if (profile.vision) {
