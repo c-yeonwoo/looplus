@@ -135,24 +135,31 @@ supabase/migrations/  # 0001_init.sql — 정규화 스키마 + RLS
 
 ---
 
-## Supabase (선택 · 다음 단계)
+## Supabase (인증 + 영속 · 선택)
 
-MVP 스켈레톤의 기본 영속은 **localStorage** 라 백엔드 없이 즉시 실행됩니다.
-정규화 스키마(`supabase/migrations/0001_init.sql`)는 **데이터 모델 산출물**로 함께 제공됩니다
-(profiles / visions / snapshots / engine_buckets / scenarios + RLS + auth 트리거).
+**환경변수 미설정 시 앱은 localStorage '로컬 모드'로 완전히 동작합니다.** 환경변수를 설정하면
+이메일 OTP 로그인 + 기기 간 동기화가 켜집니다.
+
+동작 방식:
+- **로컬 모드(기본):** 모든 데이터는 브라우저 localStorage. 사이드바 하단 "로컬 모드 · 이 기기에 저장".
+- **연결 모드:** 로그인 시 원격 프로필을 불러와 스토어를 교체. 원격이 비어 있고 로컬에 데이터가
+  있으면 **로컬 → 계정으로 이관**. 이후 변경은 디바운스로 정규화 테이블에 저장.
+  (`src/lib/auth.tsx` · `components/SyncManager.tsx` · `lib/store/supabaseRepo.ts`)
 
 연결하려면:
 1. Supabase 프로젝트 생성 후 마이그레이션 적용
    ```bash
-   supabase db push   # 또는 SQL 에디터에 0001_init.sql 붙여넣기
+   supabase db push   # 또는 SQL 에디터에 supabase/migrations/0001_init.sql 붙여넣기
    ```
 2. `.env.local` 설정 (`.env.example` 참고)
    ```
    NEXT_PUBLIC_SUPABASE_URL=...
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    ```
-3. (다음 단계) 인증(email OTP) + `Profile ↔ 정규화 테이블` 동기화 리포지토리 연결.
-   `src/lib/supabase.ts` 에 클라이언트가 준비되어 있음.
+3. **이메일 OTP:** Supabase Auth → Email 템플릿의 Magic Link 본문에 `{{ .Token }}` 을 포함해야
+   6자리 코드 로그인이 동작합니다(코드 입력 방식 사용). 기본 매직링크만 쓰려면 redirect URL 설정 필요.
+
+> 주의: 위 연결 모드는 실제 Supabase 프로젝트가 있어야 런타임 검증됩니다. 로컬 모드/타입/빌드는 검증 완료.
 
 ---
 

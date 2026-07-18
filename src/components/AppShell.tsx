@@ -6,6 +6,7 @@ import { clsx } from "@/lib/clsx";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { Logo } from "./Logo";
+import { AccountMenu } from "./AccountMenu";
 
 const NAV: { href: string; label: string; icon: IconName; core?: boolean; soon?: boolean }[] = [
   { href: "/home", label: "홈", icon: "home" },
@@ -71,6 +72,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               {l.label} <span className="text-ink-300">(곧)</span>
             </div>
           ))}
+        </div>
+        <div className="mt-auto border-t border-ink-100 pt-3">
+          <AccountMenu />
         </div>
       </aside>
 
