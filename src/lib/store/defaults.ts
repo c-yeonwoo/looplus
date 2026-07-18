@@ -1,4 +1,5 @@
 import type { Bucket, EngineConfig, FinancialSnapshot, Profile, Vision } from "../types";
+import { emptyTracking } from "../types";
 import { BUCKET_PRESETS, bucketFromPreset } from "../catalog";
 
 export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
@@ -36,6 +37,7 @@ export function emptyProfile(): Profile {
     snapshot: null,
     engine: { buckets: [] },
     scenarios: [],
+    tracking: emptyTracking(),
     onboardedAt: null,
     updatedAt: new Date(0).toISOString(),
   };

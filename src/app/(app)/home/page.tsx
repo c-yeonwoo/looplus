@@ -8,6 +8,8 @@ import { formatKRW, formatPct } from "@/lib/format";
 import { Card, StatCard, Button, EmptyState } from "@/components/ui";
 import { Icon, type IconName } from "@/components/Icon";
 import { AssetChart } from "@/components/AssetChart";
+import { computeStreak } from "@/lib/tracking";
+import { emptyTracking } from "@/lib/types";
 
 export default function HomePage() {
   const profile = useProfile((s) => s.profile);
@@ -33,6 +35,7 @@ export default function HomePage() {
   }
 
   const m = stage.metrics;
+  const streak = computeStreak((profile.tracking ?? emptyTracking()).checkIns);
   const targetYears = vision?.targetYears ?? 15;
   const whyLine = vision?.why?.trim();
   const firstScene = vision?.scenes.find((s) => s.text.trim());
@@ -121,9 +124,9 @@ export default function HomePage() {
             다음 한 걸음
           </div>
           <p className="mt-2 text-sm text-invest-700">{stage.nextStep}</p>
-          <Link href="/diagnosis">
+          <Link href="/tracking">
             <Button variant="outline" className="mt-4 w-full border-invest-500/40 text-invest-700">
-              진단 업데이트
+              {streak > 0 ? `실천하기 · ${streak}주 연속` : "실천하기"}
             </Button>
           </Link>
         </Card>
