@@ -10,18 +10,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
 
   if (!configured) {
-    if (compact) {
-      return (
-        <div className="flex justify-center py-2 text-ink-400" title="로컬 모드">
-          <Icon name="lock" size={16} />
-        </div>
-      );
-    }
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-2 text-[11px] text-ink-400">
-        <Icon name="lock" size={13} /> 로컬 모드 · 이 기기에 저장
-      </div>
-    );
+    return null;
   }
 
   if (user) {

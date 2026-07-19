@@ -15,22 +15,22 @@ type NavItem = {
   core?: boolean;
 };
 
-/** 플랫 메뉴 — 전문 용어·그룹 라벨 없이 */
+/** 플랫 메뉴 — 홈 → 목표 → 진단 → 설계 → 지출 → 실천 */
 const NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
-  { href: "/engine", label: "자산 설계", icon: "engine", core: true },
   { href: "/goals", label: "목표", icon: "target" },
   { href: "/diagnosis", label: "진단", icon: "diagnosis" },
-  { href: "/tracking", label: "실천", icon: "check-circle" },
+  { href: "/engine", label: "자산 설계", icon: "engine", core: true },
   { href: "/spending", label: "지출", icon: "wallet" },
+  { href: "/tracking", label: "실천", icon: "check-circle" },
 ];
 
 const MOBILE_NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
-  { href: "/spending", label: "지출", icon: "wallet" },
-  { href: "/engine", label: "설계", icon: "engine", core: true },
-  { href: "/tracking", label: "실천", icon: "check-circle" },
   { href: "/goals", label: "목표", icon: "target" },
+  { href: "/engine", label: "설계", icon: "engine", core: true },
+  { href: "/spending", label: "지출", icon: "wallet" },
+  { href: "/tracking", label: "실천", icon: "check-circle" },
 ];
 
 const NAV_COLLAPSE_KEY = "cyrano-nav-collapsed";

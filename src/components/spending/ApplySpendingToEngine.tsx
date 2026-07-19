@@ -11,8 +11,6 @@ import { track } from "@/lib/analytics";
 import { Button, Card } from "@/components/ui";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Icon } from "@/components/Icon";
-import { clsx } from "@/lib/clsx";
-
 type Source = "summary" | "diagnosis";
 
 /**
@@ -62,32 +60,57 @@ export function ApplySpendingToEngine({
 
   const ctaLabel = source === "diagnosis" ? "지출 실측 가져오기" : "엔진에 반영";
 
+  if (compact) {
+    return (
+      <>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-100 bg-ink-50/60 px-3 py-2.5">
+          <p className="text-xs text-ink-500">
+            지출 실측{" "}
+            <span className="tnum font-semibold text-ink-800">{formatKRW(next)}</span>
+            {same || justApplied ? (
+              <span className="ml-1.5 text-sage-700">· 반영됨</span>
+            ) : current > 0 ? (
+              <span className="ml-1.5 text-ink-400">· 현재 {formatKRW(current)}</span>
+            ) : null}
+          </p>
+          <Button onClick={() => setOpen(true)} disabled={empty || same}>
+            {ctaLabel}
+          </Button>
+        </div>
+        <ConfirmModal
+          open={open}
+          title="실측을 월 지출에 넣을까요?"
+          danger={false}
+          confirmLabel="반영하기"
+          cancelLabel="취소"
+          onCancel={() => setOpen(false)}
+          onConfirm={apply}
+          message={
+            <p>
+              <strong className="tnum">{formatKRW(current)}</strong> →{" "}
+              <strong className="tnum">{formatKRW(next)}</strong>
+            </p>
+          }
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <Card
-        className={clsx(
-          compact ? "!p-3" : "!p-4",
-          "border-brand-200/80 bg-brand-50/40",
-        )}
-      >
+      <Card className="!p-4 border-brand-200/80 bg-brand-50/40">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
               <Icon name="engine" size={14} />
-              자산 설계 · 진단 연동
+              진단 연동
             </div>
             <p className="mt-1.5 text-sm text-ink-700">
               {monthIndex + 1}월 실측{" "}
               <span className="tnum font-extrabold text-ink-900">{formatKRW(next)}</span>
-              <span className="text-ink-400">
-                {" "}
-                (변동 {formatWon(measured.variableWon)} + 고정 {formatWon(measured.fixedWon)}
-                · 만원 버림)
-              </span>
             </p>
             <p className="mt-1 text-xs text-ink-500">
-              현재 진단 월 지출{" "}
-              <span className="tnum font-semibold text-ink-700">{formatKRW(current)}</span>
+              현재 {formatKRW(current)}
               {same && !justApplied && (
                 <span className="ml-1.5 text-sage-700">· 이미 같아요</span>
               )}
@@ -95,52 +118,17 @@ export function ApplySpendingToEngine({
                 <span className="ml-1.5 text-sage-700">· 반영했어요</span>
               )}
             </p>
-            {!compact && (
-              <p className="mt-2 text-[11px] leading-relaxed text-ink-400">
-                요약의 「오늘까지」와 달리, 엔진에는{" "}
-                <strong className="font-semibold text-ink-500">이달 고정 전체</strong>를
-                넣습니다. 자동으로 바꾸지 않아요.
-              </p>
-            )}
           </div>
           <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
-            <span
-              title={
-                empty
-                  ? "지출 기록이 없으면 반영할 값이 없어요"
-                  : same
-                    ? "이미 동일한 값이에요"
-                    : undefined
-              }
+            <Button onClick={() => setOpen(true)} disabled={empty || same}>
+              {ctaLabel}
+            </Button>
+            <Link
+              href="/engine"
+              className="text-center text-[11px] font-medium text-spend-700 hover:underline"
             >
-              <Button onClick={() => setOpen(true)} disabled={empty || same}>
-                {ctaLabel}
-              </Button>
-            </span>
-            <div className="flex flex-col items-stretch gap-1 text-center sm:items-end">
-              {source === "summary" && (
-                <Link
-                  href="/diagnosis"
-                  className="text-[11px] font-medium text-brand-700 hover:underline"
-                >
-                  진단에서 확인 →
-                </Link>
-              )}
-              {source === "diagnosis" && (
-                <Link
-                  href="/spending"
-                  className="text-[11px] font-medium text-brand-700 hover:underline"
-                >
-                  지출 기록 →
-                </Link>
-              )}
-              <Link
-                href="/engine"
-                className="text-[11px] font-medium text-spend-700 hover:underline"
-              >
-                배분 비율 제안 →
-              </Link>
-            </div>
+              배분 비율 →
+            </Link>
           </div>
         </div>
       </Card>
