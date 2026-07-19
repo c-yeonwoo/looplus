@@ -27,13 +27,14 @@ export function sumMonthlyIncome(sources: IncomeSource[]): number {
 export function createIncomeSource(
   type: IncomeSourceType,
   position: number,
-  monthly = 0,
+  monthly: number,
+  name?: string,
 ): IncomeSource {
   return {
     id: newIncomeId(),
     type,
-    monthly,
-    name: INCOME_SOURCE_META[type].label,
+    monthly: Math.max(0, monthly),
+    name: name?.trim() || INCOME_SOURCE_META[type].label,
     position,
   };
 }
