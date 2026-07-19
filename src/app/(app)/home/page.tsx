@@ -166,13 +166,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 준비 바로가기 — 지출관리(placeholder) 제거해 기대 불일치 줄임 */}
       <div>
-        <div className="mb-2 text-sm font-bold text-ink-700">준비 · 수정</div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="mb-2 text-sm font-bold text-ink-700">바로가기</div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {(
             [
               { href: "/engine", label: "엔진", icon: "engine" },
+              { href: "/spending", label: "지출관리", icon: "wallet" },
               { href: "/diagnosis", label: "진단", icon: "diagnosis" },
               { href: "/goals", label: "목표", icon: "target" },
             ] as { href: string; label: string; icon: IconName }[]

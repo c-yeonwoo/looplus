@@ -37,15 +37,15 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "루프",
     items: [
       { href: "/tracking", label: "실천", icon: "check-circle" },
-      { href: "/spending", label: "지출관리", icon: "wallet", soon: true },
+      { href: "/spending", label: "지출관리", icon: "wallet" },
     ],
   },
 ];
 
-/** 모바일: 엔진을 중앙에 두어 공방 강조 */
+/** 모바일: 엔진 중앙 · 지출은 하단탭에서 홈 대신 접근 가능하도록 실천과 교대하지 않고 목표 자리에 근접 배치하지 않음 — 5탭 유지 */
 const MOBILE_NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
-  { href: "/diagnosis", label: "진단", icon: "diagnosis" },
+  { href: "/spending", label: "지출", icon: "wallet" },
   { href: "/engine", label: "엔진", icon: "engine", core: true },
   { href: "/tracking", label: "실천", icon: "check-circle" },
   { href: "/goals", label: "목표", icon: "target" },

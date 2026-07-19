@@ -20,8 +20,10 @@
 ✅ **Supabase 로컬 E2E** — `npm run verify:supabase` (마이그레이션·트리거·RLS). 클라우드는 무료 슬롯 확보 후 `docs/DEPLOY.md`
 ✅ **Railway 배포 준비** — Dockerfile · railway.toml · `/api/health` · standalone
 ✅ **컴플라이언스 페이지** — `/legal/disclaimer|terms|privacy`
+✅ **지출관리 (E) v1** — 요약·변동(캘린더)·고정 · Quiet Ledger 톤 (`docs/SPENDING_BACKLOG.md`)
 
 **남은 v1.0 GA 항목:** 클라우드 Supabase 슬롯·Railway 실배포 클릭 · 온보딩 순서 개선 · 법무 감수.
+**지출 P1:** 엔진 연동 · Supabase spending sync · 진단 규칙 고도화.
 **아직 없음:** AI 코치(Anthropic API 키 필요) · 자동연동 · 커뮤니티.
 
 ---

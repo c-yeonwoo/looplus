@@ -19,7 +19,8 @@ export type AnalyticsEvent =
   | "action_added"
   | "action_completed"
   | "weekly_checkin"
-  | "lead_cta_clicked";
+  | "lead_cta_clicked"
+  | "spend_logged";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
@@ -178,4 +179,5 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "action_completed",
   "weekly_checkin",
   "lead_cta_clicked",
+  "spend_logged",
 ];

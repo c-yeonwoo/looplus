@@ -12,15 +12,35 @@ import type {
   Vision,
 } from "../types";
 import { emptyTracking } from "../types";
-import { emptyProfile } from "./defaults";
+import type { FixedExpense, SpendingState, VariableLog } from "../spending/types";
+import type { SpendCategory, SpendFavorite } from "../spending/catalog";
+import { emptyProfile, ensureSpending } from "./defaults";
+import { seedSpending } from "../spending/seed";
 import { hasCheckedInThisWeek } from "../tracking";
 
-const MAX_SCENARIOS = 5; // 열린 결정 → 시나리오 저장 최대 5개
+const MAX_SCENARIOS = 5;
 
 let idc = 0;
 function sid() {
   idc += 1;
   return `s_${idc}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function withSpending(p: Profile, spending: SpendingState): Profile {
+  return touch({ ...p, spending });
+}
+
+function touch(p: Profile): Profile {
+  return { ...p, updatedAt: new Date().toISOString() };
+}
+
+function ensureTracking(p: Profile): Tracking {
+  return p.tracking ?? emptyTracking();
+}
+
+function migrateProfile(p: Profile): Profile {
+  if (p.spending) return p;
+  return { ...p, spending: seedSpending() };
 }
 
 interface ProfileState {
@@ -44,19 +64,24 @@ interface ProfileState {
   removeAction: (id: string) => void;
   weeklyCheckIn: () => void;
 
+  setVariableBudget: (won: number) => void;
+  addVariableLog: (input: {
+    amountWon: number;
+    category: SpendCategory;
+    date: string;
+    memo: string;
+  }) => void;
+  updateVariableLog: (id: string, patch: Partial<VariableLog>) => void;
+  removeVariableLog: (id: string) => void;
+  addFixedExpense: (input: Omit<FixedExpense, "id">) => void;
+  updateFixedExpense: (id: string, patch: Partial<FixedExpense>) => void;
+  removeFixedExpense: (id: string) => void;
+  setFavorites: (favorites: SpendFavorite[]) => void;
+
   completeOnboarding: () => void;
   resetAll: () => void;
   replaceProfile: (p: Profile) => void;
   setHasHydrated: (v: boolean) => void;
-}
-
-/** 구버전 localStorage 프로필에 tracking이 없을 수 있어 보정 */
-function ensureTracking(p: Profile): Tracking {
-  return p.tracking ?? emptyTracking();
-}
-
-function touch(p: Profile): Profile {
-  return { ...p, updatedAt: new Date().toISOString() };
 }
 
 export const useProfile = create<ProfileState>()(
@@ -188,6 +213,85 @@ export const useProfile = create<ProfileState>()(
           };
         }),
 
+      setVariableBudget: (won) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return { profile: withSpending(st.profile, { ...s, monthlyVariableBudgetWon: Math.max(0, won) }) };
+        }),
+
+      addVariableLog: (input) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          if (input.amountWon <= 0) return {};
+          const log: VariableLog = {
+            id: sid(),
+            amountWon: Math.round(input.amountWon),
+            category: input.category,
+            date: input.date,
+            memo: input.memo.trim(),
+            time: null,
+            createdAt: new Date().toISOString(),
+          };
+          return { profile: withSpending(st.profile, { ...s, logs: [log, ...s.logs] }) };
+        }),
+
+      updateVariableLog: (id, patch) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return {
+            profile: withSpending(st.profile, {
+              ...s,
+              logs: s.logs.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+            }),
+          };
+        }),
+
+      removeVariableLog: (id) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return {
+            profile: withSpending(st.profile, {
+              ...s,
+              logs: s.logs.filter((l) => l.id !== id),
+            }),
+          };
+        }),
+
+      addFixedExpense: (input) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          const row: FixedExpense = { ...input, id: sid() };
+          return { profile: withSpending(st.profile, { ...s, fixed: [...s.fixed, row] }) };
+        }),
+
+      updateFixedExpense: (id, patch) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return {
+            profile: withSpending(st.profile, {
+              ...s,
+              fixed: s.fixed.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+            }),
+          };
+        }),
+
+      removeFixedExpense: (id) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return {
+            profile: withSpending(st.profile, {
+              ...s,
+              fixed: s.fixed.filter((f) => f.id !== id),
+            }),
+          };
+        }),
+
+      setFavorites: (favorites) =>
+        set((st) => {
+          const s = ensureSpending(st.profile);
+          return { profile: withSpending(st.profile, { ...s, favorites }) };
+        }),
+
       completeOnboarding: () =>
         set((st) => ({
           profile: touch({
@@ -197,7 +301,7 @@ export const useProfile = create<ProfileState>()(
         })),
 
       resetAll: () => set({ profile: emptyProfile() }),
-      replaceProfile: (p) => set({ profile: p }),
+      replaceProfile: (p) => set({ profile: migrateProfile(p) }),
       setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
@@ -205,6 +309,9 @@ export const useProfile = create<ProfileState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (st) => ({ profile: st.profile }),
       onRehydrateStorage: () => (state) => {
+        if (state && !state.profile.spending) {
+          state.profile = migrateProfile(state.profile);
+        }
         state?.setHasHydrated(true);
       },
     },
@@ -212,3 +319,8 @@ export const useProfile = create<ProfileState>()(
 );
 
 export const MAX_SCENARIOS_LIMIT = MAX_SCENARIOS;
+
+/** 컴포넌트용 안전한 spending 셀렉터 */
+export function selectSpending(profile: Profile): SpendingState {
+  return ensureSpending(migrateProfile(profile));
+}
