@@ -339,8 +339,21 @@ export const useProfile = create<ProfileState>()(
       setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
-      name: "cyrano-profile-v1",
-      storage: createJSONStorage(() => localStorage),
+      name: "looplus-profile-v1",
+      storage: createJSONStorage(() => {
+        if (typeof window !== "undefined") {
+          try {
+            const next = "looplus-profile-v1";
+            const prev = "cyrano-profile-v1";
+            if (!localStorage.getItem(next) && localStorage.getItem(prev)) {
+              localStorage.setItem(next, localStorage.getItem(prev)!);
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        return localStorage;
+      }),
       partialize: (st) => ({ profile: st.profile }),
       onRehydrateStorage: () => (state) => {
         if (state && !state.profile.spending) {

@@ -1,4 +1,4 @@
-# 시라노 — 배포 · Supabase 운영 가이드
+# Loop+ (루플러스) — 배포 · Supabase 운영 가이드
 
 ## 1. 로컬 Supabase E2E (검증 완료 경로)
 

@@ -1,7 +1,7 @@
 import type { SVGProps } from "react";
 
 /**
- * Cyrano 아이콘 세트 — 이모지 대체용 인라인 SVG.
+ * Loop+ 아이콘 세트 — 이모지 대체용 인라인 SVG.
  * 24 그리드 · stroke 기반 · currentColor. 외부 의존성 없음.
  */
 export type IconName =
