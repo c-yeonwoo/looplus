@@ -3,8 +3,8 @@ import type { IconName } from "@/components/Icon";
 
 /**
  * 항목 추가 프리셋.
- * - kind: group = 수입 바로 아래 묶음(투자/저축/지출)
- * - kind: item = 선택 중인 묶음(또는 같은 카테고리 루트) 아래에 추가
+ * - kind: group = 월수입 바로 아래 묶음(성장·안전 = 자산 / 지출)
+ * - kind: item = 선택 중인 묶음 아래
  */
 export interface BucketPreset {
   key: string;
@@ -24,22 +24,22 @@ export const GROUP_PRESETS: BucketPreset[] = [
   {
     key: "g_invest",
     category: "invest",
-    name: "투자",
+    name: "성장",
     icon: "trending-up",
     kind: "group",
     defaultReturnPct: 0,
     defaultRealizedPct: 0,
-    desc: "불리는 돈 묶음",
+    desc: "자산 · 복리 + 배당·임대 등 현금흐름",
   },
   {
     key: "g_save",
     category: "save",
-    name: "저축",
+    name: "안전",
     icon: "shield",
     kind: "group",
     defaultReturnPct: 0,
     defaultRealizedPct: 0,
-    desc: "모아 두는 돈 묶음",
+    desc: "자산 · 안에서만 붙는 이자",
   },
   {
     key: "g_spend",
@@ -49,7 +49,7 @@ export const GROUP_PRESETS: BucketPreset[] = [
     kind: "group",
     defaultReturnPct: 0,
     defaultRealizedPct: 0,
-    desc: "쓰는 돈 묶음 · 안에 고정/변동",
+    desc: "나가는 돈 · 복리 없음",
   },
 ];
 

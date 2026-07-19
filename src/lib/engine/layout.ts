@@ -314,7 +314,7 @@ export function layoutEngineGraph(input: LayoutInput | Bucket[]): {
     if (n.kind === "bucket") maxDepth = Math.max(maxDepth, n.depth);
   }
 
-  // 모인 자산 = 투자·저축 중간 집계 (최종 싱크 아님)
+  // 자산 = 성장·안전 리프 합류 (복리 장소; 현금흐름만 월수입으로)
   const feed = nodes.filter(
     (n) =>
       n.kind === "bucket" &&

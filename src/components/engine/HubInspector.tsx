@@ -15,15 +15,14 @@ export function IncomeHubInspector({
   return (
     <div className="space-y-4">
       <div>
-        <div className="text-sm font-bold text-ink-800">월 수입</div>
+        <div className="text-sm font-bold text-ink-800">월수입</div>
         <p className="mt-1 text-xs text-ink-400">
-          왼쪽 수입원 합산 → 오른쪽 배분. 수입원은 <span className="font-semibold">항목 추가</span>에서
-          금액을 넣어 추가하세요.
+          왼쪽 수입원이 여기로 모이고, 오른쪽 자산·지출로 흘러갑니다.
         </p>
       </div>
       <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-3 text-center">
-        <div className="text-[11px] font-semibold text-brand-600">합산</div>
         <div className="tnum text-xl font-extrabold text-brand-800">{monthlyIncome}만</div>
+        <div className="mt-0.5 text-[11px] text-brand-500">이번 달 기준</div>
       </div>
       <Button className="w-full" onClick={onAddGroup}>
         <Icon name="plus" size={14} /> 묶음 추가
@@ -32,19 +31,29 @@ export function IncomeHubInspector({
   );
 }
 
-export function PoolHubInspector() {
+export function PoolHubInspector({
+  cashflowMonthly = 0,
+}: {
+  /** 자산→월수입 재유입 추정(만원/월) */
+  cashflowMonthly?: number;
+}) {
   return (
     <div className="space-y-3">
       <div>
-        <div className="text-sm font-bold text-ink-800">투자·저축 합류</div>
+        <div className="text-sm font-bold text-ink-800">자산</div>
         <p className="mt-1 text-xs leading-relaxed text-ink-400">
-          최종 목적지가 아니라 <span className="font-semibold text-ink-600">중간 집계</span>
-          입니다. 투자·저축 리프가 여기에 모이고, 실현 수익은 점선으로 월 수입에 다시 유입될 수
-          있어요.
+          성장·안전 묶음이 모이는 곳입니다. <strong className="font-semibold text-ink-600">복리는 여기서만</strong>{" "}
+          일어나고, 배당·임대 같은 현금흐름은 점선으로 월수입에 다시 들어옵니다.
         </p>
       </div>
+      {cashflowMonthly > 0 && (
+        <div className="rounded-xl border border-gold-200 bg-gold-50 px-3 py-2 text-center">
+          <div className="text-[11px] font-semibold text-gold-600">현금흐름(추정)</div>
+          <div className="tnum text-lg font-extrabold text-ink-800">월 {Math.round(cashflowMonthly)}만</div>
+        </div>
+      )}
       <div className="rounded-xl border border-ink-100 bg-ink-50 px-3 py-2 text-xs text-ink-500">
-        지출은 이 합류에 들어가지 않고, 아래 밴드로 빠져나갑니다.
+        지출은 자산에 들어가지 않고 아래 밴드로 빠져나갑니다.
       </div>
     </div>
   );
@@ -74,7 +83,7 @@ export function SourceInspector({
           placeholder={INCOME_SOURCE_META[source.type].label}
         />
       </Field>
-      <Field label="월 금액" hint="만원 · 합산되어 월 수입이 됩니다">
+      <Field label="월 금액">
         <NumberInput
           value={source.monthly}
           onChange={(n) => onChange({ monthly: Math.max(0, n) })}

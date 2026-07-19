@@ -116,6 +116,8 @@ type DragState = {
   originX: number;
   originY: number;
   moved: boolean;
+  /** 복수 선택 시 함께 이동할 노드 원점 */
+  group: { id: string; originX: number; originY: number }[];
 };
 
 function startDrag(
@@ -125,6 +127,7 @@ function startDrag(
   clientToSvg: (x: number, y: number) => { x: number; y: number },
   dragRef: React.MutableRefObject<DragState | null>,
   setDrag: (d: DragState) => void,
+  group: { id: string; originX: number; originY: number }[],
 ) {
   if ((e.target as HTMLElement).closest("button")) return;
   e.preventDefault();
@@ -138,36 +141,47 @@ function startDrag(
     originX: n.x,
     originY: n.y,
     moved: false,
+    group,
   };
   dragRef.current = next;
   setDrag(next);
+}
+
+/** 레거시 이름 → 자산 용어 */
+function displayBucketName(name: string): string {
+  if (name === "투자") return "성장";
+  if (name === "저축") return "안전";
+  return name;
 }
 
 export function EngineCanvas({
   buckets,
   engine,
   incomeSources,
-  selectedId,
+  selectedIds,
   onSelect,
   onAdd,
   onRequestDelete,
-  onMoveNode,
+  onMoveNodes,
   onResetLayout,
   onRecommend,
   spendSuggestionPending = false,
+  cashflowMonthly = 0,
 }: {
   buckets: Bucket[];
   engine: EngineConfig;
   incomeSources: IncomeSource[];
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
+  selectedIds: string[];
+  onSelect: (id: string | null, opts?: { toggle?: boolean }) => void;
   onAdd: (b: Bucket) => void;
   onRequestDelete: (id: string) => void;
-  onMoveNode: (id: string, x: number, y: number) => void;
+  onMoveNodes: (moves: { id: string; x: number; y: number }[]) => void;
   onResetLayout: () => void;
   onRecommend: () => void;
   /** Phase B — 지출 루트에 실측 제안 배지 */
   spendSuggestionPending?: boolean;
+  /** 자산→월수입 현금흐름 추정(만원/월) */
+  cashflowMonthly?: number;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -212,13 +226,28 @@ export function EngineCanvas({
       dragRef.current = next;
       setDrag(next);
     };
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
       const cur = dragRef.current;
       dragRef.current = null;
       setDrag(null);
       if (!cur) return;
-      if (cur.moved) onMoveNode(cur.id, Math.round(cur.x), Math.round(cur.y));
-      else onSelect(cur.id);
+      if (cur.moved) {
+        const dx = cur.x - cur.originX;
+        const dy = cur.y - cur.originY;
+        const targets =
+          cur.group.length > 0
+            ? cur.group
+            : [{ id: cur.id, originX: cur.originX, originY: cur.originY }];
+        onMoveNodes(
+          targets.map((g) => ({
+            id: g.id,
+            x: Math.round(g.originX + dx),
+            y: Math.round(g.originY + dy),
+          })),
+        );
+      } else {
+        onSelect(cur.id, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
+      }
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -239,6 +268,45 @@ export function EngineCanvas({
       }),
     [buckets, sources, engine, drag],
   );
+
+  const selectedId = selectedIds[0] ?? null;
+  const dragDx = drag ? drag.x - drag.originX : 0;
+  const dragDy = drag ? drag.y - drag.originY : 0;
+  /** 레이아웃이 이미 반영한 primary 제외, 그룹 멤버만 시각 오프셋 */
+  const groupOffset = (id: string) => {
+    if (!drag || id === drag.id) return { dx: 0, dy: 0 };
+    if (drag.group.some((g) => g.id === id)) return { dx: dragDx, dy: dragDy };
+    return { dx: 0, dy: 0 };
+  };
+  const posOf = (n: GraphNode) => {
+    const { dx, dy } = groupOffset(n.id);
+    return { x: n.x + dx, y: n.y + dy };
+  };
+  const shiftedEdge = (e: (typeof edges)[number]) => {
+    const a = groupOffset(e.fromId);
+    const b = groupOffset(e.toId);
+    if (!a.dx && !a.dy && !b.dx && !b.dy) return e;
+    return {
+      ...e,
+      x1: e.x1 + a.dx,
+      y1: e.y1 + a.dy,
+      x2: e.x2 + b.dx,
+      y2: e.y2 + b.dy,
+    };
+  };
+  const beginNodeDrag = (
+    e: React.PointerEvent,
+    id: string,
+    n: { x: number; y: number },
+  ) => {
+    const ids =
+      selectedIds.includes(id) && selectedIds.length > 1 ? selectedIds : [id];
+    const group = ids.map((gid) => {
+      const gn = nodes.find((x) => x.id === gid);
+      return { id: gid, originX: gn?.x ?? n.x, originY: gn?.y ?? n.y };
+    });
+    startDrag(e, id, n, clientToSvg, dragRef, setDrag, group);
+  };
 
   const crumb =
     selectedId && buckets.some((b) => b.id === selectedId) ? pathToRoot(selectedId, buckets) : [];
@@ -279,8 +347,8 @@ export function EngineCanvas({
       >
         <EmptyState
           icon="layers"
-          title="수입 항목과 배분 트리를 만드세요"
-          desc="왼쪽 수입 → 월 수입 합산 → 투자·저축·지출로 흘러갑니다."
+          title="월수입과 자산 흐름을 만드세요"
+          desc="수입 → 월수입 → 자산(복리·현금흐름) · 지출은 아래"
           action={
             <div className="flex flex-wrap justify-center gap-2">
               <Button onClick={onRecommend}>추천 배분으로 시작</Button>
@@ -308,17 +376,18 @@ export function EngineCanvas({
     const leaf = isLeaf(b, buckets);
     const ofTotal = ratioOfTotal(b, buckets);
     const month = monthlyManwon(b, buckets, monthlyIncome);
-    const selected = b.id === selectedId;
-    const parentLabel = b.parentId ? "상위" : "수입";
+    const selected = selectedIds.includes(b.id);
+    const parentLabel = b.parentId ? "상위" : "월수입";
     const compact = n.depth >= 2;
-    const dragging = drag?.id === b.id;
+    const dragging = drag?.id === b.id || (drag != null && drag.group.some((g) => g.id === b.id));
+    const p = posOf(n);
 
     return (
-      <foreignObject key={n.id} x={n.x} y={n.y} width={n.w} height={n.h}>
+      <foreignObject key={n.id} x={p.x} y={p.y} width={n.w} height={n.h}>
         <div
           role="button"
           tabIndex={0}
-          onPointerDown={(e) => startDrag(e, b.id, n, clientToSvg, dragRef, setDrag)}
+          onPointerDown={(e) => beginNodeDrag(e, b.id, n)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
@@ -339,7 +408,7 @@ export function EngineCanvas({
                 }`}
               >
                 {b.isLocked && <Icon name="lock" size={compact ? 10 : 11} className="text-locked" />}
-                <span className="truncate">{b.name}</span>
+                <span className="truncate">{displayBucketName(b.name)}</span>
                 {spendSuggestionPending &&
                   b.category === "spend" &&
                   !b.parentId &&
@@ -443,7 +512,7 @@ export function EngineCanvas({
               자동 정렬
             </button>
           )}
-          <span className="tnum font-semibold text-ink-500">합산 {monthlyIncome}만</span>
+          <span className="tnum font-semibold text-ink-500">월수입 {monthlyIncome}만</span>
         </div>
       </div>
 
@@ -463,20 +532,22 @@ export function EngineCanvas({
             fontWeight="600"
             fill="var(--color-ink-400)"
           >
-            수입 항목 → 월 수입 → 배분 · 투자·저축은 합류(중간) · 지출은 아래 밴드
+            수입 → 월수입 → 자산(복리) · 현금흐름은 점선으로 되돌아옴 · 지출은 아래
           </text>
 
           {nodes.map((n) => {
             if (n.kind === "source") {
               const src = n.incomeSource!;
-              const selected = selectedId === n.id;
-              const dragging = drag?.id === n.id;
+              const selected = selectedIds.includes(n.id);
+              const dragging =
+                drag?.id === n.id || (drag != null && drag.group.some((g) => g.id === n.id));
+              const p = posOf(n);
               return (
-                <foreignObject key={n.id} x={n.x} y={n.y} width={n.w} height={n.h}>
+                <foreignObject key={n.id} x={p.x} y={p.y} width={n.w} height={n.h}>
                   <div
                     role="button"
                     tabIndex={0}
-                    onPointerDown={(e) => startDrag(e, n.id, n, clientToSvg, dragRef, setDrag)}
+                    onPointerDown={(e) => beginNodeDrag(e, n.id, n)}
                     className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-lg border border-brand-200 bg-white px-2 text-left ${
                       selected ? "ring-2 ring-brand-500" : "hover:shadow-sm"
                     } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
@@ -493,25 +564,25 @@ export function EngineCanvas({
             }
 
             if (n.kind === "income") {
-              const selected = selectedId === "__income__";
-              const dragging = drag?.id === "__income__";
+              const selected = selectedIds.includes("__income__");
+              const dragging =
+                drag?.id === "__income__" ||
+                (drag != null && drag.group.some((g) => g.id === "__income__"));
+              const p = posOf(n);
               return (
-                <foreignObject key={n.id} x={n.x} y={n.y} width={n.w} height={n.h}>
+                <foreignObject key={n.id} x={p.x} y={p.y} width={n.w} height={n.h}>
                   <div
                     role="button"
                     tabIndex={0}
-                    onPointerDown={(e) =>
-                      startDrag(e, "__income__", n, clientToSvg, dragRef, setDrag)
-                    }
+                    onPointerDown={(e) => beginNodeDrag(e, "__income__", n)}
                     className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-xl border border-brand-200 bg-brand-50 px-2 text-center ${
                       selected ? "ring-2 ring-brand-500" : "hover:shadow-sm"
                     } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
                   >
-                    <div className="text-[11px] font-semibold text-brand-600">월 수입</div>
+                    <div className="text-[11px] font-semibold text-brand-600">월수입</div>
                     <div className="tnum mt-0.5 text-base font-extrabold text-brand-800">
                       {monthlyIncome}만
                     </div>
-                    <div className="mt-0.5 text-[9px] text-brand-400">항목 합산</div>
                     {selected && (
                       <button
                         type="button"
@@ -530,27 +601,32 @@ export function EngineCanvas({
             }
 
             if (n.kind === "pool") {
-              const selected = selectedId === "__pool__";
-              const dragging = drag?.id === "__pool__";
+              const selected = selectedIds.includes("__pool__");
+              const dragging =
+                drag?.id === "__pool__" ||
+                (drag != null && drag.group.some((g) => g.id === "__pool__"));
+              const p = posOf(n);
               return (
-                <foreignObject key={n.id} x={n.x} y={n.y} width={n.w} height={n.h}>
+                <foreignObject key={n.id} x={p.x} y={p.y} width={n.w} height={n.h}>
                   <div
                     role="button"
                     tabIndex={0}
-                    onPointerDown={(e) =>
-                      startDrag(e, "__pool__", n, clientToSvg, dragRef, setDrag)
-                    }
+                    onPointerDown={(e) => beginNodeDrag(e, "__pool__", n)}
                     className={`flex h-full w-full cursor-grab select-none flex-col items-center justify-center rounded-xl bg-brand-800 px-2 text-center text-white ${
                       selected ? "ring-2 ring-gold-400" : ""
                     } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
                   >
-                    <div className="text-sm font-bold">투자·저축 합류</div>
-                    <div className="mt-0.5 text-[10px] opacity-80">중간 집계</div>
-                    <div className="mt-1.5 text-[9px] leading-relaxed opacity-60">
-                      최종 싱크 아님
-                      <br />
-                      실현→수입 재유입
-                    </div>
+                    <div className="text-sm font-bold">자산</div>
+                    <div className="mt-0.5 text-[10px] text-white/70">안에서 복리</div>
+                    {cashflowMonthly > 0 ? (
+                      <div className="tnum mt-1.5 text-[11px] font-semibold text-gold-300">
+                        흐름 월 {Math.round(cashflowMonthly)}만
+                      </div>
+                    ) : (
+                      <div className="mt-1.5 text-[9px] leading-snug text-white/50">
+                        배당·임대 → 월수입
+                      </div>
+                    )}
                   </div>
                 </foreignObject>
               );
@@ -559,7 +635,8 @@ export function EngineCanvas({
             return renderBucket(n);
           })}
 
-          {edges.map((e, i) => {
+          {edges.map((raw, i) => {
+            const e = shiftedEdge(raw);
             const reinvest = e.fromId === "__pool__" && e.toId === "__income__";
             const d = edgePath(e, reinvest);
             const stroke =
@@ -568,8 +645,10 @@ export function EngineCanvas({
                 : e.tone === "income"
                   ? "var(--color-brand-400)"
                   : e.tone === "dashed"
-                    ? "var(--color-brand-300)"
+                    ? "var(--color-gold-400)"
                     : "var(--color-brand-400)";
+            const midX = (e.x1 + e.x2) / 2;
+            const midY = reinvest ? Math.min(e.y1, e.y2) - 18 : (e.y1 + e.y2) / 2;
             return (
               <g key={e.id} style={{ pointerEvents: "none" }}>
                 <path
@@ -577,10 +656,24 @@ export function EngineCanvas({
                   d={d}
                   fill="none"
                   stroke={stroke}
-                  strokeWidth={e.tone === "dashed" ? 1.3 : linkWidth(e.ratio)}
+                  strokeWidth={e.tone === "dashed" ? 1.6 : linkWidth(e.ratio)}
                   strokeDasharray={e.tone === "dashed" ? "5 5" : undefined}
                   opacity={0.9}
                 />
+                {reinvest && (
+                  <text
+                    x={midX}
+                    y={midY}
+                    textAnchor="middle"
+                    fontSize="9"
+                    fontWeight="600"
+                    fill="var(--color-gold-500)"
+                  >
+                    {cashflowMonthly > 0
+                      ? `현금흐름 월 ${Math.round(cashflowMonthly)}만`
+                      : "현금흐름"}
+                  </text>
+                )}
                 {animate && e.tone !== "dashed" && !drag && (
                   <>
                     <path
@@ -619,6 +712,13 @@ export function EngineCanvas({
                     </circle>
                   </>
                 )}
+                {animate && reinvest && !drag && cashflowMonthly > 0 && (
+                  <circle r="2.5" fill="var(--color-gold-400)">
+                    <animateMotion dur="3.2s" repeatCount="indefinite">
+                      <mpath href={`#${e.id}`} />
+                    </animateMotion>
+                  </circle>
+                )}
               </g>
             );
           })}
@@ -626,7 +726,7 @@ export function EngineCanvas({
       </div>
 
       <p className="border-t border-ink-100 px-3 py-2 text-[11px] text-ink-400">
-        드래그로 위치 · 월수입 클릭 시 묶음 추가 · 수입 항목은 왼쪽에서 합산 · 지출은 아래 밴드
+        Shift+클릭으로 여러 개 · 같이 드래그 · 복리는 자산 안 · 지출은 아래 밴드
       </p>
 
       {quickAddParent !== undefined && (

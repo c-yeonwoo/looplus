@@ -57,7 +57,21 @@ export function EngineBuilder() {
 
   const incomeSources = normalizeIncomeSources(snapshot.incomeSources);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selectedId = selectedIds[0] ?? null;
+  const selectNode = (id: string | null, opts?: { toggle?: boolean }) => {
+    if (id == null) {
+      setSelectedIds([]);
+      return;
+    }
+    if (opts?.toggle) {
+      setSelectedIds((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      );
+      return;
+    }
+    setSelectedIds([id]);
+  };
   const [compareId, setCompareId] = useState<string | null>(null);
   const [scenarioName, setScenarioName] = useState("");
   const [sens, setSens] = useState<SensitivityKey>("base");
@@ -80,7 +94,7 @@ export function EngineBuilder() {
     if (!pendingDelete) return;
     const drop = collectDescendantIds(pendingDelete.id, buckets);
     removeBucket(pendingDelete.id);
-    setSelectedId((cur) => (cur && drop.includes(cur) ? null : cur));
+    setSelectedIds((cur) => cur.filter((id) => !drop.includes(id)));
     setPendingDelete(null);
   };
 
@@ -170,6 +184,14 @@ export function EngineBuilder() {
     selectedId && !selected && selectedId !== "__income__" && selectedId !== "__pool__"
       ? incomeSources.find((s) => s.id === selectedId) ?? null
       : null;
+  const capitalMonthly = incomeSources
+    .filter((s) => s.type === "capital")
+    .reduce((a, s) => a + s.monthly, 0);
+  const cashflowMonthly = useMemo(() => {
+    const y1 = projection.curve[1];
+    if (!y1) return 0;
+    return Math.max(0, y1.monthlyPassiveIncome - capitalMonthly);
+  }, [projection.curve, capitalMonthly]);
   const targetYears = vision?.targetYears ?? 15;
   const atYear = (curve: typeof projection.curve) =>
     curve.find((p) => p.year === targetYears) ?? curve[curve.length - 1];
@@ -249,7 +271,7 @@ export function EngineBuilder() {
                 onAdd={addBucket}
                 onAddIncome={(s) => {
                   patchSources([...incomeSources, s]);
-                  if (s.id) setSelectedId(s.id);
+                  if (s.id) selectNode(s.id);
                 }}
               />
             </div>
@@ -275,29 +297,56 @@ export function EngineBuilder() {
             buckets={buckets}
             engine={engine}
             incomeSources={incomeSources}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
+            selectedIds={selectedIds}
+            onSelect={selectNode}
             onAdd={addBucket}
             onRequestDelete={requestDelete}
             spendSuggestionPending={spendSuggestionPending}
-            onMoveNode={(id, x, y) => {
-              if (id === "__income__") {
-                setEngine({ ...engine, incomeCanvasX: x, incomeCanvasY: y });
-                return;
+            cashflowMonthly={cashflowMonthly}
+            onMoveNodes={(moves) => {
+              const byId = new Map(moves.map((m) => [m.id, m]));
+              let nextEngine = { ...engine };
+              let engineTouched = false;
+              const incomeMove = byId.get("__income__");
+              if (incomeMove) {
+                nextEngine = {
+                  ...nextEngine,
+                  incomeCanvasX: incomeMove.x,
+                  incomeCanvasY: incomeMove.y,
+                };
+                engineTouched = true;
               }
-              if (id === "__pool__") {
-                setEngine({ ...engine, poolCanvasX: x, poolCanvasY: y });
-                return;
+              const poolMove = byId.get("__pool__");
+              if (poolMove) {
+                nextEngine = {
+                  ...nextEngine,
+                  poolCanvasX: poolMove.x,
+                  poolCanvasY: poolMove.y,
+                };
+                engineTouched = true;
               }
-              if (incomeSources.some((s) => s.id === id)) {
-                patchSources(
-                  incomeSources.map((s) =>
-                    s.id === id ? { ...s, canvasX: x, canvasY: y } : s,
-                  ),
-                );
-                return;
+              let sourcesTouched = false;
+              const nextSources = incomeSources.map((s) => {
+                if (!s.id) return s;
+                const m = byId.get(s.id);
+                if (!m) return s;
+                sourcesTouched = true;
+                return { ...s, canvasX: m.x, canvasY: m.y };
+              });
+              const nextBuckets = buckets.map((b) => {
+                const m = byId.get(b.id);
+                return m ? { ...b, canvasX: m.x, canvasY: m.y } : b;
+              });
+              const bucketsTouched = nextBuckets.some(
+                (b, i) => b.canvasX !== buckets[i]?.canvasX || b.canvasY !== buckets[i]?.canvasY,
+              );
+              if (engineTouched || bucketsTouched) {
+                setEngine({
+                  ...nextEngine,
+                  buckets: bucketsTouched ? nextBuckets : nextEngine.buckets,
+                });
               }
-              updateBucket(id, { canvasX: x, canvasY: y });
+              if (sourcesTouched) patchSources(nextSources);
             }}
             onResetLayout={() => {
               setEngine({
@@ -478,7 +527,7 @@ export function EngineBuilder() {
             <span className="text-sm font-bold text-ink-800">항목 수정</span>
             {selectedId && (
               <button
-                onClick={() => setSelectedId(null)}
+                onClick={() => selectNode(null)}
                 aria-label="선택 해제"
                 className="text-ink-400 hover:text-ink-700"
               >
@@ -496,7 +545,7 @@ export function EngineBuilder() {
                 }}
               />
             ) : selectedId === "__pool__" ? (
-              <PoolHubInspector />
+              <PoolHubInspector cashflowMonthly={cashflowMonthly} />
             ) : selectedSource ? (
               <SourceInspector
                 source={selectedSource}
@@ -509,7 +558,7 @@ export function EngineBuilder() {
                 }
                 onDelete={() => {
                   patchSources(incomeSources.filter((s) => s.id !== selectedSource.id));
-                  setSelectedId(null);
+                  selectNode(null);
                 }}
                 onMoveSibling={(dir) => moveSourceSibling(selectedSource.id!, dir)}
               />
@@ -531,16 +580,20 @@ export function EngineBuilder() {
                       : "border-amber-200 bg-amber-50 text-amber-700"
                   }`}
                 >
-                  수입 배분(루트) {Math.round(sum)}%{" "}
+                  월수입 대비 루트 {Math.round(sum)}%{" "}
                   {sumOk ? "" : sum > 100 ? "· 초과" : "· 미달"}
                 </div>
               </>
+            ) : selectedIds.length > 1 ? (
+              <div className="px-2 py-8 text-center text-sm text-ink-500">
+                {selectedIds.length}개 선택 · 드래그하면 함께 움직여요
+              </div>
             ) : (
               <div className="flex flex-col items-center px-2 py-10 text-center">
                 <Icon name="layers" size={28} className="text-ink-300" />
                 <p className="mt-3 text-sm font-semibold text-ink-600">노드를 선택하세요</p>
                 <p className="mt-1 text-xs leading-relaxed text-ink-400">
-                  수입 항목·월 수입·배분·합류를 눌러 수정할 수 있어요.
+                  월수입 · 자산 · 성장/안전/지출 · Shift+클릭으로 여러 개
                 </p>
               </div>
             )}
@@ -550,7 +603,7 @@ export function EngineBuilder() {
 
       <BottomSheet
         open={selectedId !== null}
-        onClose={() => setSelectedId(null)}
+        onClose={() => selectNode(null)}
         title="항목 수정"
       >
         {selectedId === "__income__" && (
@@ -562,7 +615,9 @@ export function EngineBuilder() {
             }}
           />
         )}
-        {selectedId === "__pool__" && <PoolHubInspector />}
+        {selectedId === "__pool__" && (
+          <PoolHubInspector cashflowMonthly={cashflowMonthly} />
+        )}
         {selectedSource && (
           <SourceInspector
             source={selectedSource}
@@ -575,7 +630,7 @@ export function EngineBuilder() {
             }
             onDelete={() => {
               patchSources(incomeSources.filter((s) => s.id !== selectedSource.id));
-              setSelectedId(null);
+              selectNode(null);
             }}
             onMoveSibling={(dir) => moveSourceSibling(selectedSource.id!, dir)}
           />
