@@ -109,6 +109,8 @@ function QuickAddMenu({
 
 type DragState = {
   id: string;
+  /** node = 노드 직접 / edge = 선 핸들로 양끝 노드 동시 이동 */
+  mode: "node" | "edge";
   grabDX: number;
   grabDY: number;
   x: number;
@@ -116,7 +118,7 @@ type DragState = {
   originX: number;
   originY: number;
   moved: boolean;
-  /** 복수 선택 시 함께 이동할 노드 원점 */
+  /** 함께 이동할 노드 원점 (복수 선택·선 드래그) */
   group: { id: string; originX: number; originY: number }[];
 };
 
@@ -134,6 +136,7 @@ function startDrag(
   const p = clientToSvg(e.clientX, e.clientY);
   const next: DragState = {
     id,
+    mode: "node",
     grabDX: p.x - n.x,
     grabDY: p.y - n.y,
     x: n.x,
@@ -172,7 +175,10 @@ export function EngineCanvas({
   engine: EngineConfig;
   incomeSources: IncomeSource[];
   selectedIds: string[];
-  onSelect: (id: string | null, opts?: { toggle?: boolean }) => void;
+  onSelect: (
+    id: string | null,
+    opts?: { toggle?: boolean; also?: string[] },
+  ) => void;
   onAdd: (b: Bucket) => void;
   onRequestDelete: (id: string) => void;
   onMoveNodes: (moves: { id: string; x: number; y: number }[]) => void;
@@ -245,6 +251,10 @@ export function EngineCanvas({
             y: Math.round(g.originY + dy),
           })),
         );
+      } else if (cur.mode === "edge") {
+        const a = cur.group[0];
+        const b = cur.group[1];
+        if (a && b) onSelect(a.id, { also: [b.id] });
       } else {
         onSelect(cur.id, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
       }
@@ -264,7 +274,11 @@ export function EngineCanvas({
         buckets,
         incomeSources: sources,
         anchors: anchorsFromEngine(engine),
-        drag: drag ? { id: drag.id, x: drag.x, y: drag.y } : null,
+        // 선 드래그는 레이아웃 primary 없이 그룹 오프셋만 사용
+        drag:
+          drag && drag.mode === "node"
+            ? { id: drag.id, x: drag.x, y: drag.y }
+            : null,
       }),
     [buckets, sources, engine, drag],
   );
@@ -272,9 +286,15 @@ export function EngineCanvas({
   const selectedId = selectedIds[0] ?? null;
   const dragDx = drag ? drag.x - drag.originX : 0;
   const dragDy = drag ? drag.y - drag.originY : 0;
-  /** 레이아웃이 이미 반영한 primary 제외, 그룹 멤버만 시각 오프셋 */
+  /** node 모드: primary는 레이아웃 반영 → 나머지만 오프셋. edge 모드: 양끝 전부 오프셋 */
   const groupOffset = (id: string) => {
-    if (!drag || id === drag.id) return { dx: 0, dy: 0 };
+    if (!drag) return { dx: 0, dy: 0 };
+    if (drag.mode === "edge") {
+      return drag.group.some((g) => g.id === id)
+        ? { dx: dragDx, dy: dragDy }
+        : { dx: 0, dy: 0 };
+    }
+    if (id === drag.id) return { dx: 0, dy: 0 };
     if (drag.group.some((g) => g.id === id)) return { dx: dragDx, dy: dragDy };
     return { dx: 0, dy: 0 };
   };
@@ -306,6 +326,40 @@ export function EngineCanvas({
       return { id: gid, originX: gn?.x ?? n.x, originY: gn?.y ?? n.y };
     });
     startDrag(e, id, n, clientToSvg, dragRef, setDrag, group);
+  };
+
+  const beginEdgeDrag = (
+    e: React.PointerEvent,
+    edge: { id: string; fromId: string; toId: string; x1: number; y1: number; x2: number; y2: number },
+    reinvest: boolean,
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const from = nodes.find((n) => n.id === edge.fromId);
+    const to = nodes.find((n) => n.id === edge.toId);
+    if (!from || !to) return;
+    const midX = (edge.x1 + edge.x2) / 2;
+    const midY = reinvest
+      ? Math.min(edge.y1, edge.y2) - 28
+      : (edge.y1 + edge.y2) / 2;
+    const p = clientToSvg(e.clientX, e.clientY);
+    const next: DragState = {
+      id: edge.id,
+      mode: "edge",
+      grabDX: p.x - midX,
+      grabDY: p.y - midY,
+      x: midX,
+      y: midY,
+      originX: midX,
+      originY: midY,
+      moved: false,
+      group: [
+        { id: from.id, originX: from.x, originY: from.y },
+        { id: to.id, originX: to.x, originY: to.y },
+      ],
+    };
+    dragRef.current = next;
+    setDrag(next);
   };
 
   const crumb =
@@ -535,6 +589,114 @@ export function EngineCanvas({
             수입 → 월수입 → 자산(복리) · 현금흐름은 점선으로 되돌아옴 · 지출은 아래
           </text>
 
+          {/* 선(시각·히트) → 노드 → 핸들 순. 노드가 끝점 클릭을 우선 받음 */}
+          {edges.map((raw, i) => {
+            const e = shiftedEdge(raw);
+            const reinvest = e.fromId === "__pool__" && e.toId === "__income__";
+            const d = edgePath(e, reinvest);
+            const stroke =
+              e.tone === "spend"
+                ? "var(--color-spend-500)"
+                : e.tone === "income"
+                  ? "var(--color-brand-400)"
+                  : e.tone === "dashed"
+                    ? "var(--color-gold-400)"
+                    : "var(--color-brand-400)";
+            const midX = (e.x1 + e.x2) / 2;
+            const midY = reinvest
+              ? Math.min(e.y1, e.y2) - 28
+              : (e.y1 + e.y2) / 2;
+            const labelY = reinvest ? midY + 10 : midY;
+            return (
+              <g key={`edge-${e.id}`}>
+                <path
+                  id={e.id}
+                  d={d}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth={e.tone === "dashed" ? 1.6 : linkWidth(e.ratio)}
+                  strokeDasharray={e.tone === "dashed" ? "5 5" : undefined}
+                  opacity={0.9}
+                  style={{ pointerEvents: "none" }}
+                />
+                <path
+                  d={d}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={16}
+                  className="cursor-grab"
+                  onPointerDown={(ev) => beginEdgeDrag(ev, e, reinvest)}
+                />
+                {reinvest && (
+                  <text
+                    x={midX}
+                    y={labelY}
+                    textAnchor="middle"
+                    fontSize="9"
+                    fontWeight="600"
+                    fill="var(--color-gold-500)"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {cashflowMonthly > 0
+                      ? `현금흐름 월 ${Math.round(cashflowMonthly)}만`
+                      : "현금흐름"}
+                  </text>
+                )}
+                {animate && e.tone !== "dashed" && !drag && (
+                  <>
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={
+                        e.tone === "spend"
+                          ? "var(--color-spend-600)"
+                          : e.tone === "income"
+                            ? "var(--color-gold-400)"
+                            : "var(--color-brand-500)"
+                      }
+                      strokeWidth="1.5"
+                      strokeDasharray="2 10"
+                      strokeLinecap="round"
+                      className="flow-link"
+                      opacity="0.9"
+                      style={{ pointerEvents: "none" }}
+                    />
+                    <circle
+                      r="3"
+                      fill={
+                        e.tone === "spend"
+                          ? "var(--color-spend-500)"
+                          : e.tone === "income"
+                            ? "var(--color-gold-400)"
+                            : "var(--color-gold-400)"
+                      }
+                      style={{ pointerEvents: "none" }}
+                    >
+                      <animateMotion
+                        dur={`${2.2 - Math.min(1, Math.max(e.ratio, 15) / 120)}s`}
+                        repeatCount="indefinite"
+                        begin={`${(i % 5) * 0.25}s`}
+                      >
+                        <mpath href={`#${e.id}`} />
+                      </animateMotion>
+                    </circle>
+                  </>
+                )}
+                {animate && reinvest && !drag && cashflowMonthly > 0 && (
+                  <circle
+                    r="2.5"
+                    fill="var(--color-gold-400)"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    <animateMotion dur="3.2s" repeatCount="indefinite">
+                      <mpath href={`#${e.id}`} />
+                    </animateMotion>
+                  </circle>
+                )}
+              </g>
+            );
+          })}
+
           {nodes.map((n) => {
             if (n.kind === "source") {
               const src = n.incomeSource!;
@@ -635,98 +797,42 @@ export function EngineCanvas({
             return renderBucket(n);
           })}
 
-          {edges.map((raw, i) => {
+          {edges.map((raw) => {
             const e = shiftedEdge(raw);
             const reinvest = e.fromId === "__pool__" && e.toId === "__income__";
-            const d = edgePath(e, reinvest);
-            const stroke =
-              e.tone === "spend"
-                ? "var(--color-spend-500)"
-                : e.tone === "income"
-                  ? "var(--color-brand-400)"
-                  : e.tone === "dashed"
-                    ? "var(--color-gold-400)"
-                    : "var(--color-brand-400)";
             const midX = (e.x1 + e.x2) / 2;
-            const midY = reinvest ? Math.min(e.y1, e.y2) - 18 : (e.y1 + e.y2) / 2;
+            const midY = reinvest
+              ? Math.min(e.y1, e.y2) - 28
+              : (e.y1 + e.y2) / 2;
+            const edgeActive =
+              drag?.mode === "edge" &&
+              drag.group.some((g) => g.id === e.fromId) &&
+              drag.group.some((g) => g.id === e.toId);
+            const endsSelected =
+              selectedIds.includes(e.fromId) && selectedIds.includes(e.toId);
             return (
-              <g key={e.id} style={{ pointerEvents: "none" }}>
-                <path
-                  id={e.id}
-                  d={d}
-                  fill="none"
-                  stroke={stroke}
-                  strokeWidth={e.tone === "dashed" ? 1.6 : linkWidth(e.ratio)}
-                  strokeDasharray={e.tone === "dashed" ? "5 5" : undefined}
-                  opacity={0.9}
-                />
-                {reinvest && (
-                  <text
-                    x={midX}
-                    y={midY}
-                    textAnchor="middle"
-                    fontSize="9"
-                    fontWeight="600"
-                    fill="var(--color-gold-500)"
-                  >
-                    {cashflowMonthly > 0
-                      ? `현금흐름 월 ${Math.round(cashflowMonthly)}만`
-                      : "현금흐름"}
-                  </text>
-                )}
-                {animate && e.tone !== "dashed" && !drag && (
-                  <>
-                    <path
-                      d={d}
-                      fill="none"
-                      stroke={
-                        e.tone === "spend"
-                          ? "var(--color-spend-600)"
-                          : e.tone === "income"
-                            ? "var(--color-gold-400)"
-                            : "var(--color-brand-500)"
-                      }
-                      strokeWidth="1.5"
-                      strokeDasharray="2 10"
-                      strokeLinecap="round"
-                      className="flow-link"
-                      opacity="0.9"
-                    />
-                    <circle
-                      r="3"
-                      fill={
-                        e.tone === "spend"
-                          ? "var(--color-spend-500)"
-                          : e.tone === "income"
-                            ? "var(--color-gold-400)"
-                            : "var(--color-gold-400)"
-                      }
-                    >
-                      <animateMotion
-                        dur={`${2.2 - Math.min(1, Math.max(e.ratio, 15) / 120)}s`}
-                        repeatCount="indefinite"
-                        begin={`${(i % 5) * 0.25}s`}
-                      >
-                        <mpath href={`#${e.id}`} />
-                      </animateMotion>
-                    </circle>
-                  </>
-                )}
-                {animate && reinvest && !drag && cashflowMonthly > 0 && (
-                  <circle r="2.5" fill="var(--color-gold-400)">
-                    <animateMotion dur="3.2s" repeatCount="indefinite">
-                      <mpath href={`#${e.id}`} />
-                    </animateMotion>
-                  </circle>
-                )}
-              </g>
+              <circle
+                key={`handle-${e.id}`}
+                cx={midX}
+                cy={midY}
+                r={edgeActive || endsSelected ? 5.5 : 4}
+                fill="white"
+                stroke={
+                  edgeActive || endsSelected
+                    ? "var(--color-brand-500)"
+                    : "var(--color-ink-300)"
+                }
+                strokeWidth={edgeActive || endsSelected ? 2 : 1.25}
+                className="cursor-grab"
+                onPointerDown={(ev) => beginEdgeDrag(ev, e, reinvest)}
+              />
             );
           })}
         </svg>
       </div>
 
       <p className="border-t border-ink-100 px-3 py-2 text-[11px] text-ink-400">
-        Shift+클릭으로 여러 개 · 같이 드래그 · 복리는 자산 안 · 지출은 아래 밴드
+        Shift+클릭 복수 · 선·핸들 드래그로 양끝 이동 · 복리는 자산 안 · 지출은 아래
       </p>
 
       {quickAddParent !== undefined && (

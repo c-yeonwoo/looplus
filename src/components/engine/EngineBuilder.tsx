@@ -59,9 +59,17 @@ export function EngineBuilder() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectedId = selectedIds[0] ?? null;
-  const selectNode = (id: string | null, opts?: { toggle?: boolean }) => {
+  const selectNode = (
+    id: string | null,
+    opts?: { toggle?: boolean; also?: string[] },
+  ) => {
     if (id == null) {
       setSelectedIds([]);
+      return;
+    }
+    if (opts?.also?.length) {
+      const uniq = [id, ...opts.also.filter((x) => x !== id)];
+      setSelectedIds(uniq);
       return;
     }
     if (opts?.toggle) {
