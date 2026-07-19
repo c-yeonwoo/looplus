@@ -371,44 +371,56 @@ export function EngineBuilder() {
           </Card>
         </div>
 
-        {/* 항목 수정 — 오른쪽 컬럼 (캔버스 위 오버레이 아님) */}
-        {selected && (
-          <Card
-            pad={false}
-            className="sticky top-4 hidden max-h-[calc(100vh-2rem)] w-[280px] shrink-0 overflow-y-auto border-ink-200 lg:block"
-          >
-            <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
-              <span className="text-sm font-bold text-ink-800">항목 수정</span>
+        {/* 항목 수정 — 항상 고정 폭 (선택 여부와 무관 → 캔버스 폭 흔들림 방지) */}
+        <Card
+          pad={false}
+          className="sticky top-4 hidden max-h-[calc(100vh-2rem)] w-[280px] shrink-0 overflow-y-auto border-ink-200 lg:block"
+        >
+          <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
+            <span className="text-sm font-bold text-ink-800">항목 수정</span>
+            {selected && (
               <button
                 onClick={() => setSelectedId(null)}
-                aria-label="닫기"
+                aria-label="선택 해제"
                 className="text-ink-400 hover:text-ink-700"
               >
                 <Icon name="x" size={16} />
               </button>
-            </div>
-            <div className="p-3">
-              <Inspector
-                bucket={selected}
-                all={buckets}
-                monthlyIncome={monthlyIncome}
-                onChange={(patch) => updateBucket(selected.id, patch)}
-                onDelete={() => requestDelete(selected.id)}
-                onDuplicate={() => duplicate(selected)}
-              />
-              <div
-                className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs font-semibold ${
-                  sumOk
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-amber-200 bg-amber-50 text-amber-700"
-                }`}
-              >
-                수입 배분(루트) {Math.round(sum)}%{" "}
-                {sumOk ? "" : sum > 100 ? "· 초과" : "· 미달"}
+            )}
+          </div>
+          <div className="p-3">
+            {selected ? (
+              <>
+                <Inspector
+                  bucket={selected}
+                  all={buckets}
+                  monthlyIncome={monthlyIncome}
+                  onChange={(patch) => updateBucket(selected.id, patch)}
+                  onDelete={() => requestDelete(selected.id)}
+                  onDuplicate={() => duplicate(selected)}
+                />
+                <div
+                  className={`mt-4 rounded-lg border px-3 py-2 text-center text-xs font-semibold ${
+                    sumOk
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-amber-200 bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  수입 배분(루트) {Math.round(sum)}%{" "}
+                  {sumOk ? "" : sum > 100 ? "· 초과" : "· 미달"}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center px-2 py-10 text-center">
+                <Icon name="layers" size={28} className="text-ink-300" />
+                <p className="mt-3 text-sm font-semibold text-ink-600">항목을 선택하세요</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-400">
+                  캔버스에서 노드를 누르면 비율·월 환산을 수정할 수 있어요.
+                </p>
               </div>
-            </div>
-          </Card>
-        )}
+            )}
+          </div>
+        </Card>
       </div>
 
       <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="항목 수정">

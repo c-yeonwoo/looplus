@@ -3,18 +3,21 @@ import { childrenOf, roots } from "./tree";
 
 export const NODE_W = 168;
 export const NODE_H = 70;
-export const COL_GAP = 52;
+export const COL_GAP = 56;
 export const ROW_GAP = 14;
 export const PAD_X = 20;
 export const PAD_Y = 36;
+export const INCOME_W = 148;
+export const INCOME_H = 96;
+export const POOL_W = 128;
+export const POOL_H = 140;
 
-export type GraphNodeKind = "income" | "bucket" | "pool" | "add";
+export type GraphNodeKind = "income" | "bucket" | "pool";
 
 export interface GraphNode {
   id: string;
   kind: GraphNodeKind;
   bucket?: Bucket;
-  /** 트리 depth (income=0) */
   depth: number;
   x: number;
   y: number;
@@ -26,9 +29,13 @@ export interface GraphEdge {
   id: string;
   fromId: string;
   toId: string;
-  /** spend 계열은 약한 톤 */
   tone: "brand" | "spend" | "dashed";
   ratio: number;
+  /** 절대 좌표 연결점 (거터 라우팅) */
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 interface TreeSlot {
@@ -44,7 +51,6 @@ function buildSlot(bucket: Bucket, all: Bucket[]): TreeSlot {
   return { bucket, children: kids, weight, y: 0 };
 }
 
-/** 서브트리에 세로 좌표 배정 (중심 y) */
 function placeY(slot: TreeSlot, top: number, rowH: number): number {
   if (slot.children.length === 0) {
     slot.y = top + rowH / 2;
@@ -60,14 +66,25 @@ function placeY(slot: TreeSlot, top: number, rowH: number): number {
   return cursor;
 }
 
+function colX(depth: number): number {
+  if (depth === 0) return PAD_X;
+  return PAD_X + INCOME_W + COL_GAP + (depth - 1) * (NODE_W + COL_GAP);
+}
+
+function safeEdgeId(fromId: string, toId: string): string {
+  return `e_${fromId}_to_${toId}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
 function collect(
   slot: TreeSlot,
   depth: number,
   out: GraphNode[],
   edges: GraphEdge[],
-  parentId: string,
+  parent: GraphNode,
+  siblingIndex: number,
+  siblingCount: number,
 ) {
-  const x = PAD_X + depth * (NODE_W + COL_GAP);
+  const x = colX(depth);
   const node: GraphNode = {
     id: slot.bucket.id,
     kind: "bucket",
@@ -79,20 +96,39 @@ function collect(
     h: NODE_H,
   };
   out.push(node);
+
+  // 부모 우측 출구를 형제 수만큼 분산 → 수입↔지출 선이 한 점에 뭉치지 않음
+  const pTop = parent.y + 10;
+  const pUsable = Math.max(20, parent.h - 20);
+  const y1 =
+    siblingCount <= 1
+      ? parent.y + parent.h / 2
+      : pTop + ((siblingIndex + 0.5) / siblingCount) * pUsable;
+  const y2 = node.y + node.h / 2;
+
   edges.push({
-    id: `${parentId}->${slot.bucket.id}`,
-    fromId: parentId,
-    toId: slot.bucket.id,
+    id: safeEdgeId(parent.id, node.id),
+    fromId: parent.id,
+    toId: node.id,
     tone: slot.bucket.category === "spend" ? "spend" : "brand",
     ratio: slot.bucket.ratioPct,
+    x1: parent.x + parent.w,
+    y1,
+    x2: node.x,
+    y2,
   });
-  for (const c of slot.children) collect(c, depth + 1, out, edges, slot.bucket.id);
+
+  const kids = slot.children;
+  kids.forEach((c, i) => collect(c, depth + 1, out, edges, node, i, kids.length));
 }
 
-export function layoutEngineGraph(
-  buckets: Bucket[],
-  opts?: { addUnderId?: string | null },
-): { nodes: GraphNode[]; edges: GraphEdge[]; width: number; height: number; maxDepth: number } {
+export function layoutEngineGraph(buckets: Bucket[]): {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  width: number;
+  height: number;
+  maxDepth: number;
+} {
   const rowH = NODE_H + ROW_GAP;
   const topSlots = roots(buckets).map((r) => buildSlot(r, buckets));
 
@@ -100,8 +136,8 @@ export function layoutEngineGraph(
   for (const s of topSlots) {
     cursor = placeY(s, cursor, rowH);
   }
-  const contentH = Math.max(rowH, cursor - PAD_Y);
-  const incomeY = PAD_Y + contentH / 2;
+  const contentH = Math.max(rowH * 2, cursor - PAD_Y);
+  const incomeCy = PAD_Y + contentH / 2;
 
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -111,55 +147,20 @@ export function layoutEngineGraph(
     kind: "income",
     depth: 0,
     x: PAD_X,
-    y: incomeY - 48,
-    w: NODE_W - 20,
-    h: 96,
+    y: incomeCy - INCOME_H / 2,
+    w: INCOME_W,
+    h: INCOME_H,
   };
   nodes.push(income);
 
+  topSlots.forEach((s, i) => collect(s, 1, nodes, edges, income, i, topSlots.length));
+
   let maxDepth = 1;
-  for (const s of topSlots) {
-    collect(s, 1, nodes, edges, "__income__");
-  }
   for (const n of nodes) {
     if (n.kind === "bucket") maxDepth = Math.max(maxDepth, n.depth);
   }
 
-  // 선택 노드 아래 "추가" 고스트
-  const addUnder = opts?.addUnderId;
-  if (addUnder) {
-    const parent = nodes.find((n) => n.id === addUnder && n.kind === "bucket");
-    if (parent) {
-      const kids = childrenOf(addUnder, buckets);
-      const lastKid = kids.length
-        ? nodes.find((n) => n.id === kids[kids.length - 1]!.id)
-        : null;
-      const gx = parent.x + NODE_W + COL_GAP;
-      const gy = lastKid
-        ? lastKid.y + NODE_H + ROW_GAP
-        : parent.y + (NODE_H - 48) / 2;
-      const addId = `__add__${addUnder}`;
-      nodes.push({
-        id: addId,
-        kind: "add",
-        depth: parent.depth + 1,
-        x: gx,
-        y: gy,
-        w: 120,
-        h: 48,
-      });
-      edges.push({
-        id: `${addUnder}->${addId}`,
-        fromId: addUnder,
-        toId: addId,
-        tone: "dashed",
-        ratio: 0,
-      });
-      maxDepth = Math.max(maxDepth, parent.depth + 1);
-    }
-  }
-
-  // 모인 자산 — 투자/저축 리프에서 유입
+  // 모인 자산 — 투자/저축 리프만 (지출은 수입에서 빠져나가는 흐름으로 끝)
   const feed = nodes.filter(
     (n) =>
       n.kind === "bucket" &&
@@ -167,65 +168,68 @@ export function layoutEngineGraph(
       n.bucket.category !== "spend" &&
       childrenOf(n.bucket.id, buckets).length === 0,
   );
-  const poolX = PAD_X + (maxDepth + 1) * (NODE_W + COL_GAP);
-  const poolY = incomeY - 70;
+
+  const poolX = colX(maxDepth) + NODE_W + COL_GAP;
   if (feed.length > 0) {
-    nodes.push({
+    const pool: GraphNode = {
       id: "__pool__",
       kind: "pool",
       depth: maxDepth + 1,
       x: poolX,
-      y: poolY,
-      w: 128,
-      h: 140,
-    });
-    for (const f of feed) {
+      y: incomeCy - POOL_H / 2,
+      w: POOL_W,
+      h: POOL_H,
+    };
+    nodes.push(pool);
+
+    feed.forEach((f, i) => {
+      const pTop = pool.y + 16;
+      const pUsable = Math.max(20, pool.h - 32);
+      const y2 =
+        feed.length <= 1 ? pool.y + pool.h / 2 : pTop + ((i + 0.5) / feed.length) * pUsable;
       edges.push({
-        id: `${f.id}->__pool__`,
+        id: safeEdgeId(f.id, pool.id),
         fromId: f.id,
-        toId: "__pool__",
+        toId: pool.id,
         tone: "brand",
         ratio: f.bucket?.ratioPct ?? 0,
+        x1: f.x + f.w,
+        y1: f.y + f.h / 2,
+        x2: pool.x,
+        y2,
       });
-    }
-    // 재유입 표시용 점선 (pool → income) — 별도 edge
+    });
+
     edges.push({
-      id: "__pool__->__income__",
-      fromId: "__pool__",
-      toId: "__income__",
+      id: safeEdgeId(pool.id, income.id),
+      fromId: pool.id,
+      toId: income.id,
       tone: "dashed",
       ratio: 0,
+      x1: pool.x + pool.w / 2,
+      y1: pool.y,
+      x2: income.x + income.w / 2,
+      y2: income.y,
     });
   }
 
-  const width = poolX + 128 + PAD_X + 8;
-  const height = Math.max(PAD_Y * 2 + contentH, income.y + income.h + PAD_Y, 420);
-  // 노드가 뷰 밖으로 나가지 않게 bottom 확장
-  let maxBottom = height;
+  const width = (feed.length > 0 ? poolX + POOL_W : colX(maxDepth) + NODE_W) + PAD_X;
+  let maxBottom = PAD_Y + contentH + PAD_Y;
   for (const n of nodes) {
     maxBottom = Math.max(maxBottom, n.y + n.h + PAD_Y);
   }
+  // 선택 UI와 무관하게 높이 하한 — 리사이즈 덜컹거림 완화
+  const height = Math.max(maxBottom, 440);
 
-  return { nodes, edges, width, height: maxBottom, maxDepth };
+  return { nodes, edges, width, height, maxDepth };
 }
 
-export function edgePath(
-  from: GraphNode,
-  to: GraphNode,
-  opts?: { reinvest?: boolean },
-): string {
-  if (opts?.reinvest || (from.kind === "pool" && to.kind === "income")) {
-    const x1 = from.x + from.w / 2;
-    const y1 = from.y;
-    const x2 = to.x + to.w / 2;
-    const y2 = to.y;
-    const midY = Math.min(y1, y2) - 28;
-    return `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+/** 거터(열 사이)만 지나는 직교+라운드 경로 — 노드 박스를 관통하지 않음 */
+export function edgePath(e: GraphEdge, reinvest = false): string {
+  if (reinvest) {
+    const midY = Math.min(e.y1, e.y2) - 28;
+    return `M${e.x1},${e.y1} C${e.x1},${midY} ${e.x2},${midY} ${e.x2},${e.y2}`;
   }
-  const x1 = from.x + from.w;
-  const y1 = from.y + from.h / 2;
-  const x2 = to.x;
-  const y2 = to.y + to.h / 2;
-  const mx = (x1 + x2) / 2;
-  return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+  const mx = (e.x1 + e.x2) / 2;
+  return `M${e.x1},${e.y1} C${mx},${e.y1} ${mx},${e.y2} ${e.x2},${e.y2}`;
 }

@@ -32,15 +32,23 @@ describe("layoutEngineGraph", () => {
     expect(edges.some((e) => e.fromId === "spend" && e.toId === "fixed")).toBe(true);
   });
 
-  it("선택 시 하위 추가 고스트 노드", () => {
-    const buckets = [b({ id: "invest", ratioPct: 100 })];
-    const { nodes } = layoutEngineGraph(buckets, { addUnderId: "invest" });
-    expect(nodes.some((n) => n.kind === "add")).toBe(true);
+  it("지출 루트도 수입과 연결점·경로를 가진다", () => {
+    const buckets = [
+      b({ id: "invest", category: "invest", ratioPct: 60, position: 0 }),
+      b({ id: "spend", category: "spend", ratioPct: 40, position: 1 }),
+    ];
+    const { edges } = layoutEngineGraph(buckets);
+    const link = edges.find((e) => e.fromId === "__income__" && e.toId === "spend");
+    expect(link).toBeTruthy();
+    expect(link!.x2).toBeGreaterThan(link!.x1);
+    expect(link!.tone).toBe("spend");
+    expect(edgePath(link!)).toMatch(/^M/);
   });
 
-  it("edgePath는 베지어 곡선", () => {
-    const a = { id: "a", kind: "income" as const, depth: 0, x: 0, y: 0, w: 100, h: 80 };
-    const b2 = { id: "b", kind: "bucket" as const, depth: 1, x: 200, y: 40, w: 100, h: 70 };
-    expect(edgePath(a, b2)).toMatch(/^M/);
+  it("edge id에 특수문자 없음", () => {
+    const { edges } = layoutEngineGraph([b({ id: "a", ratioPct: 100 })]);
+    for (const e of edges) {
+      expect(e.id).toMatch(/^[a-zA-Z0-9_-]+$/);
+    }
   });
 });
