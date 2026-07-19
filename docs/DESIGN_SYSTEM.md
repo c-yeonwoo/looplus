@@ -1,7 +1,7 @@
 # 시라노 — 디자인 시스템
 
-> 토큰 피벗: Indigo → Plum&Gold → Charcoal&Yellow-gold → **Quiet Ledger (Charcoal & Champagne bronze)**.
-> 이모지는 전면 제거하고 인라인 SVG 아이콘 세트로 대체했다.
+> 토큰 피벗: … → Quiet Ledger(bronze) → **Cool Mist (쿨 슬레이트 + 스틸 블루)**.
+> 화면 용어는 `GLOSSARY.md` (엔진→자산 설계, 버킷→항목 등).
 
 ---
 

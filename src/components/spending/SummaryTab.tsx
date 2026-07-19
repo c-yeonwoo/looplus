@@ -54,7 +54,7 @@ export function SummaryTab() {
         <div className="p-5 md:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs tracking-wide text-white/45">이번 달 변동지출 · 통제 레버</div>
+              <div className="text-xs text-white/50">이번 달 변동 지출</div>
               <div className="mt-2 flex flex-wrap items-baseline gap-2">
                 <span className="tnum font-display text-3xl font-bold text-gold-400">
                   {formatWon(spent)}
@@ -126,9 +126,7 @@ export function SummaryTab() {
       {/* 고정 vs 변동 프레이밍 */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Card className="!p-4">
-          <div className="text-xs font-semibold tracking-wide text-ink-400 uppercase">
-            고정 · 이미 정해진 것
-          </div>
+          <div className="text-xs font-semibold text-ink-400">고정비</div>
           <div className="tnum mt-1 text-xl font-extrabold text-ink-900">
             {formatWon(fixedTotal)}
           </div>
@@ -139,9 +137,7 @@ export function SummaryTab() {
           </p>
         </Card>
         <Card className="!p-4 border-gold-200 bg-gold-50/40">
-          <div className="text-xs font-semibold tracking-wide text-gold-600 uppercase">
-            변동 · 조절하는 레버
-          </div>
+          <div className="text-xs font-semibold text-gold-600">변동비</div>
           <div className="tnum mt-1 text-xl font-extrabold text-ink-900">{formatWon(spent)}</div>
           <p className="mt-1 text-xs text-ink-500">
             예산 {formatWonFull(spending.monthlyVariableBudgetWon)} 안에서 기록·조절

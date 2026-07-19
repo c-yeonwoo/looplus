@@ -1,7 +1,6 @@
 /**
- * 시라노 로고 (Quiet Ledger).
- * 마크 = charcoal 라운드 스퀘어 안의 상승 복리 곡선 + bronze 엔드포인트.
- * 워드마크 = 디스플레이 세리프 "시라노" + 산세리프 디스크립터.
+ * 시라노 로고 (Cool Mist).
+ * 마크 = 슬레이트 라운드 스퀘어 + 상승 곡선 + 스틸블루 엔드포인트.
  */
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (

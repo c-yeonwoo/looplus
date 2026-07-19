@@ -9,7 +9,7 @@
 
 개인이 **자기 재테크 엔진(포트폴리오 배분)을 직접 조립**하고 → **n년 뒤 자산을 미리 보며** 확신을 얻는 인생설계 플랫폼. **온보딩(목표·비전) → 진단 → 엔진 조립 → 홈 대시보드** 핵심 루프가 실제로 동작하는 상태로 완성했고, 그 위에 신뢰·리텐션·공유 장치를 얹었다.
 
-- **서비스명**: 시라노 · **브랜드**: Quiet Ledger — Charcoal & Champagne bronze
+- **서비스명**: 시라노 · **브랜드**: Cool Mist — 쿨 슬레이트 + 스틸 블루 (`docs/GLOSSARY.md` 용어)
 - **레포**: `github.com/c-yeonwoo/cyrano` · **브랜치**: `main` 단일, PR 13개 전부 squash 머지·삭제 완료
 - **스택**: Next.js 15(App Router) · React 19 · TypeScript · Tailwind v4 · Zustand(localStorage) · Supabase(선택)
 - **배포**: Dockerfile + Railway 설정 준비 (`docs/DEPLOY.md`). 클라우드 클릭 배포는 계정 연동 필요.

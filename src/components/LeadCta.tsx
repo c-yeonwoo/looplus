@@ -30,10 +30,9 @@ export function LeadCta({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-bold text-ink-800">배분이 섰다면, 실행을 이어가요</div>
+          <div className="text-sm font-bold text-ink-800">다음 실행이 궁금하다면</div>
           <p className="mt-0.5 text-xs text-ink-500">
-            Signal 도구·강의로 다음 한 걸음을 구체화할 수 있어요. 개별 종목·매물 추천이 아닌
-            배분·실행 가이드입니다.
+            배분 구조를 실제로 옮기는 가이드를 볼 수 있어요. (종목·매물 추천 아님)
           </p>
         </div>
         <Button onClick={onClick} className="shrink-0">

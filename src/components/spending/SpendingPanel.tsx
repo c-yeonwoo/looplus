@@ -22,11 +22,7 @@ export function SpendingPanel({ initialTab = "summary" }: { initialTab?: TabKey 
   return (
     <div className="space-y-5">
       <div>
-        <PageHeader
-          icon="wallet"
-          title="지출관리"
-          desc="고정은 정해진 것 · 변동은 조절하는 레버. 예산은 변동에만 적용됩니다."
-        />
+        <PageHeader icon="wallet" title="지출" desc="고정비와 변동비를 나눠 보고, 예산은 변동에만 걸어요." />
         <div className="mt-4 flex gap-1 border-b border-ink-200">
           {TABS.map((t) => (
             <button
@@ -51,10 +47,7 @@ export function SpendingPanel({ initialTab = "summary" }: { initialTab?: TabKey 
       {tab === "variable" && <VariableTab />}
       {tab === "fixed" && <FixedTab />}
 
-      <AssumptionNote>
-        지출 기록·또래 비교·페이스 투영은 모두 예시·가정일 수 있습니다. 엔진 자동 연동은 이후
-        버전에서 연결됩니다.
-      </AssumptionNote>
+      <AssumptionNote>또래 비교·예산 페이스는 예시·가정입니다.</AssumptionNote>
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   Card,
   Field,
   NumberInput,
-  Badge,
   StatCard,
   SectionTitle,
   AssumptionNote,
@@ -67,12 +66,9 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
 
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <SectionTitle n={2} desc="소스별 월 소득. 엔진(C)과 같은 데이터입니다.">
-              월 소득 (소스별)
+            <SectionTitle n={2} desc="자산 설계와 같은 숫자를 씁니다">
+              월 소득
             </SectionTitle>
-            <Badge tone="brand">
-              <Icon name="loop" size={12} /> 엔진과 공유
-            </Badge>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {INCOME_ORDER.map((type) => (
@@ -164,14 +160,12 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
                   }}
                 />
               </div>
-              <p className="mt-2 text-xs text-ink-400">
-                ＊정밀 ETA·달성률은 엔진(C)에서 계산됩니다.
-              </p>
+              <p className="mt-2 text-xs text-ink-400">자세한 예상 시점은 자산 설계에서 확인해요.</p>
             </Card>
           )}
 
           <AssumptionNote>
-            단계 판정 = 신호 게이트(비상금·저축률·투자 시작·passive 등), 절대 금액 아님. 임계값은 예시·가정이며 튜닝 가능합니다.
+            단계는 비상금·저축률·투자 시작 등 신호로 판정해요. 기준값은 예시·가정입니다.
           </AssumptionNote>
         </div>
       )}

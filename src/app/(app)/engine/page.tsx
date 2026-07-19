@@ -6,8 +6,8 @@ export default function EnginePage() {
     <div className="space-y-5">
       <PageHeader
         icon="engine"
-        title="재테크 엔진"
-        desc="팔레트에서 버킷을 끌어다 내 포트폴리오를 조립하세요. 복리 결과가 실시간으로 갱신됩니다."
+        title="자산 설계"
+        desc="돈을 어디에 나눌지 정하면, 몇 년 뒤 자산이 어떻게 되는지 바로 보여줍니다."
       />
       <EngineBuilder />
     </div>

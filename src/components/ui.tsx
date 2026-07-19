@@ -60,7 +60,7 @@ export function Button({
 }) {
   const styles: Record<BtnVariant, string> = {
     primary:
-      "bg-gold-400 text-brand-900 hover:bg-brand-800 hover:text-white disabled:bg-ink-200 disabled:text-ink-400",
+      "bg-gold-400 text-white hover:bg-gold-500 disabled:bg-ink-200 disabled:text-ink-400",
     ghost: "text-ink-600 hover:bg-ink-100",
     outline: "border border-ink-300 text-ink-800 hover:border-gold-500 hover:bg-gold-50",
     danger: "border border-red-200 text-red-600 hover:bg-red-50",
@@ -191,7 +191,7 @@ export function AssumptionNote({ children }: { children?: ReactNode }) {
       <Icon name="info" size={14} className="mt-0.5 shrink-0" />
       <span>
         {children ??
-          "모든 수치는 예시·가정이며 수익을 보장하지 않습니다. 개별 종목·매물 추천이 아닌 '배분 구조'만 다룹니다."}
+          "숫자는 예시·가정이며 수익을 보장하지 않아요. 종목·매물 추천은 하지 않습니다."}
       </span>
     </p>
   );

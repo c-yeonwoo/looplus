@@ -32,12 +32,12 @@ export function Palette({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-400">드래그하거나 탭해서 캔버스에 추가</p>
+      <p className="text-xs text-ink-400">눌러서 추가 · 끌어서도 추가</p>
 
       {CAT_ORDER.map((cat) => (
         <div key={cat}>
           <div className={`mb-1.5 text-xs font-bold ${CAT_TEXT[cat]}`}>
-            {CATEGORY_META[cat].label} · {CATEGORY_META[cat].note}
+            {CATEGORY_META[cat].label}
           </div>
           <div className="space-y-1.5">
             {BUCKET_PRESETS.filter((p) => p.category === cat).map((p) => (
@@ -58,9 +58,8 @@ export function Palette({
         </div>
       ))}
 
-      {/* 커스텀 버킷 */}
       <div className="rounded-xl border border-dashed border-ink-300 p-2">
-        <div className="mb-1.5 text-xs font-bold text-ink-500">＋ 커스텀 버킷</div>
+        <div className="mb-1.5 text-xs font-bold text-ink-500">직접 만들기</div>
         <TextInput value={customName} onChange={setCustomName} placeholder="이름 (예: 코인)" />
         <div className="mt-2 flex gap-1">
           {CAT_ORDER.map((c) => (
