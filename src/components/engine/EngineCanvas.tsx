@@ -17,11 +17,7 @@ import {
   pathToRoot,
   ratioOfTotal,
 } from "@/lib/engine/tree";
-import {
-  edgePath,
-  layoutEngineGraph,
-  type GraphNode,
-} from "@/lib/engine/layout";
+import { edgePath, layoutEngineGraph } from "@/lib/engine/layout";
 import { Button, EmptyState, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
@@ -135,19 +131,8 @@ export function EngineCanvas({
     return () => mq.removeEventListener("change", on);
   }, []);
 
-  const { nodes, edges, width, height } = useMemo(
-    () =>
-      layoutEngineGraph(buckets, {
-        addUnderId: selectedId && buckets.some((b) => b.id === selectedId) ? selectedId : null,
-      }),
-    [buckets, selectedId],
-  );
-
-  const byId = useMemo(() => {
-    const m = new Map<string, GraphNode>();
-    for (const n of nodes) m.set(n.id, n);
-    return m;
-  }, [nodes]);
+  // 선택과 무관 — 인스펙터/고스트로 뷰박스 크기가 흔들리지 않게
+  const { nodes, edges, width, height } = useMemo(() => layoutEngineGraph(buckets), [buckets]);
 
   const crumb = selectedId ? pathToRoot(selectedId, buckets) : [];
 
@@ -248,7 +233,8 @@ export function EngineCanvas({
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full min-w-[720px]"
-          style={{ height: "auto", aspectRatio: `${width} / ${height}` }}
+          style={{ height: Math.min(520, Math.max(360, height * 0.55)), minHeight: 360 }}
+          preserveAspectRatio="xMidYMid meet"
         >
           <text
             x={width / 2}
@@ -261,57 +247,7 @@ export function EngineCanvas({
             배당·이자 등 → 다시 수입으로
           </text>
 
-          {edges.map((e, i) => {
-            const from = byId.get(e.fromId);
-            const to = byId.get(e.toId);
-            if (!from || !to) return null;
-            const reinvest = e.fromId === "__pool__" && e.toId === "__income__";
-            const d = edgePath(from, to, { reinvest });
-            const pid = `edge-${e.id}`;
-            const stroke =
-              e.tone === "spend"
-                ? "var(--color-spend-400)"
-                : e.tone === "dashed"
-                  ? "var(--color-brand-300)"
-                  : "var(--color-brand-300)";
-            return (
-              <g key={e.id}>
-                <path
-                  id={pid}
-                  d={d}
-                  fill="none"
-                  stroke={stroke}
-                  strokeWidth={e.tone === "dashed" ? 1.4 : linkWidth(e.ratio)}
-                  strokeDasharray={e.tone === "dashed" ? "5 5" : undefined}
-                  opacity={0.75}
-                />
-                {animate && e.tone !== "dashed" && e.ratio > 0 && (
-                  <>
-                    <path
-                      d={d}
-                      fill="none"
-                      stroke={e.tone === "spend" ? "var(--color-spend-500)" : "var(--color-brand-500)"}
-                      strokeWidth="1.5"
-                      strokeDasharray="2 10"
-                      strokeLinecap="round"
-                      className="flow-link"
-                      opacity="0.85"
-                    />
-                    <circle r="3" fill="var(--color-gold-400)">
-                      <animateMotion
-                        dur={`${2.2 - Math.min(1, e.ratio / 120)}s`}
-                        repeatCount="indefinite"
-                        begin={`${(i % 5) * 0.25}s`}
-                      >
-                        <mpath href={`#${pid}`} />
-                      </animateMotion>
-                    </circle>
-                  </>
-                )}
-              </g>
-            );
-          })}
-
+          {/* 노드 먼저 — 연결선은 위에 그려 지출↔수입 선이 가려지지 않게 */}
           {nodes.map((n) => {
             if (n.kind === "income") {
               return (
@@ -344,20 +280,6 @@ export function EngineCanvas({
                       실현 = 재유입
                     </div>
                   </div>
-                </foreignObject>
-              );
-            }
-            if (n.kind === "add") {
-              const parentId = selectedId!;
-              return (
-                <foreignObject key={n.id} x={n.x} y={n.y} width={n.w} height={n.h}>
-                  <button
-                    type="button"
-                    onClick={() => setQuickAddParent(parentId)}
-                    className="flex h-full w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brand-300 bg-brand-50/50 text-xs font-bold text-brand-600 hover:bg-brand-50"
-                  >
-                    <Icon name="plus" size={14} /> 하위 추가
-                  </button>
                 </foreignObject>
               );
             }
@@ -428,6 +350,56 @@ export function EngineCanvas({
                   )}
                 </div>
               </foreignObject>
+            );
+          })}
+
+          {edges.map((e, i) => {
+            const reinvest = e.fromId === "__pool__" && e.toId === "__income__";
+            const d = edgePath(e, reinvest);
+            const pid = e.id;
+            const stroke =
+              e.tone === "spend"
+                ? "var(--color-spend-500)"
+                : e.tone === "dashed"
+                  ? "var(--color-brand-300)"
+                  : "var(--color-brand-400)";
+            return (
+              <g key={e.id} style={{ pointerEvents: "none" }}>
+                <path
+                  id={pid}
+                  d={d}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth={e.tone === "dashed" ? 1.4 : linkWidth(e.ratio)}
+                  strokeDasharray={e.tone === "dashed" ? "5 5" : undefined}
+                  opacity={e.tone === "spend" ? 0.95 : 0.85}
+                />
+                {animate && e.tone !== "dashed" && (
+                  <>
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={e.tone === "spend" ? "var(--color-spend-600)" : "var(--color-brand-500)"}
+                      strokeWidth="1.6"
+                      strokeDasharray="2 10"
+                      strokeLinecap="round"
+                      className="flow-link"
+                      opacity="0.9"
+                    />
+                    {(e.ratio > 0 || e.tone === "spend") && (
+                      <circle r="3.2" fill={e.tone === "spend" ? "var(--color-spend-500)" : "var(--color-gold-400)"}>
+                        <animateMotion
+                          dur={`${2.2 - Math.min(1, Math.max(e.ratio, 20) / 120)}s`}
+                          repeatCount="indefinite"
+                          begin={`${(i % 5) * 0.25}s`}
+                        >
+                          <mpath href={`#${pid}`} />
+                        </animateMotion>
+                      </circle>
+                    )}
+                  </>
+                )}
+              </g>
             );
           })}
         </svg>
