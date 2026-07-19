@@ -45,7 +45,7 @@ function OnboardingInner() {
   };
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[1280px] px-5 py-6 md:px-10">
+    <div className="mx-auto min-h-screen w-full max-w-[1680px] px-5 py-6 md:px-8 lg:px-10">
       {/* Stepper */}
       <div className="mb-6 flex items-center justify-between">
         <Logo />
