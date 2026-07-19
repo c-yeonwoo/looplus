@@ -36,15 +36,6 @@ export function Inspector({
   const sibSum = siblingRatioSum(bucket.parentId, all);
   const ratioLabel = parent ? `"${parent.name}" 대비` : "월 수입 대비";
 
-  const handleDelete = () => {
-    const hasKids = all.some((b) => b.parentId === bucket.id);
-    const msg = hasKids
-      ? `"${bucket.name}"과 하위 항목을 모두 삭제할까요?`
-      : `"${bucket.name}" 항목을 삭제할까요?`;
-    if (!window.confirm(msg)) return;
-    onDelete();
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -156,7 +147,7 @@ export function Inspector({
         <Button variant="outline" className="flex-1" onClick={onDuplicate}>
           복제
         </Button>
-        <Button variant="danger" className="flex-1" onClick={handleDelete}>
+        <Button variant="danger" className="flex-1" onClick={onDelete}>
           삭제
         </Button>
       </div>

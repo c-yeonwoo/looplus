@@ -22,6 +22,7 @@ import { Icon } from "@/components/Icon";
 import { LeadCta } from "@/components/LeadCta";
 import { AssetChart } from "@/components/AssetChart";
 import { BottomSheet } from "@/components/BottomSheet";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
 import { EngineCanvas } from "./EngineCanvas";
@@ -45,6 +46,26 @@ export function EngineBuilder() {
   const [sens, setSens] = useState<SensitivityKey>("base");
   const [sharing, setSharing] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    name: string;
+    hasKids: boolean;
+  } | null>(null);
+
+  const requestDelete = (id: string) => {
+    const b = buckets.find((x) => x.id === id);
+    if (!b) return;
+    const hasKids = buckets.some((x) => x.parentId === id);
+    setPendingDelete({ id, name: b.name, hasKids });
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const drop = collectDescendantIds(pendingDelete.id, buckets);
+    removeBucket(pendingDelete.id);
+    setSelectedId((cur) => (cur && drop.includes(cur) ? null : cur));
+    setPendingDelete(null);
+  };
 
   const monthlyIncome = snapshot.incomeSources.reduce((s, i) => s + i.monthly, 0);
   const sum = ratioSum(buckets);
@@ -192,11 +213,7 @@ export function EngineBuilder() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onAdd={addBucket}
-            onDelete={(id) => {
-              const drop = collectDescendantIds(id, buckets);
-              removeBucket(id);
-              setSelectedId((cur) => (cur && drop.includes(cur) ? null : cur));
-            }}
+            onRequestDelete={requestDelete}
             onRecommend={() => {
               setEngine(suggestEngineFromSnapshot(snapshot));
               track("engine_recommend_applied", { source: "canvas_empty" });
@@ -376,10 +393,7 @@ export function EngineBuilder() {
                 all={buckets}
                 monthlyIncome={monthlyIncome}
                 onChange={(patch) => updateBucket(selected.id, patch)}
-                onDelete={() => {
-                  removeBucket(selected.id);
-                  setSelectedId(null);
-                }}
+                onDelete={() => requestDelete(selected.id)}
                 onDuplicate={() => duplicate(selected)}
               />
               <div
@@ -404,14 +418,24 @@ export function EngineBuilder() {
             all={buckets}
             monthlyIncome={monthlyIncome}
             onChange={(patch) => updateBucket(selected.id, patch)}
-            onDelete={() => {
-              removeBucket(selected.id);
-              setSelectedId(null);
-            }}
+            onDelete={() => requestDelete(selected.id)}
             onDuplicate={() => duplicate(selected)}
           />
         )}
       </BottomSheet>
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="항목 삭제"
+        message={
+          pendingDelete?.hasKids
+            ? `"${pendingDelete.name}"과 하위 항목을 모두 삭제할까요?`
+            : `"${pendingDelete?.name ?? ""}" 항목을 삭제할까요?`
+        }
+        confirmLabel="삭제"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

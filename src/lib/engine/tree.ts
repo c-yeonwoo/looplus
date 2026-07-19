@@ -74,3 +74,17 @@ export function parentOf(bucket: Bucket, all: Bucket[]): Bucket | null {
   if (!bucket.parentId) return null;
   return all.find((b) => b.id === bucket.parentId) ?? null;
 }
+
+/** 루트→자신 경로 (브레드크럼용) */
+export function pathToRoot(bucketId: string, all: Bucket[]): Bucket[] {
+  const path: Bucket[] = [];
+  let cur = all.find((b) => b.id === bucketId);
+  const guard = new Set<string>();
+  while (cur && !guard.has(cur.id)) {
+    guard.add(cur.id);
+    path.unshift(cur);
+    const pid = cur.parentId ?? null;
+    cur = pid ? all.find((b) => b.id === pid) : undefined;
+  }
+  return path;
+}

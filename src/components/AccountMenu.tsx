@@ -5,11 +5,18 @@ import { useAuth } from "@/lib/auth";
 import { Icon } from "./Icon";
 import { Button, TextInput } from "./ui";
 
-export function AccountMenu() {
+export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const { configured, user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   if (!configured) {
+    if (compact) {
+      return (
+        <div className="flex justify-center py-2 text-ink-400" title="로컬 모드">
+          <Icon name="lock" size={16} />
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-1.5 px-3 py-2 text-[11px] text-ink-400">
         <Icon name="lock" size={13} /> 로컬 모드 · 이 기기에 저장
@@ -18,6 +25,18 @@ export function AccountMenu() {
   }
 
   if (user) {
+    if (compact) {
+      return (
+        <button
+          type="button"
+          onClick={signOut}
+          title={user.email ?? "로그아웃"}
+          className="flex w-full items-center justify-center rounded-lg py-2 text-ink-500 hover:bg-ink-100"
+        >
+          <Icon name="users" size={16} />
+        </button>
+      );
+    }
     return (
       <div className="px-3 py-2">
         <div className="truncate text-xs text-ink-500">{user.email}</div>
@@ -35,9 +54,15 @@ export function AccountMenu() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+        title="로그인 · 저장"
+        className={
+          compact
+            ? "flex w-full items-center justify-center rounded-lg py-2 text-brand-700 hover:bg-brand-50"
+            : "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+        }
       >
-        <Icon name="users" size={16} /> 로그인 · 저장
+        <Icon name="users" size={16} />
+        {!compact && "로그인 · 저장"}
       </button>
       {open && <AuthModal onClose={() => setOpen(false)} />}
     </>
