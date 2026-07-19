@@ -8,10 +8,19 @@ import {
   customBucket,
   type BucketPreset,
 } from "@/lib/catalog";
-import { CATEGORY_META, type Bucket, type BucketCategory } from "@/lib/types";
+import {
+  CATEGORY_META,
+  INCOME_SOURCE_META,
+  type Bucket,
+  type BucketCategory,
+  type IncomeSource,
+  type IncomeSourceType,
+} from "@/lib/types";
 import { childrenOf, roots } from "@/lib/engine/tree";
-import { TextInput } from "@/components/ui";
+import { createIncomeSource, INCOME_TYPE_ORDER } from "@/lib/income";
+import { Field, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { parseNum } from "@/lib/format";
 
 const CAT_ORDER: BucketCategory[] = ["invest", "save", "spend"];
 const CAT_TEXT: Record<BucketCategory, string> = {
@@ -25,12 +34,6 @@ const CAT_CARD: Record<BucketCategory, string> = {
   spend: "border-sky-200 bg-sky-50 hover:bg-sky-100",
 };
 
-/**
- * 팔레트 UX
- * 1) 묶음(그룹) → 수입 바로 아래 루트로 추가
- * 2) 세부 항목 → 선택 중인 노드 아래, 없으면 같은 카테고리 루트 아래, 그것도 없으면 루트로
- * 클릭만으로 캔버스에 올라감 (드래그도 가능)
- */
 export function resolveAddParent(
   preset: BucketPreset,
   buckets: Bucket[],
@@ -42,17 +45,88 @@ export function resolveAddParent(
   return root?.id ?? null;
 }
 
+/** 수입원 추가 폼 — 금액 입력 후 확정 */
+function IncomeAddForm({
+  type,
+  defaultName,
+  nextPosition,
+  onConfirm,
+  onCancel,
+}: {
+  type: IncomeSourceType;
+  defaultName: string;
+  nextPosition: number;
+  onConfirm: (s: IncomeSource) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(defaultName);
+  const [monthlyStr, setMonthlyStr] = useState("");
+
+  const monthly = monthlyStr.trim() === "" ? null : parseNum(monthlyStr);
+  const canAdd = monthly !== null && Number.isFinite(monthly) && name.trim().length > 0;
+
+  return (
+    <div className="mt-1.5 space-y-2 rounded-xl border border-brand-200 bg-brand-50/60 p-2.5">
+      <Field label="이름">
+        <TextInput value={name} onChange={setName} placeholder={defaultName} />
+      </Field>
+      <Field label="월 금액" hint="만원 · 필수 입력">
+        <div className="flex items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+          <input
+            inputMode="numeric"
+            autoFocus
+            className="w-full rounded-lg bg-transparent px-3 py-2 text-sm outline-none"
+            value={monthlyStr}
+            placeholder="예: 300"
+            onChange={(e) => setMonthlyStr(e.target.value.replace(/[^0-9.]/g, ""))}
+          />
+          <span className="pr-3 text-sm text-ink-400">만원</span>
+        </div>
+      </Field>
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 rounded-lg border border-ink-200 py-1.5 text-xs font-semibold text-ink-600 hover:bg-white"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          disabled={!canAdd}
+          onClick={() => {
+            if (!canAdd || monthly === null) return;
+            onConfirm(createIncomeSource(type, nextPosition, monthly, name.trim()));
+          }}
+          className="flex-1 rounded-lg bg-brand-800 py-1.5 text-xs font-semibold text-white disabled:bg-ink-300"
+        >
+          추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Palette({
   buckets,
   selectedId,
+  incomeCount,
   onAdd,
+  onAddIncome,
 }: {
   buckets: Bucket[];
   selectedId: string | null;
+  incomeCount: number;
   onAdd: (b: Bucket) => void;
+  onAddIncome: (s: IncomeSource) => void;
 }) {
   const [customName, setCustomName] = useState("");
   const [customCat, setCustomCat] = useState<BucketCategory>("invest");
+  /** 수입원: 프리셋 선택 시 금액 폼 / custom = 자율 */
+  const [incomeDraft, setIncomeDraft] = useState<IncomeSourceType | "custom" | null>(null);
+  const [customIncomeName, setCustomIncomeName] = useState("");
+  const [customIncomeType, setCustomIncomeType] = useState<IncomeSourceType>("labor");
+  const [customIncomeMonthly, setCustomIncomeMonthly] = useState("");
 
   const selected = selectedId ? buckets.find((b) => b.id === selectedId) : null;
   const contextLabel = selected
@@ -68,9 +142,124 @@ export function Palette({
   return (
     <div className="space-y-4">
       <p className="text-xs leading-relaxed text-ink-400">
-        눌러서 캔버스에 추가 · 세부 항목은{" "}
+        눌러서 추가 · 수입원은 금액 입력 후 확정 · 세부 항목은{" "}
         <span className="font-semibold text-ink-600">{contextLabel}</span>
       </p>
+
+      {/* 0. 수입원 */}
+      <div>
+        <div className="mb-1.5 text-xs font-bold text-brand-600">0. 수입원 (월수입 왼쪽)</div>
+        <div className="space-y-1.5">
+          {INCOME_TYPE_ORDER.map((type) => (
+            <div key={type}>
+              <button
+                type="button"
+                onClick={() => setIncomeDraft(incomeDraft === type ? null : type)}
+                className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                  incomeDraft === type
+                    ? "border-brand-400 bg-brand-50 text-brand-800"
+                    : "border-brand-100 bg-white text-ink-700 hover:bg-brand-50/50"
+                }`}
+              >
+                <Icon name="coins" size={18} className="shrink-0 text-brand-500" />
+                <span className="min-w-0">
+                  <span className="block">{INCOME_SOURCE_META[type].label}</span>
+                  <span className="block text-[10px] font-normal opacity-70">
+                    {INCOME_SOURCE_META[type].hint}
+                  </span>
+                </span>
+              </button>
+              {incomeDraft === type && (
+                <IncomeAddForm
+                  type={type}
+                  defaultName={INCOME_SOURCE_META[type].label}
+                  nextPosition={incomeCount}
+                  onConfirm={(s) => {
+                    onAddIncome(s);
+                    setIncomeDraft(null);
+                  }}
+                  onCancel={() => setIncomeDraft(null)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 rounded-xl border border-dashed border-brand-200 p-2">
+          <button
+            type="button"
+            onClick={() => setIncomeDraft(incomeDraft === "custom" ? null : "custom")}
+            className="mb-1 w-full text-left text-xs font-bold text-brand-600"
+          >
+            직접 만들기 {incomeDraft === "custom" ? "· 접기" : ""}
+          </button>
+          {incomeDraft === "custom" && (
+            <div className="space-y-2">
+              <Field label="이름">
+                <TextInput
+                  value={customIncomeName}
+                  onChange={setCustomIncomeName}
+                  placeholder="예: 알바 · 배당"
+                />
+              </Field>
+              <div className="flex flex-wrap gap-1">
+                {INCOME_TYPE_ORDER.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setCustomIncomeType(t)}
+                    className={`rounded-lg border px-2 py-1 text-[10px] font-semibold ${
+                      customIncomeType === t
+                        ? "border-brand-400 bg-brand-50 text-brand-700"
+                        : "border-ink-200 text-ink-500"
+                    }`}
+                  >
+                    {INCOME_SOURCE_META[t].label}
+                  </button>
+                ))}
+              </div>
+              <Field label="월 금액" hint="만원 · 필수 입력">
+                <div className="flex items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                  <input
+                    inputMode="numeric"
+                    className="w-full rounded-lg bg-transparent px-3 py-2 text-sm outline-none"
+                    value={customIncomeMonthly}
+                    placeholder="예: 50"
+                    onChange={(e) => setCustomIncomeMonthly(e.target.value.replace(/[^0-9.]/g, ""))}
+                  />
+                  <span className="pr-3 text-sm text-ink-400">만원</span>
+                </div>
+              </Field>
+              <button
+                type="button"
+                disabled={
+                  !customIncomeName.trim() ||
+                  customIncomeMonthly.trim() === "" ||
+                  !Number.isFinite(parseNum(customIncomeMonthly))
+                }
+                onClick={() => {
+                  const monthly = parseNum(customIncomeMonthly);
+                  if (!customIncomeName.trim() || customIncomeMonthly.trim() === "") return;
+                  onAddIncome(
+                    createIncomeSource(
+                      customIncomeType,
+                      incomeCount,
+                      monthly,
+                      customIncomeName.trim(),
+                    ),
+                  );
+                  setCustomIncomeName("");
+                  setCustomIncomeMonthly("");
+                  setIncomeDraft(null);
+                }}
+                className="w-full rounded-lg bg-brand-800 py-1.5 text-xs font-semibold text-white disabled:bg-ink-300"
+              >
+                수입원 추가
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div>
         <div className="mb-1.5 text-xs font-bold text-ink-500">1. 묶음 (수입 바로 아래)</div>
@@ -121,7 +310,7 @@ export function Palette({
       </div>
 
       <div className="rounded-xl border border-dashed border-ink-300 p-2">
-        <div className="mb-1.5 text-xs font-bold text-ink-500">직접 만들기</div>
+        <div className="mb-1.5 text-xs font-bold text-ink-500">배분 항목 직접 만들기</div>
         <TextInput value={customName} onChange={setCustomName} placeholder="이름 (예: 코인)" />
         <div className="mt-2 flex gap-1">
           {CAT_ORDER.map((c) => (
@@ -155,7 +344,14 @@ export function Palette({
               buckets,
               selectedId,
             );
-            onAdd(customBucket(customCat, customName.trim(), childrenOf(parentId, buckets).length, parentId));
+            onAdd(
+              customBucket(
+                customCat,
+                customName.trim(),
+                childrenOf(parentId, buckets).length,
+                parentId,
+              ),
+            );
             setCustomName("");
           }}
           className="mt-2 w-full rounded-lg bg-ink-800 py-1.5 text-xs font-semibold text-white disabled:bg-ink-300"

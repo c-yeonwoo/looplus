@@ -1,28 +1,25 @@
 "use client";
 
-import {
-  INCOME_SOURCE_META,
-  type IncomeSource,
-  type IncomeSourceType,
-} from "@/lib/types";
-import { incomeSourceLabel, INCOME_TYPE_ORDER } from "@/lib/income";
+import { INCOME_SOURCE_META, type IncomeSource } from "@/lib/types";
+import { incomeSourceLabel } from "@/lib/income";
 import { Field, NumberInput, Button, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
 export function IncomeHubInspector({
   monthlyIncome,
   onAddGroup,
-  onAddSource,
 }: {
   monthlyIncome: number;
   onAddGroup: () => void;
-  onAddSource: (type: IncomeSourceType) => void;
 }) {
   return (
     <div className="space-y-4">
       <div>
         <div className="text-sm font-bold text-ink-800">월 수입</div>
-        <p className="mt-1 text-xs text-ink-400">왼쪽 수입 항목 합산 → 오른쪽 배분으로 흘러갑니다.</p>
+        <p className="mt-1 text-xs text-ink-400">
+          왼쪽 수입원 합산 → 오른쪽 배분. 수입원은 <span className="font-semibold">항목 추가</span>에서
+          금액을 넣어 추가하세요.
+        </p>
       </div>
       <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-3 text-center">
         <div className="text-[11px] font-semibold text-brand-600">합산</div>
@@ -31,21 +28,6 @@ export function IncomeHubInspector({
       <Button className="w-full" onClick={onAddGroup}>
         <Icon name="plus" size={14} /> 묶음 추가
       </Button>
-      <div>
-        <div className="mb-1.5 text-xs font-medium text-ink-500">수입 항목 추가 (왼쪽)</div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {INCOME_TYPE_ORDER.map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => onAddSource(type)}
-              className="rounded-lg border border-ink-200 px-2 py-1.5 text-left text-[11px] font-semibold text-ink-700 hover:bg-ink-50"
-            >
-              {INCOME_SOURCE_META[type].label}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

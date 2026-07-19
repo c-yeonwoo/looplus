@@ -13,12 +13,8 @@ import {
   collectDescendantIds,
   type SensitivityKey,
 } from "@/lib/engine";
-import type { Bucket, IncomeSourceType } from "@/lib/types";
-import {
-  createIncomeSource,
-  normalizeIncomeSources,
-  sumMonthlyIncome,
-} from "@/lib/income";
+import type { Bucket } from "@/lib/types";
+import { normalizeIncomeSources, sumMonthlyIncome } from "@/lib/income";
 import { GROUP_PRESETS, bucketFromPreset } from "@/lib/catalog";
 import { formatKRW } from "@/lib/format";
 import { renderShareCard, shareOrDownload } from "@/lib/shareCard";
@@ -243,7 +239,12 @@ export function EngineBuilder() {
               <Palette
                 buckets={buckets}
                 selectedId={selected && selectedId ? selectedId : null}
+                incomeCount={incomeSources.length}
                 onAdd={addBucket}
+                onAddIncome={(s) => {
+                  patchSources([...incomeSources, s]);
+                  if (s.id) setSelectedId(s.id);
+                }}
               />
             </div>
           </Card>
@@ -480,12 +481,6 @@ export function EngineBuilder() {
                   const pos = childrenOf(null, buckets).length;
                   addBucket(bucketFromPreset(GROUP_PRESETS[0]!, pos, null));
                 }}
-                onAddSource={(type: IncomeSourceType) => {
-                  patchSources([
-                    ...incomeSources,
-                    createIncomeSource(type, incomeSources.length),
-                  ]);
-                }}
               />
             ) : selectedId === "__pool__" ? (
               <PoolHubInspector />
@@ -551,9 +546,6 @@ export function EngineBuilder() {
             onAddGroup={() => {
               const pos = childrenOf(null, buckets).length;
               addBucket(bucketFromPreset(GROUP_PRESETS[0]!, pos, null));
-            }}
-            onAddSource={(type) => {
-              patchSources([...incomeSources, createIncomeSource(type, incomeSources.length)]);
             }}
           />
         )}
