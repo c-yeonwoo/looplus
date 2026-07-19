@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-/** 시라노 파비콘 — Cool Mist · 배분 흐름 마크 */
+/** Loop+ 파비콘 — Cool Mist · 배분 흐름 마크 */
 export default function Icon() {
   return new ImageResponse(
     (

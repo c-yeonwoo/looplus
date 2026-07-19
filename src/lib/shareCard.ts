@@ -57,10 +57,10 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob> {
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = ink900;
   ctx.font = "800 34px ui-sans-serif, system-ui, 'Apple SD Gothic Neo', sans-serif";
-  ctx.fillText("시라노", 128, 92);
+  ctx.fillText("Loop+", 128, 92);
   ctx.fillStyle = ink400;
   ctx.font = "500 20px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText("자산 설계 코치", 128, 116);
+  ctx.fillText("루플러스 · 돌수록 더해지는 자산 루프", 128, 116);
 
   // 헤드라인
   ctx.fillStyle = ink400;
@@ -203,14 +203,14 @@ function roundRect(
 }
 
 /** 공유(모바일 Web Share) 또는 다운로드 폴백 */
-export async function shareOrDownload(blob: Blob, filename = "cyrano-result.png") {
+export async function shareOrDownload(blob: Blob, filename = "looplus-result.png") {
   const file = new File([blob], filename, { type: "image/png" });
   const nav = navigator as Navigator & {
     canShare?: (data: { files: File[] }) => boolean;
   };
   if (nav.canShare?.({ files: [file] }) && navigator.share) {
     try {
-      await navigator.share({ files: [file], title: "시라노 결과" });
+      await navigator.share({ files: [file], title: "Loop+ 결과" });
       return;
     } catch {
       // 취소 시 폴백 없이 종료

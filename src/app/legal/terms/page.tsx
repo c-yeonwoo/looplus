@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "이용약관 — 시라노",
+  title: "이용약관 — Loop+",
 };
 
 export default function TermsPage() {
@@ -12,7 +12,7 @@ export default function TermsPage() {
 
       <h2 className="pt-2 text-base font-bold text-ink-800">1. 서비스</h2>
       <p>
-        시라노(“서비스”)는 자산 설계 시뮬레이션·진단·실천 기록 기능을 제공합니다. 서비스는
+        루플러스(Loop+, “서비스”)는 자산 설계 시뮬레이션·진단·실천 기록 기능을 제공합니다. 서비스는
         베타/MVP 단계일 수 있으며, 기능이 변경·중단될 수 있습니다.
       </p>
 

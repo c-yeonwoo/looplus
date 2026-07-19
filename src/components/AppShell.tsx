@@ -33,7 +33,7 @@ const MOBILE_NAV: NavItem[] = [
   { href: "/tracking", label: "실천", icon: "check-circle" },
 ];
 
-const NAV_COLLAPSE_KEY = "cyrano-nav-collapsed";
+const NAV_COLLAPSE_KEY = "looplus-nav-collapsed";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname();

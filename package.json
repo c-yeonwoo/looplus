@@ -1,8 +1,8 @@
 {
-  "name": "cyrano",
+  "name": "looplus",
   "version": "0.1.0",
   "private": true,
-  "description": "재테크 엔진 인생설계 플랫폼 MVP",
+  "description": "Loop+ (루플러스) — 돌수록 더해지는 자산 루프",
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/copy-standalone.mjs",

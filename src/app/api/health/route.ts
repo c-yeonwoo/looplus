@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export function GET() {
   return NextResponse.json({
     ok: true,
-    service: "cyrano",
+    service: "looplus",
     ts: new Date().toISOString(),
     supabase: Boolean(
       process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

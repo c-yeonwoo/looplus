@@ -1,8 +1,20 @@
 /**
- * 시라노 계측 레이어.
+ * Loop+ 계측 레이어.
  * - PostHog 키 없으면 no-op (로컬 모드와 동일 패턴). DEV에서는 console.debug.
  * - 외부 SDK 의존 0 — capture API fetch만 사용.
+ * - localStorage 키는 looplus_* (구 cyrano_* 에서 1회 이전).
  */
+
+function migrateLsKey(next: string, prev: string) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!localStorage.getItem(next) && localStorage.getItem(prev)) {
+      localStorage.setItem(next, localStorage.getItem(prev)!);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export type AnalyticsEvent =
   | "onboarding_started"
@@ -29,9 +41,15 @@ export type AnalyticsEvent =
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
-const DISTINCT_KEY = "cyrano_distinct_id";
-const AHA_KEY = "cyrano_aha_fired";
-const STARTED_KEY = "cyrano_onboarding_started";
+const DISTINCT_KEY = "looplus_distinct_id";
+const AHA_KEY = "looplus_aha_fired";
+const STARTED_KEY = "looplus_onboarding_started";
+
+if (typeof window !== "undefined") {
+  migrateLsKey(DISTINCT_KEY, "cyrano_distinct_id");
+  migrateLsKey(AHA_KEY, "cyrano_aha_fired");
+  migrateLsKey(STARTED_KEY, "cyrano_onboarding_started");
+}
 
 function posthogKey(): string | undefined {
   return process.env.NEXT_PUBLIC_POSTHOG_KEY || undefined;
@@ -98,7 +116,7 @@ export function track(event: AnalyticsEvent, properties?: Props): void {
   const props = {
     ...sanitize(properties),
     path: window.location.pathname,
-    $lib: "cyrano",
+    $lib: "looplus",
     $lib_version: "0.1.0",
   };
   if (debugEnabled()) console.debug("[analytics]", event, props);

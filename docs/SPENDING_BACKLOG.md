@@ -7,7 +7,7 @@
 
 ## UI 진단 (목업 as-is → Quiet Ledger)
 
-| 이슈 | 목업 | 시라노 방향 |
+| 이슈 | 목업 | Loop+ 방향 |
 |---|---|---|
 | 액센트 | 보라/블루 CTA·탭·진행바 | Champagne bronze `#c4a574` + charcoal |
 | 히트맵 | 연보라 띠 | ink/bronze 농도 (지출량↑ = 진함) |

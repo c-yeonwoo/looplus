@@ -1,10 +1,11 @@
-# 시라노 — 자산 설계 코치 (MVP)
+# Loop+ (루플러스) — 돌수록 더해지는 자산 루프 (MVP)
 
 개인이 **자기 '재테크 엔진(포트폴리오 배분)'을 직접 조립**하고 → **n년 뒤 자산을 미리 보며**
 자신감·동기를 얻는 인생설계 플랫폼. 핸드오프 문서(19) + 설계 파일(09~18) 기반 구현.
 
-> 브랜드 **시라노** = 무대 뒤에서 코칭하는 조력자. "정답을 강요하지 않고, 내가 내 엔진을 만들도록 곁에서 돕는다."
-> 컬러: Quiet Ledger — Charcoal & Champagne bronze.
+> **Loop+** (영문 Looplus / 한글 루플러스) — 자산·현금흐름이 루프로 돌고, 돌수록 더해진다.
+> "정답을 강요하지 않고, 내가 내 엔진을 만들도록 곁에서 돕는다."
+> 컬러: Cool Mist — 쿨 슬레이트 + 스틸 블루.
 
 > **주의:** 모든 수치는 **예시·가정**이며 수익을 보장하지 않습니다. 개별 종목·매물 추천이 아닌
 > **'배분 구조'** 만 다루며, 세법 딥다이브는 하지 않습니다.
@@ -14,7 +15,7 @@
 - [`docs/BUSINESS_MODEL.md`](docs/BUSINESS_MODEL.md) — BM 결정 (리드젠 1차 · AI 코치 2차)
 - [`docs/PRODUCT_REVIEW.md`](docs/PRODUCT_REVIEW.md) — Product·Design·Tech·UXR·AI 5개 관점 종합 리뷰 + ROI 우선순위
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — 단계별 로드맵 (v1.0 GA → v2 AI 코치)
-- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — 시라노 브랜드·토큰·아이콘 시스템
+- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — Loop+ 브랜드·토큰·아이콘 시스템
 - [`docs/DEPLOY.md`](docs/DEPLOY.md) — Supabase E2E · Railway 배포
 
 ---

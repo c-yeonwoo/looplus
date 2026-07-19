@@ -11,6 +11,7 @@ import { LogoMark } from "@/components/Logo";
 import { AssetChart } from "@/components/AssetChart";
 import { computeStreak } from "@/lib/tracking";
 import { emptyTracking } from "@/lib/types";
+import { BRAND } from "@/lib/brand";
 
 export default function HomePage() {
   const profile = useProfile((s) => s.profile);
@@ -23,8 +24,10 @@ export default function HomePage() {
         <div className="flex items-center gap-2.5">
           <LogoMark size={32} />
           <div>
-            <div className="font-display text-lg font-bold text-ink-900">시라노</div>
-            <p className="text-xs text-ink-500">자산 설계 코치</p>
+            <div className="font-display text-lg font-bold text-ink-900">{BRAND.mark}</div>
+            <p className="text-xs text-ink-500">
+              {BRAND.ko} · {BRAND.descriptor}
+            </p>
           </div>
         </div>
         <EmptyState
@@ -54,9 +57,9 @@ export default function HomePage() {
         <div className="mb-4 flex items-center gap-2.5">
           <LogoMark size={28} />
           <span className="font-display text-base font-bold tracking-tight text-white">
-            시라노
+            {BRAND.mark}
           </span>
-          <span className="text-[11px] text-white/40">자산 설계 코치</span>
+          <span className="text-[11px] text-white/40">{BRAND.ko}</span>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">

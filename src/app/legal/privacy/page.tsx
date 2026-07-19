@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "개인정보 처리방침 — 시라노",
+  title: "개인정보 처리방침 — Loop+",
 };
 
 export default function PrivacyPage() {
