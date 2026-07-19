@@ -14,6 +14,8 @@ export type IconName =
   | "check-circle"
   | "users"
   | "chevron-right"
+  | "chevron-left"
+  | "panel-left"
   | "arrow-right"
   | "plus"
   | "lock"
@@ -76,6 +78,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   "chevron-right": <path d="M9 5l7 7-7 7" />,
+  "chevron-left": <path d="M15 5l-7 7 7 7" />,
+  "panel-left": (
+    <>
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M9.5 4v16" />
+    </>
+  ),
   "arrow-right": <path d="M4 12h15M13 6l6 6-6 6" />,
   plus: <path d="M12 5v14M5 12h14" />,
   lock: (
