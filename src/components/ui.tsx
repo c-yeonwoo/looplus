@@ -32,12 +32,12 @@ export function SectionTitle({
   n?: number;
 }) {
   return (
-    <div className="mb-3">
-      <h2 className="flex items-center gap-2 text-base font-bold text-ink-800">
+    <div className="mb-5">
+      <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-ink-800">
         {n != null && <NumberChip n={n} />}
         {children}
       </h2>
-      {desc && <p className="mt-0.5 text-sm text-ink-500">{desc}</p>}
+      {desc && <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-400">{desc}</p>}
     </div>
   );
 }
@@ -118,10 +118,10 @@ export function NumberInput({
   placeholder?: string;
 }) {
   return (
-    <div className="flex items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+    <div className="flex min-w-0 items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
       <input
         inputMode="numeric"
-        className="w-full rounded-lg bg-transparent px-3 py-2 text-sm text-ink-900 outline-none"
+        className="tnum min-w-0 flex-1 rounded-lg bg-transparent px-3 py-2 text-sm text-ink-900 outline-none"
         value={Number.isFinite(value) ? String(value) : ""}
         placeholder={placeholder ?? "0"}
         onChange={(e) => {
@@ -129,7 +129,9 @@ export function NumberInput({
           onChange(cleaned === "" ? 0 : Number(cleaned));
         }}
       />
-      {suffix && <span className="pr-3 text-sm text-ink-400">{suffix}</span>}
+      {suffix && (
+        <span className="shrink-0 whitespace-nowrap pr-3 text-sm text-ink-400">{suffix}</span>
+      )}
     </div>
   );
 }

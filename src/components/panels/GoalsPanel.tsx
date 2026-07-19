@@ -1,13 +1,31 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useProfile } from "@/lib/store/useProfile";
 import { DEFAULT_VISION } from "@/lib/store/defaults";
 import { SCENE_META, type Scene, type SceneType, type Vision } from "@/lib/types";
 import { formatKRW } from "@/lib/format";
-import { Card, Field, NumberInput, SectionTitle, AssumptionNote } from "@/components/ui";
+import { Card, Field, NumberInput, AssumptionNote } from "@/components/ui";
 import { Icon, type IconName } from "@/components/Icon";
 
 const SCENE_ORDER: SceneType[] = ["place", "day", "work", "people"];
+
+function QuietSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-xs font-semibold tracking-[0.08em] text-ink-400 uppercase">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
 
 export function GoalsPanel() {
   const stored = useProfile((s) => s.profile.vision);
@@ -22,104 +40,100 @@ export function GoalsPanel() {
     patch({ scenes: [...others, { ...getScene(type), ...patchScene }] });
   };
 
-  // 역산 헬퍼: 월 생활비 × 12 ÷ 4%
   const reverseTarget = v.goalPassiveIncome > 0 ? (v.goalPassiveIncome * 12) / 0.04 : 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* 비전보드 */}
-      <div className="space-y-5">
-        <Card className="border-invest-100 bg-invest-50/60">
-          <SectionTitle n={1} desc="＂70살의 내가 지금으로 돌아왔다면…＂">
-            왜 경제적 자유를 원하나요?
-          </SectionTitle>
+    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="space-y-12">
+        <QuietSection title="동기">
           <textarea
-            className="h-24 w-full resize-none rounded-xl border border-invest-100 bg-white px-3 py-2 text-sm outline-none focus:border-invest-500"
-            placeholder="동기를 한 문장~짧은 글로 적어보세요."
+            className="h-28 w-full resize-none rounded-2xl border border-ink-100 bg-ink-50/50 px-4 py-3 text-sm leading-relaxed text-ink-800 outline-none placeholder:text-ink-300 focus:border-gold-300 focus:bg-white"
+            placeholder="왜 경제적 자유를 원하나요? (선택)"
             value={v.why}
             onChange={(e) => patch({ why: e.target.value })}
           />
-        </Card>
+        </QuietSection>
 
-        <div>
-          <SectionTitle n={2} desc="각 장면을 짧은 글로 그려보세요. (AI 장면 이미지는 준비 중)">
-            미래의 내 삶 장면
-          </SectionTitle>
-          <div className="grid grid-cols-2 gap-3">
+        <QuietSection title="미래 장면">
+          <div className="grid gap-4 sm:grid-cols-2">
             {SCENE_ORDER.map((type) => {
               const sc = getScene(type);
               const meta = SCENE_META[type];
               return (
-                <Card key={type} className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-bold text-ink-700">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-                      <Icon name={meta.icon as IconName} size={16} />
-                    </span>
+                <div key={type} className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-ink-600">
+                    <Icon name={meta.icon as IconName} size={15} className="text-ink-400" />
                     {meta.label}
                   </div>
                   <textarea
-                    className="h-16 w-full resize-none rounded-lg border border-ink-200 bg-ink-50 px-2 py-1.5 text-xs outline-none focus:border-brand-400"
+                    className="h-20 w-full resize-none rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-ink-300 focus:border-gold-300"
                     placeholder={meta.placeholder}
                     value={sc.text}
                     onChange={(e) => setScene(type, { text: e.target.value })}
                   />
-                  <button
-                    disabled
-                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-1.5 text-[11px] text-ink-400"
-                  >
-                    <Icon name="image" size={13} /> AI 장면 이미지 (곧)
-                  </button>
-                </Card>
+                </div>
               );
             })}
           </div>
-        </div>
+        </QuietSection>
       </div>
 
-      {/* 목표 수치 */}
-      <div className="space-y-5">
-        <Card>
-          <SectionTitle n={3} desc="목표선으로만 쓰이고, 배분 계산에는 넣지 않아요.">
-            목표 수치
-          </SectionTitle>
-          <div className="space-y-4">
+      <div className="space-y-12">
+        <QuietSection title="목표 수치">
+          <Card className="!p-6 space-y-5">
             <Field label="목표 순자산">
-              <NumberInput value={v.goalNetworth} onChange={(n) => patch({ goalNetworth: n })} suffix="만원" />
+              <NumberInput
+                value={v.goalNetworth}
+                onChange={(n) => patch({ goalNetworth: n })}
+                suffix="만원"
+              />
             </Field>
-            <div className="-mt-2 text-right text-xs text-ink-400">= {formatKRW(v.goalNetworth)}</div>
-            <Field label="목표 passive income (월)" hint="배당·임대 등 실현 자본소득">
-              <NumberInput value={v.goalPassiveIncome} onChange={(n) => patch({ goalPassiveIncome: n })} suffix="만원" />
+            {v.goalNetworth > 0 && (
+              <p className="-mt-3 text-xs text-ink-400">≈ {formatKRW(v.goalNetworth)}</p>
+            )}
+            <Field label="목표 월 passive income">
+              <NumberInput
+                value={v.goalPassiveIncome}
+                onChange={(n) => patch({ goalPassiveIncome: n })}
+                suffix="만원"
+              />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <Field label="목표 시점">
-                <NumberInput value={v.targetYears} onChange={(n) => patch({ targetYears: n })} suffix="년 뒤" />
+                <NumberInput
+                  value={v.targetYears}
+                  onChange={(n) => patch({ targetYears: n })}
+                  suffix="년 뒤"
+                />
               </Field>
-              <Field label="현재 나이 (선택)">
-                <NumberInput value={v.currentAge ?? 0} onChange={(n) => patch({ currentAge: n })} suffix="세" />
+              <Field label="현재 나이">
+                <NumberInput
+                  value={v.currentAge ?? 0}
+                  onChange={(n) => patch({ currentAge: n })}
+                  suffix="세"
+                />
               </Field>
             </div>
-          </div>
 
-          <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-3">
-            <div className="flex items-center gap-1.5 text-sm font-bold text-brand-700">
-              <Icon name="calculator" size={15} /> 월 생활비로 역산 (선택)
-            </div>
-            <p className="mt-1 text-sm text-brand-600">
-              월 {formatKRW(v.goalPassiveIncome)} × 12 ÷ 4% ≈ 약 <b>{formatKRW(reverseTarget)}</b> 필요
-            </p>
-            <button
-              onClick={() => patch({ goalNetworth: Math.round(reverseTarget) })}
-              className="mt-2 text-xs font-semibold text-brand-700 underline"
-            >
-              이 값을 목표 순자산으로 적용
-            </button>
-            <p className="mt-1 text-xs text-brand-400">＊4% 규칙 · 예시·가정</p>
-          </div>
-        </Card>
+            {v.goalPassiveIncome > 0 && (
+              <div className="border-t border-ink-100 pt-4">
+                <p className="text-xs leading-relaxed text-ink-500">
+                  월 {formatKRW(v.goalPassiveIncome)} × 12 ÷ 4% ≈{" "}
+                  <span className="font-semibold text-ink-700">{formatKRW(reverseTarget)}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => patch({ goalNetworth: Math.round(reverseTarget) })}
+                  className="mt-2 text-xs font-semibold text-gold-600 hover:underline"
+                >
+                  순자산 목표로 적용
+                </button>
+              </div>
+            )}
+          </Card>
+        </QuietSection>
 
-        <AssumptionNote>
-          목표는 참고선이에요. 숫자는 예시·가정이며 언제든 바꿀 수 있습니다.
-        </AssumptionNote>
+        <AssumptionNote>목표는 참고선이에요. 언제든 바꿀 수 있습니다.</AssumptionNote>
       </div>
     </div>
   );
