@@ -274,7 +274,7 @@ function CalendarMonth({
                   <span
                     className="mt-0.5 h-1 w-full rounded-full"
                     style={{
-                      background: `rgba(196, 165, 116, ${intensity})`,
+                      background: `rgba(74, 144, 184, ${intensity})`,
                     }}
                   />
                 </>
@@ -285,9 +285,7 @@ function CalendarMonth({
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] text-ink-400">
-        셀 하단 띠 = 그달 대비 상대 지출량(bronze 히트맵). 날짜를 누르면 아래에 항목이 펼쳐집니다.
-      </p>
+      <p className="mt-2 text-[11px] text-ink-400">띠가 진할수록 그날 지출이 많아요. 날짜를 누르면 아래에 내역이 열려요.</p>
     </Card>
   );
 }

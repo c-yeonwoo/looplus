@@ -3,45 +3,44 @@
 
 /* ============================================================
    시라노 — Design Tokens
-   브랜드: Quiet Ledger (조용한 장부) · Charcoal & Champagne bronze
-   원칙: 코치의 신뢰감 · 액센트(bronze)와 기능색(amber) 역할 분리 · 데이터 우선.
+   브랜드: Cool Mist · 쿨 슬레이트 + 스틸 블루 액센트
+   (토큰명 gold-* 는 하위호환 — 값은 쿨톤 액센트)
    ============================================================ */
 
 @theme {
-  /* ---- Brand (Ink charcoal) ---- */
-  --color-brand-50: #f7f7f8;
-  --color-brand-100: #ececee;
-  --color-brand-200: #d3d4d7;
-  --color-brand-300: #aeb0b5;
-  --color-brand-400: #82848a;
-  --color-brand-500: #585a60;
-  --color-brand-600: #3a3c42;
-  --color-brand-700: #292b30;
-  --color-brand-800: #1c1d21;
-  --color-brand-900: #14151a;
+  /* ---- Brand (cool slate) ---- */
+  --color-brand-50: #f1f5f9;
+  --color-brand-100: #e2e8f0;
+  --color-brand-200: #cbd5e1;
+  --color-brand-300: #94a3b8;
+  --color-brand-400: #64748b;
+  --color-brand-500: #475569;
+  --color-brand-600: #334155;
+  --color-brand-700: #1e293b;
+  --color-brand-800: #152033;
+  --color-brand-900: #0f172a;
 
-  /* ---- Accent: Champagne bronze (CTA·강조 · invest amber와 chroma로 분리) ----
-     토큰명 gold-* 는 하위호환 유지. 값은 옐로우골드가 아닌 뮤트 브론즈. */
-  --color-gold-50: #f6f3ee;
-  --color-gold-100: #ebe4d8;
-  --color-gold-200: #d9cdb8;
-  --color-gold-300: #cdb892;
-  --color-gold-400: #c4a574;
-  --color-gold-500: #a88b5c;
-  --color-gold-600: #7d6644;
+  /* ---- Accent: steel blue (CTA·강조) — 토큰명 gold-* 유지 ---- */
+  --color-gold-50: #eef6fa;
+  --color-gold-100: #d6ebf4;
+  --color-gold-200: #aed5e8;
+  --color-gold-300: #7bb8d4;
+  --color-gold-400: #4a90b8;
+  --color-gold-500: #3a7a9e;
+  --color-gold-600: #2d5f7c;
 
-  /* ---- Coach moment (드물게 · 다음 한 걸음 등) ---- */
-  --color-sage-50: #f0f4f2;
-  --color-sage-100: #dce6e1;
-  --color-sage-500: #5b7c6e;
-  --color-sage-600: #4a6659;
-  --color-sage-700: #3a5147;
+  /* ---- Soft moment (다음 한 걸음 등) ---- */
+  --color-sage-50: #f0f7f6;
+  --color-sage-100: #d9ece9;
+  --color-sage-500: #4d8b82;
+  --color-sage-600: #3d7169;
+  --color-sage-700: #2f5852;
 
-  /* ---- Ink (중립 · 텍스트/보더/배경 · cool paper) ---- */
-  --color-ink-50: #f4f5f7;
-  --color-ink-100: #eef0f3;
-  --color-ink-200: #e2e5ea;
-  --color-ink-300: #c8ced6;
+  /* ---- Ink ---- */
+  --color-ink-50: #f8fafc;
+  --color-ink-100: #f1f5f9;
+  --color-ink-200: #e2e8f0;
+  --color-ink-300: #cbd5e1;
   --color-ink-400: #94a3b8;
   --color-ink-500: #64748b;
   --color-ink-600: #475569;
@@ -49,44 +48,35 @@
   --color-ink-800: #1e293b;
   --color-ink-900: #0f172a;
 
-  /* ---- 자산 카테고리 (기능색 · 접근성 확보) ---- */
-  /* invest = 성장/복리 (amber) — CTA bronze와 구분 유지 */
+  /* ---- 자산 카테고리 (기능색) ---- */
   --color-invest-50: #fffbeb;
   --color-invest-100: #fef3c7;
   --color-invest-500: #f59e0b;
   --color-invest-600: #d97706;
   --color-invest-700: #b45309;
-  /* save = 안전/유동 (emerald) */
   --color-save-50: #ecfdf5;
   --color-save-100: #d1fae5;
   --color-save-500: #10b981;
   --color-save-600: #059669;
   --color-save-700: #047857;
-  /* spend = 소비/out (sky) */
   --color-spend-50: #f0f9ff;
   --color-spend-100: #e0f2fe;
   --color-spend-500: #0ea5e9;
   --color-spend-600: #0284c7;
   --color-spend-700: #0369a1;
 
-  /* ---- 시맨틱 ---- */
   --color-success: #059669;
   --color-warning: #d97706;
   --color-danger: #dc2626;
-  --color-locked: #0d9488; /* 잠긴 자산(연금·IRP) — teal */
-  /* 목표선 = bronze보다 한 톤 깊은 샴페인 (차트 가독) */
-  --color-goal: #b8956c;
+  --color-locked: #0d9488;
+  --color-goal: #4a90b8;
 
-  /* ---- Radius ---- */
-  --radius-card: 1rem; /* 16px */
-  --radius-field: 0.75rem; /* 12px */
+  --radius-card: 1rem;
+  --radius-field: 0.75rem;
 
-  /* ---- Font ---- */
   --font-sans: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
     -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
-
-/* ============================================================ */
 
 :root {
   color-scheme: light;
@@ -102,20 +92,19 @@ body {
   color: var(--color-ink-900);
   -webkit-font-smoothing: antialiased;
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-/* 워드마크·브랜드 순간 — next/font가 html에 --font-display 주입 */
 .font-display {
   font-family: var(--font-display), "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
 }
 
-/* 숫자는 표 정렬 (재무 수치 위계) */
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/* 슬라이더 (배분 비율 조절) */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -130,9 +119,9 @@ input[type="range"]::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background: var(--color-brand-600);
+  background: var(--color-gold-500);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -143,7 +132,6 @@ input[type="range"]::-webkit-slider-thumb {
   scrollbar-width: none;
 }
 
-/* 엔진 캔버스 — 자금 흐름 애니메이션 (upstream → downstream) */
 @keyframes flowdash {
   to {
     stroke-dashoffset: -24;

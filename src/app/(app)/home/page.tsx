@@ -30,7 +30,7 @@ export default function HomePage() {
         <EmptyState
           icon="diagnosis"
           title="먼저 진단으로 현재 위치를 확인해요"
-          desc="자산·소득을 입력하면 8단계 중 내 위치와 엔진 출발점이 만들어집니다."
+          desc="자산·소득을 입력하면 지금 단계와 다음 할 일이 보여요."
           action={
             <Link href="/onboarding">
               <Button>시작하기</Button>
@@ -102,11 +102,11 @@ export default function HomePage() {
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
               <Icon name="trending-up" size={16} className="text-brand-600" />
-              엔진 미리보기 ({targetYears}년)
+              {targetYears}년 뒤 미리보기
             </div>
             <Link href="/engine">
               <Button className="!py-1.5 !text-xs">
-                엔진 열기 <Icon name="arrow-right" size={14} />
+                자산 설계 <Icon name="arrow-right" size={14} />
               </Button>
             </Link>
           </div>
@@ -122,11 +122,11 @@ export default function HomePage() {
             ) : (
               <EmptyState
                 icon="engine"
-                title="아직 엔진이 비어 있어요"
-                desc="버킷을 조립하면 n년 뒤 자산 곡선이 보입니다."
+                title="아직 배분이 없어요"
+                desc="항목을 추가하면 자산 곡선이 그려집니다."
                 action={
                   <Link href="/engine">
-                    <Button>엔진 만들기</Button>
+                    <Button>설계 시작</Button>
                   </Link>
                 }
               />
@@ -171,8 +171,8 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {(
             [
-              { href: "/engine", label: "엔진", icon: "engine" },
-              { href: "/spending", label: "지출관리", icon: "wallet" },
+              { href: "/engine", label: "자산 설계", icon: "engine" },
+              { href: "/spending", label: "지출", icon: "wallet" },
               { href: "/diagnosis", label: "진단", icon: "diagnosis" },
               { href: "/goals", label: "목표", icon: "target" },
             ] as { href: string; label: string; icon: IconName }[]
@@ -188,10 +188,6 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-
-      <p className="text-xs text-ink-400">
-        홈 = &quot;지금 어디 · 목표까지 얼마 · 언제 · 다음 뭐&quot; · 모든 수치는 예시·가정
-      </p>
     </div>
   );
 }

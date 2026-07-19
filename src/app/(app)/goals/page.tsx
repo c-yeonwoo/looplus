@@ -7,7 +7,7 @@ export default function GoalsPage() {
       <PageHeader
         icon="target"
         title="목표 · 비전"
-        desc="미래의 나(도달점)를 그려요. 이 목표가 엔진의 목표선 · 달성률 · ETA 기준이 됩니다."
+        desc="어디까지 가고 싶은지 적어 두세요. 설계 화면의 목표선으로 쓰입니다."
       />
       <GoalsPanel />
     </div>

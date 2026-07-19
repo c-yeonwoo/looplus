@@ -22,7 +22,7 @@ export function Inspector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-bold text-ink-700">인스펙터 · {bucket.name}</div>
+        <div className="text-sm font-bold text-ink-800">{bucket.name}</div>
         <Badge
           tone={bucket.category === "invest" ? "amber" : bucket.category === "save" ? "emerald" : "sky"}
         >

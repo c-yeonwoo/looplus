@@ -155,14 +155,14 @@ export function EngineBuilder() {
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* 팔레트 — 기본 펼침, 접기 가능 */}
+        {/* 항목 추가 */}
         {paletteOpen ? (
-          <Card pad={false} className="shrink-0 lg:w-[188px]">
+          <Card pad={false} className="shrink-0 lg:w-[200px]">
             <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
-              <span className="text-sm font-bold text-ink-800">팔레트</span>
+              <span className="text-sm font-bold text-ink-800">항목 추가</span>
               <button
                 onClick={() => setPaletteOpen(false)}
-                aria-label="팔레트 접기"
+                aria-label="접기"
                 className="text-ink-400 hover:text-ink-700"
               >
                 <Icon name="x" size={16} />
@@ -177,12 +177,12 @@ export function EngineBuilder() {
             onClick={() => setPaletteOpen(true)}
             className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-50"
           >
-            <Icon name="plus" size={16} /> 팔레트
+            <Icon name="plus" size={16} /> 항목 추가
           </button>
         )}
 
-        {/* 메인 — 캔버스 + 결과 (동일 너비) */}
-        <div className="relative min-w-0 flex-1 space-y-4">
+        {/* 흐름도 + 결과 */}
+        <div className="min-w-0 flex-1 space-y-4">
           <EngineCanvas
             buckets={buckets}
             monthlyIncome={monthlyIncome}
@@ -195,12 +195,11 @@ export function EngineBuilder() {
             }}
           />
 
-          {/* 결과 패널 */}
           <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
-            <Icon name="trending-up" size={16} className="text-brand-600" />
-            복리 시뮬 결과
+          <div className="flex items-center gap-1.5 text-sm font-bold text-ink-800">
+            <Icon name="trending-up" size={16} className="text-gold-500" />
+            예상 결과
           </div>
           <div className="flex items-center gap-2">
             {compareId && (
@@ -230,18 +229,15 @@ export function EngineBuilder() {
         </div>
 
         <p className="mb-3 text-xs text-ink-400">
-          수익률 가정: {SENSITIVITY[sens].label}
-          {SENSITIVITY[sens].deltaPp !== 0 &&
-            ` (기대수익률 ${SENSITIVITY[sens].deltaPp > 0 ? "+" : ""}${SENSITIVITY[sens].deltaPp}%p)`}
-          . 음영은 보수~공격 범위입니다. 가정이 바뀌면 결과가 이만큼 달라져요.
+          {SENSITIVITY[sens].label} 가정 · 회색 띠는 보수~공격 범위 (예시)
         </p>
 
         {nudge && (
-          <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             <Icon name="info" size={16} className="mt-0.5 shrink-0" />
             <span>
-              현재 속도로는 목표 시점({targetYears}년) 내 도달이 어려워 보여요. 저축·수익률을 높이거나
-              목표 시점을 늘려보는 건 어떨까요? (목표는 그대로 둬도 괜찮아요)
+              이 속도면 {targetYears}년 안에 목표 도달이 어려울 수 있어요. 저축을 늘리거나 목표
+              시점을 늦춰 보세요.
             </span>
           </div>
         )}
@@ -344,24 +340,29 @@ export function EngineBuilder() {
           )}
         </div>
 
-          <div className="mt-4">
+          <div className="mt-3">
             <AssumptionNote />
           </div>
           </Card>
+        </div>
 
-          {/* 인스펙터 — 노드 클릭 시에만 (데스크톱: 캔버스 위 오버레이 → 캔버스가 줄지 않음) */}
-          {selected && (
-            <Card className="absolute right-0 top-0 z-20 hidden max-h-full w-[264px] overflow-y-auto border-ink-300 shadow-xl lg:block">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-ink-800">버킷 편집</span>
-                <button
-                  onClick={() => setSelectedId(null)}
-                  aria-label="닫기"
-                  className="text-ink-400 hover:text-ink-700"
-                >
-                  <Icon name="x" size={16} />
-                </button>
-              </div>
+        {/* 항목 수정 — 오른쪽 컬럼 (캔버스 위 오버레이 아님) */}
+        {selected && (
+          <Card
+            pad={false}
+            className="sticky top-4 hidden max-h-[calc(100vh-2rem)] w-[280px] shrink-0 overflow-y-auto border-ink-200 lg:block"
+          >
+            <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
+              <span className="text-sm font-bold text-ink-800">항목 수정</span>
+              <button
+                onClick={() => setSelectedId(null)}
+                aria-label="닫기"
+                className="text-ink-400 hover:text-ink-700"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <div className="p-3">
               <Inspector
                 bucket={selected}
                 onChange={(patch) => updateBucket(selected.id, patch)}
@@ -378,15 +379,14 @@ export function EngineBuilder() {
                     : "border-amber-200 bg-amber-50 text-amber-700"
                 }`}
               >
-                비율 합계: {Math.round(sum)}% {sumOk ? "✓" : sum > 100 ? "초과" : "미달"}
+                비율 합계 {Math.round(sum)}% {sumOk ? "" : sum > 100 ? "· 초과" : "· 미달"}
               </div>
-            </Card>
-          )}
-        </div>
+            </div>
+          </Card>
+        )}
       </div>
 
-      {/* 인스펙터 — 모바일 바텀시트 */}
-      <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="버킷 편집">
+      <BottomSheet open={selected !== null} onClose={() => setSelectedId(null)} title="항목 수정">
         {selected && (
           <Inspector
             bucket={selected}

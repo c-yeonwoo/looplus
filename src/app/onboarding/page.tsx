@@ -16,7 +16,7 @@ import { track, trackOnboardingStartedOnce } from "@/lib/analytics";
 const STEPS: { key: string; label: string; icon: IconName }[] = [
   { key: "goals", label: "목표·비전", icon: "target" },
   { key: "diagnosis", label: "현재 진단", icon: "diagnosis" },
-  { key: "engine", label: "엔진 구성", icon: "engine" },
+  { key: "engine", label: "자산 설계", icon: "engine" },
 ];
 
 function OnboardingInner() {
@@ -45,7 +45,7 @@ function OnboardingInner() {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-6xl px-4 py-6 md:px-8">
+    <div className="mx-auto min-h-screen w-full max-w-[1280px] px-5 py-6 md:px-10">
       {/* Stepper */}
       <div className="mb-6 flex items-center justify-between">
         <Logo />
@@ -95,7 +95,7 @@ function OnboardingInner() {
             <StepHeader
               n={2}
               title="지금 내 위치를 확인해요"
-              desc="최소만 입력해도 됩니다. 이 데이터는 엔진과 그대로 공유돼요."
+              desc="최소만 입력해도 됩니다. 자산 설계와 같은 숫자를 씁니다."
             />
             <DiagnosisPanel />
           </>
@@ -104,8 +104,8 @@ function OnboardingInner() {
           <>
             <StepHeader
               n={3}
-              title="내 엔진을 조립해요"
-              desc="팔레트에서 버킷을 끌어다 배분하면 n년 뒤 자산이 바로 보입니다."
+              title="돈을 어디에 나눌까요"
+              desc="항목을 추가하고 비율만 맞추면, 몇 년 뒤 자산이 바로 보입니다."
             />
             <EngineBuilder />
           </>
@@ -119,7 +119,7 @@ function OnboardingInner() {
         </Button>
         {step < STEPS.length - 1 ? (
           <Button onClick={goNext}>
-            {step === 0 ? "이 목표로 시작하기" : "이 데이터로 엔진 구성"}
+            {step === 0 ? "다음" : "자산 설계로"}
             <Icon name="arrow-right" size={15} />
           </Button>
         ) : (

@@ -79,7 +79,7 @@ export function GoalsPanel() {
       {/* 목표 수치 */}
       <div className="space-y-5">
         <Card>
-          <SectionTitle n={3} desc="목표는 '타겟 라인' — 엔진 계산에는 영향을 주지 않아요.">
+          <SectionTitle n={3} desc="목표선으로만 쓰이고, 배분 계산에는 넣지 않아요.">
             목표 수치
           </SectionTitle>
           <div className="space-y-4">
@@ -118,7 +118,7 @@ export function GoalsPanel() {
         </Card>
 
         <AssumptionNote>
-          목표 = 타겟 라인(엔진 미영향) · 하드 상한 없음, 현실 피드백으로 안내 · 모든 수치는 예시·가정. 언제든 수정 가능합니다.
+          목표는 참고선이에요. 숫자는 예시·가정이며 언제든 바꿀 수 있습니다.
         </AssumptionNote>
       </div>
     </div>

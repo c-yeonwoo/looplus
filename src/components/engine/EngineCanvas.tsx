@@ -110,9 +110,9 @@ export function EngineCanvas({
       >
         <EmptyState
           icon="layers"
-          title="여기에 버킷을 끌어다 놓으세요"
-          desc="수입에서 시작해, 팔레트의 버킷을 조립하면 자금 흐름과 복리 결과가 그려집니다."
-          action={<Button onClick={onRecommend}>진단 데이터로 추천 배분 시작</Button>}
+          title="왼쪽에서 항목을 추가하세요"
+          desc="수입이 어디에 배분되는지, 몇 년 뒤 자산이 어떻게 되는지 바로 보여줍니다."
+          action={<Button onClick={onRecommend}>추천 배분으로 시작</Button>}
         />
       </div>
     );
@@ -140,7 +140,7 @@ export function EngineCanvas({
           strokeDasharray="5 5"
         />
         <text x={VB_W / 2} y={16} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="var(--color-brand-600)">
-          실현 자본소득 재투입 (하이브리드 복리)
+          배당·이자 등 → 다시 수입으로
         </text>
 
         {/* income → bucket 링크 */}
@@ -243,7 +243,7 @@ export function EngineCanvas({
         {feed.length > 0 && (
           <foreignObject x={pool.x} y={pool.cy - pool.h / 2} width={pool.w} height={pool.h}>
             <div className="flex h-full flex-col items-center justify-center rounded-lg bg-brand-700 px-3 text-center text-white">
-              <div className="text-sm font-bold">자산 풀</div>
+              <div className="text-sm font-bold">모인 자산</div>
               <div className="mt-0.5 text-[11px] opacity-80">복리 누적</div>
               <div className="mt-1.5 text-[10px] leading-relaxed opacity-70">
                 미실현 = 내부 복리

@@ -77,9 +77,9 @@ export const CATEGORY_META: Record<
   BucketCategory,
   { label: string; accent: string; note: string }
 > = {
-  invest: { label: "투자", accent: "amber", note: "수익 발생 → 복리 재투입" },
-  save: { label: "저축", accent: "emerald", note: "유동성·목적 자금 (저수익)" },
-  spend: { label: "지출", accent: "sky", note: "소비 — 시스템 밖(out)" },
+  invest: { label: "투자", accent: "amber", note: "불리는 돈" },
+  save: { label: "저축", accent: "emerald", note: "모아 두는 돈" },
+  spend: { label: "지출", accent: "sky", note: "쓰는 돈" },
 };
 
 export interface Bucket {
