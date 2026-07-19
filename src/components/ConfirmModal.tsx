@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./ui";
 
 export function ConfirmModal({
@@ -15,7 +15,7 @@ export function ConfirmModal({
 }: {
   open: boolean;
   title: string;
-  message: string;
+  message: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
@@ -53,7 +53,7 @@ export function ConfirmModal({
         <h2 id="confirm-title" className="text-base font-bold text-ink-900">
           {title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-ink-600">{message}</p>
+        <div className="mt-2 text-sm leading-relaxed text-ink-600">{message}</div>
         <div className="mt-5 flex justify-end gap-2">
           <button
             ref={cancelRef}

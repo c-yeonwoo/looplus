@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { monthTotalSpendingManwon, spendRatioSuggestion, wonToManwon } from "./bridge";
+import {
+  monthSpendingBreakdown,
+  monthTotalSpendingManwon,
+  spendRatioSuggestion,
+  wonToManwon,
+} from "./bridge";
 import type { SpendingState } from "./types";
 
 const spending: SpendingState = {
@@ -34,6 +39,10 @@ describe("spending bridge", () => {
   it("sums fixed + month variable into manwon", () => {
     // 700k + 250k = 950k → 95만
     expect(monthTotalSpendingManwon(spending, 2026, 6)).toBe(95);
+    const b = monthSpendingBreakdown(spending, 2026, 6);
+    expect(b.variableWon).toBe(250_000);
+    expect(b.fixedWon).toBe(700_000);
+    expect(b.manwon).toBe(95);
   });
 
   it("suggests ratios vs income", () => {

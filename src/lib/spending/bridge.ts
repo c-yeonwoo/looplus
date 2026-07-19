@@ -10,15 +10,35 @@ export function wonToManwon(won: number): number {
   return Math.floor(won / 10_000);
 }
 
+/** Phase A / 엔진 sync용 — 당월 변동 + 고정 전체(결제일 무관) */
+export function monthSpendingBreakdown(
+  spending: SpendingState,
+  year: number,
+  monthIndex: number,
+): {
+  variableWon: number;
+  fixedWon: number;
+  totalWon: number;
+  manwon: number;
+} {
+  const variableWon = sumLogs(logsInMonth(spending.logs, year, monthIndex));
+  const fixedWon = sumFixed(spending.fixed);
+  const totalWon = variableWon + fixedWon;
+  return {
+    variableWon,
+    fixedWon,
+    totalWon,
+    manwon: wonToManwon(totalWon),
+  };
+}
+
 /** 해당 월 변동합 + 고정합 → 엔진 monthlySpending(만원, 버림) */
 export function monthTotalSpendingManwon(
   spending: SpendingState,
   year: number,
   monthIndex: number,
 ): number {
-  const variable = sumLogs(logsInMonth(spending.logs, year, monthIndex));
-  const fixed = sumFixed(spending.fixed);
-  return wonToManwon(variable + fixed);
+  return monthSpendingBreakdown(spending, year, monthIndex).manwon;
 }
 
 /**

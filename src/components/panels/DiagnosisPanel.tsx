@@ -18,6 +18,7 @@ import {
   AssumptionNote,
 } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { ApplySpendingToEngine } from "@/components/spending/ApplySpendingToEngine";
 
 const INCOME_ORDER: IncomeSourceType[] = ["labor", "capital", "platform", "freelance"];
 
@@ -96,7 +97,9 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
         </Card>
 
         <Card>
-          <SectionTitle n={3}>지출 · 비상금</SectionTitle>
+          <SectionTitle n={3} desc="대략값도 되고, 지출 실측을 가져올 수도 있어요">
+            지출 · 비상금
+          </SectionTitle>
           <div className="grid grid-cols-2 gap-3">
             <Field label="월 지출 (대략)">
               <NumberInput value={s.monthlySpending} onChange={(v) => patch({ monthlySpending: v })} suffix="만원" />
@@ -104,6 +107,9 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
             <Field label="비상금" hint="몇 개월치">
               <NumberInput value={s.emergencyMonths} onChange={(v) => patch({ emergencyMonths: v })} suffix="개월" />
             </Field>
+          </div>
+          <div className="mt-3">
+            <ApplySpendingToEngine source="diagnosis" compact />
           </div>
           <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
             → 월 저축·투자 가능액 약 <b>{formatKRW(Math.max(0, m.monthlySavable))}</b> · 저축률{" "}
