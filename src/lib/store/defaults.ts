@@ -8,11 +8,9 @@ export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   investAssets: 0,
   realEstate: 0,
   liabilities: 0,
+  // 근로소득만 샘플 — 나머지는 팔레트에서 커스텀 추가
   incomeSources: [
-    { id: "inc_labor", type: "labor", monthly: 0, position: 0, name: "근로소득" },
-    { id: "inc_capital", type: "capital", monthly: 0, position: 1, name: "자본소득" },
-    { id: "inc_platform", type: "platform", monthly: 0, position: 2, name: "플랫폼 부수입" },
-    { id: "inc_freelance", type: "freelance", monthly: 0, position: 3, name: "프리랜서" },
+    { id: "inc_labor", type: "labor", monthly: 300, position: 0, name: "근로소득" },
   ],
   monthlySpending: 0,
   emergencyMonths: 0,

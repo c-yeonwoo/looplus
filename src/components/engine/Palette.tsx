@@ -17,7 +17,11 @@ import {
   type IncomeSourceType,
 } from "@/lib/types";
 import { childrenOf, roots } from "@/lib/engine/tree";
-import { createIncomeSource, INCOME_TYPE_ORDER } from "@/lib/income";
+import {
+  createIncomeSource,
+  INCOME_PALETTE_PRESETS,
+  INCOME_TYPE_ORDER,
+} from "@/lib/income";
 import { Field, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { parseNum } from "@/lib/format";
@@ -125,7 +129,7 @@ export function Palette({
   /** 수입원: 프리셋 선택 시 금액 폼 / custom = 자율 */
   const [incomeDraft, setIncomeDraft] = useState<IncomeSourceType | "custom" | null>(null);
   const [customIncomeName, setCustomIncomeName] = useState("");
-  const [customIncomeType, setCustomIncomeType] = useState<IncomeSourceType>("labor");
+  const [customIncomeType, setCustomIncomeType] = useState<IncomeSourceType>("capital");
   const [customIncomeMonthly, setCustomIncomeMonthly] = useState("");
 
   const selected = selectedId ? buckets.find((b) => b.id === selectedId) : null;
@@ -149,8 +153,9 @@ export function Palette({
       {/* 0. 수입원 */}
       <div>
         <div className="mb-1.5 text-xs font-bold text-brand-600">0. 수입원 (월수입 왼쪽)</div>
+        <p className="mb-1.5 text-[10px] text-ink-400">샘플은 근로소득 · 나머지는 직접 만들기</p>
         <div className="space-y-1.5">
-          {INCOME_TYPE_ORDER.map((type) => (
+          {INCOME_PALETTE_PRESETS.map((type) => (
             <div key={type}>
               <button
                 type="button"
@@ -199,11 +204,11 @@ export function Palette({
                 <TextInput
                   value={customIncomeName}
                   onChange={setCustomIncomeName}
-                  placeholder="예: 알바 · 배당"
+                  placeholder="예: 배당 · 알바 · 프리랜서"
                 />
               </Field>
               <div className="flex flex-wrap gap-1">
-                {INCOME_TYPE_ORDER.map((t) => (
+                {INCOME_TYPE_ORDER.filter((t) => t !== "labor").map((t) => (
                   <button
                     key={t}
                     type="button"

@@ -45,3 +45,6 @@ export const INCOME_TYPE_ORDER: IncomeSourceType[] = [
   "platform",
   "freelance",
 ];
+
+/** 팔레트에 바로 보이는 샘플 프리셋 (나머지는 직접 만들기) */
+export const INCOME_PALETTE_PRESETS: IncomeSourceType[] = ["labor"];
