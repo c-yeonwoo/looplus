@@ -6,9 +6,9 @@ import {
   categoryBreakdown,
   fixedCategoryBreakdown,
   logsInMonth,
+  partitionFixedByBilling,
   peerInsight,
   patternInsight,
-  sumFixed,
   sumLogs,
 } from "@/lib/spending/calc";
 import { formatWon } from "@/lib/spending/format";
@@ -20,34 +20,40 @@ import { clsx } from "@/lib/clsx";
 export function SummaryTab() {
   const profile = useProfile((s) => s.profile);
   const spending = selectSpending(profile);
-  const now = new Date();
-  const year = now.getFullYear();
-  const monthIndex = now.getMonth();
+  const today = new Date();
+  const year = today.getFullYear();
+  const monthIndex = today.getMonth();
+  const day = today.getDate();
 
   const monthLogs = useMemo(
     () => logsInMonth(spending.logs, year, monthIndex),
     [spending.logs, year, monthIndex],
   );
+  const fixedParts = useMemo(
+    () => partitionFixedByBilling(spending.fixed, new Date(year, monthIndex, day)),
+    [spending.fixed, year, monthIndex, day],
+  );
   const variableSpent = sumLogs(monthLogs);
-  const fixedTotal = sumFixed(spending.fixed);
-  const totalSpend = variableSpent + fixedTotal;
+  const fixedPaid = fixedParts.paidWon;
+  const fixedUpcoming = fixedParts.upcomingWon;
+  const totalSpend = variableSpent + fixedPaid;
   const variableBreakdown = categoryBreakdown(monthLogs);
-  const fixedBreakdown = fixedCategoryBreakdown(spending.fixed);
+  const fixedBreakdown = fixedCategoryBreakdown(fixedParts.paid);
   const peer = peerInsight(variableBreakdown, profile.vision?.currentAge);
   const pattern = patternInsight(monthLogs);
   const incomeWon =
     (profile.snapshot?.incomeSources.reduce((s, i) => s + i.monthly, 0) ?? 0) * 10_000;
   const totalIncomePct = incomeWon > 0 ? (totalSpend / incomeWon) * 100 : null;
-  const fixedIncomePct = incomeWon > 0 ? (fixedTotal / incomeWon) * 100 : null;
+  const fixedIncomePct = incomeWon > 0 ? (fixedPaid / incomeWon) * 100 : null;
   const variableShare = totalSpend > 0 ? (variableSpent / totalSpend) * 100 : 0;
-  const fixedShare = totalSpend > 0 ? (fixedTotal / totalSpend) * 100 : 0;
+  const fixedShare = totalSpend > 0 ? (fixedPaid / totalSpend) * 100 : 0;
 
   return (
     <div className="space-y-5">
-      {/* 총지출 히어로 */}
+      {/* 총지출 히어로 — 변동 + 결제된 고정만 */}
       <section className="rounded-2xl border border-ink-200 bg-white p-5 md:p-6">
         <div className="text-xs font-semibold tracking-wide text-ink-400">
-          {monthIndex + 1}월 지출 총합
+          {monthIndex + 1}월 지출 총합 · 오늘까지
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-2">
           <span className="tnum text-3xl font-extrabold tracking-tight text-ink-900">
@@ -58,7 +64,7 @@ export function SummaryTab() {
           )}
         </div>
         <p className="mt-1 text-xs text-ink-500">
-          변동 {formatWon(variableSpent)} + 고정 {formatWon(fixedTotal)}
+          변동 {formatWon(variableSpent)} + 결제된 고정 {formatWon(fixedPaid)}
         </p>
         <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-ink-100">
           {totalSpend > 0 ? (
@@ -71,7 +77,7 @@ export function SummaryTab() {
               <div
                 className="bg-brand-400 transition-all"
                 style={{ width: `${fixedShare}%` }}
-                title="고정"
+                title="결제된 고정"
               />
             </>
           ) : null}
@@ -83,21 +89,21 @@ export function SummaryTab() {
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-brand-400" />
-            고정 {fixedShare.toFixed(0)}%
+            결제된 고정 {fixedShare.toFixed(0)}%
           </span>
         </div>
       </section>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Card className="!p-4">
-          <div className="text-xs font-semibold text-ink-400">고정비</div>
+          <div className="text-xs font-semibold text-ink-400">결제된 고정비</div>
           <div className="tnum mt-1 text-xl font-extrabold text-ink-900">
-            {formatWon(fixedTotal)}
+            {formatWon(fixedPaid)}
           </div>
           <p className="mt-1 text-xs text-ink-500">
             {fixedIncomePct != null
-              ? `소득 대비 ${fixedIncomePct.toFixed(0)}% · 결제일만 관리`
-              : "진단에서 소득을 넣으면 비중을 보여줘요"}
+              ? `소득 대비 ${fixedIncomePct.toFixed(0)}% · 결제일 기준`
+              : "결제일 기준 · 오늘까지 나간 것만"}
           </p>
         </Card>
         <Card className="!p-4 border-gold-200 bg-gold-50/40">
@@ -122,12 +128,12 @@ export function SummaryTab() {
           />
         </Card>
         <Card>
-          <div className="mb-3 text-sm font-bold text-ink-800">카테고리별 고정지출</div>
+          <div className="mb-3 text-sm font-bold text-ink-800">카테고리별 결제된 고정</div>
           <DonutChart
             segments={fixedBreakdown}
-            totalWon={fixedTotal}
-            centerLabel="고정"
-            emptyLabel="고정지출을 등록해 보세요"
+            totalWon={fixedPaid}
+            centerLabel="결제"
+            emptyLabel="아직 결제된 고정이 없어요"
           />
         </Card>
       </div>
@@ -179,6 +185,13 @@ export function SummaryTab() {
           아닙니다.
         </AssumptionNote>
       </div>
+
+      {fixedUpcoming > 0 && (
+        <p className="text-center text-xs text-ink-400">
+          이달 남은 고정지출 예정 {formatWon(fixedUpcoming)}
+          <span className="text-ink-300"> · 결제일 전 · 총합에는 아직 포함하지 않아요</span>
+        </p>
+      )}
     </div>
   );
 }

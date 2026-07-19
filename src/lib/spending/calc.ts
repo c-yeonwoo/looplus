@@ -64,6 +64,49 @@ export function sumFixed(fixed: FixedExpense[]): number {
   return fixed.reduce((s, f) => s + f.amountWon, 0);
 }
 
+/** 해당 월의 실제 결제일 (말일보다 크면 말일로 클램프) */
+export function effectiveBillingDay(
+  billingDay: number,
+  year: number,
+  monthIndex: number,
+): number {
+  const last = new Date(year, monthIndex + 1, 0).getDate();
+  return Math.min(Math.max(1, billingDay), last);
+}
+
+/** 오늘 기준 이번 달 결제일이 지났으면(당일 포함) 결제됨 */
+export function isFixedPaidThisMonth(f: FixedExpense, today: Date = new Date()): boolean {
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  const day = today.getDate();
+  return effectiveBillingDay(f.billingDay, y, m) <= day;
+}
+
+export function partitionFixedByBilling(
+  fixed: FixedExpense[],
+  today: Date = new Date(),
+): {
+  paid: FixedExpense[];
+  upcoming: FixedExpense[];
+  paidWon: number;
+  upcomingWon: number;
+} {
+  const paid: FixedExpense[] = [];
+  const upcoming: FixedExpense[] = [];
+  for (const f of fixed) {
+    (isFixedPaidThisMonth(f, today) ? paid : upcoming).push(f);
+  }
+  const byDay = (a: FixedExpense, b: FixedExpense) => a.billingDay - b.billingDay;
+  paid.sort(byDay);
+  upcoming.sort(byDay);
+  return {
+    paid,
+    upcoming,
+    paidWon: sumFixed(paid),
+    upcomingWon: sumFixed(upcoming),
+  };
+}
+
 /** 남은 일수(오늘 포함) 기준 일일 여유 · 페이스 투영 */
 export function budgetPace(opts: {
   spentWon: number;
