@@ -135,8 +135,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-5 pb-24 pt-5 md:px-8 md:pb-10 lg:px-10">
-        <div className="mx-auto w-full max-w-[1280px]">{children}</div>
+      <main className="min-w-0 flex-1 px-5 pb-24 pt-5 md:px-6 md:pb-10 lg:px-8 xl:px-10">
+        <div className="mx-auto w-full max-w-[1680px]">{children}</div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-ink-200 bg-white/95 backdrop-blur md:hidden">
