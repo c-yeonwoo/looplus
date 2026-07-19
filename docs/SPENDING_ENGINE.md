@@ -1,6 +1,6 @@
 # 지출관리 ↔ 자산 설계 엔진 연동
 
-> 상태: **설계 확정 · 코드 자동 sync 미배선**  
+> 상태: **Phase A UX 구현** (`ApplySpendingToEngine`) · 자동 sync 없음  
 > 단위 브리지: `src/lib/spending/bridge.ts`
 
 ## 1. 역할 분리
@@ -26,10 +26,11 @@
 
 ## 3. 연동 단계 (제안)
 
-### Phase A — 단방향 pull (권장 1차)
-1. 지출 요약에 **「엔진에 반영」** 버튼 (또는 진단 패널에서 「지출 실측 가져오기」).
-2. `monthTotalSpendingManwon(spending, now)` → `snapshot.monthlySpending` 덮어쓰기.
-3. 사용자 확인 후 적용. 자동 덮어쓰기 없음 → 계획·실측 혼선 방지.
+### Phase A — 단방향 pull ✅
+1. 지출 **요약**: 「엔진에 반영」 / 진단: 「지출 실측 가져오기」 (`ApplySpendingToEngine`).
+2. `monthSpendingBreakdown` → ConfirmModal 확인 후 `snapshot.monthlySpending` 덮어쓰기.
+3. 값 = 당월 변동 + **고정 전체**(결제일 무관) · 만원 버림. 요약「오늘까지」와 의도적으로 다름.
+4. 이미 동일·실측 0원이면 버튼 비활성. analytics: `spend_applied_to_engine`.
 
 ### Phase B — 배분 트리 제안
 1. `spendRatioSuggestion`으로 소득 대비 `g_spend` % 제안.
@@ -55,6 +56,6 @@
 
 ## 6. 열린 결정
 
-- [ ] Phase A 트리거: 버튼 vs 진단 진입 시 배너
-- [ ] 반영 대상: `monthlySpending`만 / `g_spend` ratio까지
+- [x] Phase A 트리거: 요약 카드 + 진단 인라인 (배너 아님)
+- [ ] Phase B: `g_spend` ratio까지
 - [ ] 과거 달 평균 vs 당월만

@@ -20,7 +20,9 @@ export type AnalyticsEvent =
   | "action_completed"
   | "weekly_checkin"
   | "lead_cta_clicked"
-  | "spend_logged";
+  | "spend_logged"
+  | "budget_pace_viewed"
+  | "spend_applied_to_engine";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 

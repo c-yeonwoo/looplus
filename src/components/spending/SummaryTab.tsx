@@ -15,6 +15,7 @@ import { formatWon } from "@/lib/spending/format";
 import { AssumptionNote, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { DonutChart } from "./DonutChart";
+import { ApplySpendingToEngine } from "./ApplySpendingToEngine";
 import { clsx } from "@/lib/clsx";
 
 export function SummaryTab() {
@@ -93,6 +94,8 @@ export function SummaryTab() {
           </span>
         </div>
       </section>
+
+      <ApplySpendingToEngine source="summary" />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Card className="!p-4">

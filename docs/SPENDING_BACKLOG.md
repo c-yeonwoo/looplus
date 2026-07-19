@@ -38,7 +38,7 @@
 10. [ ] 패턴 인사이트 규칙 확장
 11. [ ] Supabase `spending_*` 마이그레이션 + sync
 12. [ ] analytics: `spend_logged` / `budget_pace_viewed`
-13. [ ] **엔진 Phase A**: 실측 → `monthlySpending` 수동 반영 UX
+13. [x] **엔진 Phase A**: 실측 → `monthlySpending` 수동 반영 UX
 
 ### P2 — 이후
 14. [ ] 엔진 Phase B: `g_spend` ratio 제안
