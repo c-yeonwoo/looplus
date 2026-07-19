@@ -2,11 +2,14 @@
  * 도메인 모델 — 핸드오프 §7 기반.
  *
  * 단위 규약(중요):
- *  - 모든 금액은 **만원** 단위 정수/실수 (예: 10억 = 100_000, 월 300만 = 300).
+ *  - 엔진·진단 금액은 **만원** 단위 (예: 10억 = 100_000, 월 300만 = 300).
+ *  - 지출관리(E) 금액은 **원** (`Profile.spending`) — 연동 시 /10000.
  *  - 비율은 퍼센트 값 (예: 54 = 54%).
  *  - 기간은 '지금부터 n년'.
  * 모든 수치는 '예시·가정'이며 수익을 보장하지 않는다.
  */
+
+import type { SpendingState } from "./spending/types";
 
 export type IncomeSourceType = "labor" | "capital" | "platform" | "freelance";
 
@@ -137,6 +140,8 @@ export interface Profile {
   engine: EngineConfig;
   scenarios: Scenario[];
   tracking: Tracking;
+  /** 지출관리(E). 금액 단위는 원. 구버전 persist엔 없을 수 있음 */
+  spending: SpendingState;
   onboardedAt: string | null;
   updatedAt: string;
 }

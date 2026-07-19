@@ -1,5 +1,6 @@
 import type { Bucket, EngineConfig, FinancialSnapshot, Profile, Vision } from "../types";
 import { emptyTracking } from "../types";
+import { seedSpending } from "../spending/seed";
 import { BUCKET_PRESETS, bucketFromPreset } from "../catalog";
 
 export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
@@ -38,9 +39,15 @@ export function emptyProfile(): Profile {
     engine: { buckets: [] },
     scenarios: [],
     tracking: emptyTracking(),
+    // 신규 프로필은 데모 시드로 시작 — 빈 화면보다 루프 이해에 도움
+    spending: seedSpending(),
     onboardedAt: null,
     updatedAt: new Date(0).toISOString(),
   };
+}
+
+export function ensureSpending(p: Profile): Profile["spending"] {
+  return p.spending ?? seedSpending();
 }
 
 /**
