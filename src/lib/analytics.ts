@@ -32,6 +32,8 @@ export type AnalyticsEvent =
   | "action_completed"
   | "weekly_checkin"
   | "lead_cta_clicked"
+  | "linked_tool_clicked"
+  | "home_week_delta_viewed"
   | "spend_logged"
   | "budget_pace_viewed"
   | "spend_applied_to_engine"
@@ -202,6 +204,8 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "action_completed",
   "weekly_checkin",
   "lead_cta_clicked",
+  "linked_tool_clicked",
+  "home_week_delta_viewed",
   "spend_logged",
   "budget_pace_viewed",
   "spend_applied_to_engine",

@@ -46,8 +46,17 @@ supabase projects api-keys --project-ref <REF> -o env
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / publishable |
-| `NEXT_PUBLIC_POSTHOG_KEY` | (선택) |
-| `NEXT_PUBLIC_LEAD_URL` | (선택) |
+| `NEXT_PUBLIC_POSTHOG_KEY` | (선택) 계측 — 없으면 no-op |
+| `NEXT_PUBLIC_LEAD_URL` | (선택) 리드젠 CTA — 없으면 "곧 연결" |
+| `NEXT_PUBLIC_LEAD_URL_SIGNAL_DESK` | (선택) 주식 버킷 크로스셀 |
+| `NEXT_PUBLIC_LEAD_URL_SIGNAL_APT` | (선택) 부동산 버킷 크로스셀 |
+
+### 운영 스위치 체크리스트 (GA)
+
+1. Supabase URL + publishable → Redeploy → `/login` 에 OTP 폼
+2. Auth Site URL / Redirect = Railway 도메인
+3. `NEXT_PUBLIC_POSTHOG_KEY` → 온보딩/아하 이벤트 수신
+4. `NEXT_PUBLIC_LEAD_URL` → 엔진·홈 CTA가 외부로 열림
 
 원격 스모크:
 

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useProfile } from "@/lib/store/useProfile";
 import { useDerived } from "@/lib/useDerived";
-import { STAGE_NAMES } from "@/lib/engine";
+import { STAGE_NAMES, ratioSum } from "@/lib/engine";
 import { formatKRW, formatPct } from "@/lib/format";
 import { avgMonthlySpendWon } from "@/lib/spending";
 import { ensureSpending } from "@/lib/store/defaults";
@@ -17,7 +17,10 @@ import {
   HomeMetricGrid,
   buildHomeMetrics,
 } from "@/components/home/HomeMetricGrid";
+import { LeadCta } from "@/components/LeadCta";
 import { computeDailyStreak, normalizeTracking } from "@/lib/tracking";
+import { computeWeekDelta, type WeekDelta } from "@/lib/homeDelta";
+import { track } from "@/lib/analytics";
 import { emptyTracking } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 
@@ -131,6 +134,23 @@ export default function HomePage() {
     recordedAvgSpendWon3m,
   });
 
+  const engineSumOk = Math.round(ratioSum(profile.engine.buckets)) === 100;
+  const [weekDelta, setWeekDelta] = useState<WeekDelta | null>(null);
+
+  useEffect(() => {
+    const d = computeWeekDelta({
+      netWorth: m.netWorth,
+      achievementPct: currentAchievePct,
+      stage: stage.stage,
+    });
+    setWeekDelta(d);
+    track("home_week_delta_viewed", {
+      is_new_week: d.isNewWeek,
+      nw_delta: Math.round(d.netWorthDelta),
+      stage_delta: d.stageDelta,
+    });
+  }, [m.netWorth, currentAchievePct, stage.stage]);
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {/* 단계 히어로 */}
@@ -155,6 +175,30 @@ export default function HomePage() {
               ` · 월 패시브 ${formatKRW(vision.goalPassiveIncome)}`}
             {` · ${targetYears}년`}
           </p>
+        )}
+        {weekDelta && !weekDelta.isNewWeek && (
+          <p className="mt-3 text-xs text-white/50">
+            이번 주{" "}
+            <span className="text-white/80">
+              순자산 {formatSignedMan(weekDelta.netWorthDelta)}
+            </span>
+            {" · "}
+            <span className="text-white/80">
+              달성 {formatSignedPp(weekDelta.achievementDeltaPp)}
+            </span>
+            {weekDelta.stageDelta !== 0 && (
+              <>
+                {" · "}
+                <span className="text-gold-300">
+                  단계 {weekDelta.stageDelta > 0 ? "+" : ""}
+                  {weekDelta.stageDelta}
+                </span>
+              </>
+            )}
+          </p>
+        )}
+        {weekDelta?.isNewWeek && (
+          <p className="mt-3 text-xs text-white/45">이번 주 기준점을 기록했어요</p>
         )}
       </section>
 
@@ -264,8 +308,22 @@ export default function HomePage() {
       </Card>
 
       <HomeMetricGrid metrics={homeMetrics} />
+
+      {engineSumOk && <LeadCta placement="home_retention" />}
     </div>
   );
+}
+
+function formatSignedMan(man: number): string {
+  if (man === 0) return "변화 없음";
+  const sign = man > 0 ? "+" : "";
+  return `${sign}${formatKRW(man)}`;
+}
+
+function formatSignedPp(pp: number): string {
+  if (Math.abs(pp) < 0.05) return "변화 없음";
+  const sign = pp > 0 ? "+" : "";
+  return `${sign}${pp.toFixed(1)}%p`;
 }
 
 /** 1% 미만도 안 보이도록 자리수 조정 (0.0% 오인 방지) */
