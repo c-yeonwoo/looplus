@@ -11,6 +11,8 @@ import {
 import { Field, NumberInput, Button, Badge } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { clampPct } from "@/lib/format";
+import { resolveLinkedTool } from "@/lib/leads";
+import { LeadCta } from "@/components/LeadCta";
 import { SpendRatioSuggestionInline } from "./SpendRatioSuggestion";
 import { PushBudgetToVariableInline } from "./PushBudgetToVariable";
 
@@ -173,12 +175,20 @@ export function Inspector({
         </Field>
       )}
 
-      {bucket.linkedTool && (
-        <div className="flex items-center justify-between text-xs text-ink-400">
-          <span>연결 도구</span>
-          <span>{bucket.linkedTool}</span>
-        </div>
-      )}
+      {(() => {
+        const tool = resolveLinkedTool(bucket.linkedTool);
+        if (!tool) return null;
+        return (
+          <LeadCta
+            compact
+            placement="inspector_tool"
+            toolId={tool.id}
+            title={tool.label}
+            body={tool.blurb}
+            className="mt-1"
+          />
+        );
+      })()}
 
       {onMoveSibling && (
         <div>

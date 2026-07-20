@@ -9,6 +9,7 @@ describe("analytics event catalog", () => {
       "aha_engine_allocated",
       "page_viewed",
       "lead_cta_clicked",
+      "home_week_delta_viewed",
       "weekly_checkin",
     ] as const) {
       expect(ANALYTICS_EVENTS).toContain(e);

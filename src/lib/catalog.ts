@@ -63,7 +63,7 @@ export const ITEM_PRESETS: BucketPreset[] = [
     defaultReturnPct: 8,
     defaultRealizedPct: 2,
     desc: "장기 성장",
-    linkedTool: "Signal Desk (v2)",
+    linkedTool: "signal_desk",
   },
   {
     key: "realestate",
@@ -74,7 +74,7 @@ export const ITEM_PRESETS: BucketPreset[] = [
     defaultReturnPct: 6,
     defaultRealizedPct: 3,
     desc: "임대·시세",
-    linkedTool: "Signal APT (v2)",
+    linkedTool: "signal_apt",
   },
   {
     key: "pension",

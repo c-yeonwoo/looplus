@@ -96,6 +96,7 @@ export function EngineBuilder() {
   const [scenarioName, setScenarioName] = useState("");
   const [sens, setSens] = useState<SensitivityKey>("base");
   const [sharing, setSharing] = useState(false);
+  const [justShared, setJustShared] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
@@ -278,6 +279,7 @@ export function EngineBuilder() {
         target_years: targetYears,
         achievement_pct: Math.round(projection.achievementPct),
       });
+      setJustShared(true);
     } catch (e) {
       console.error("[share]", e);
     } finally {
@@ -543,7 +545,25 @@ export function EngineBuilder() {
           </div>
         </div>
 
-        {sumOk && <LeadCta placement="engine_result" className="mt-4" />}
+        {/* 아하 → 공유 → 리드 */}
+        {sumOk && (
+          <div className="mt-4 space-y-3 rounded-xl border border-ink-200 bg-ink-50/50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-sm font-bold text-ink-800">배분이 맞춰졌어요</div>
+                <p className="text-xs text-ink-500">
+                  결과를 공유한 뒤, 실행 가이드로 이어가 보세요.
+                </p>
+              </div>
+              <Button onClick={handleShare} disabled={sharing}>
+                <Icon name="image" size={15} /> {sharing ? "생성 중…" : "결과 공유"}
+              </Button>
+            </div>
+            <LeadCta
+              placement={justShared ? "engine_after_share" : "engine_result"}
+            />
+          </div>
+        )}
 
         {/* 시나리오 */}
         <div className="mt-4 border-t border-ink-100 pt-4">
@@ -566,14 +586,16 @@ export function EngineBuilder() {
             <span className="text-xs text-ink-400">
               {scenarios.length}/{MAX_SCENARIOS_LIMIT}
             </span>
-            <Button
-              variant="outline"
-              className="ml-auto"
-              onClick={handleShare}
-              disabled={buckets.length === 0 || sharing}
-            >
-              <Icon name="image" size={15} /> {sharing ? "생성 중…" : "결과 공유"}
-            </Button>
+            {!sumOk && (
+              <Button
+                variant="outline"
+                className="ml-auto"
+                onClick={handleShare}
+                disabled={buckets.length === 0 || sharing}
+              >
+                <Icon name="image" size={15} /> {sharing ? "생성 중…" : "결과 공유"}
+              </Button>
+            )}
           </div>
           {scenarios.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">

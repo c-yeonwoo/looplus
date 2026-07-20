@@ -10,21 +10,20 @@
 ## 지금 위치 (2026-07 기준)
 ✅ MVP 스켈레톤 (온보딩 A → 진단 B → 엔진 C → 홈) · 하이브리드 복리 엔진 · 8단계 판정 · Cyrano 디자인 시스템 · 이모지 제거.
 ✅ **수익률 프리셋 + 민감도 밴드** (거짓 확신 방지) — PR #3
-✅ **Supabase 이메일 OTP 인증 + 동기화** (로컬 모드 폴백) — PR #4 *(연결 모드는 실제 프로젝트 연결 시 검증)*
+✅ **Supabase 이메일 OTP 인증 + 동기화** — 클라우드 Seoul 연동 · 로그인 필수
 ✅ **결과 공유 이미지** (획득 루프) — PR #5
 ✅ **모바일 엔진 인스펙터 바텀시트** — PR #6
-✅ **실천·트래킹 최소 (리텐션 루프)** — PR #7 (주간 점검 스트릭 + 다음 걸음 실천)
-✅ **Quiet Ledger 브랜드** — Champagne bronze · Pretendard · 루프형 IA
+✅ **실천·트래킹 최소 (리텐션 루프)** — PR #7 (루틴·잔디 + 다음 걸음)
 ✅ **핵심 지표 계측** — PostHog 선택 연결 · 온보딩/아하/리텐션/리드 CTA 이벤트
-✅ **BM 확정** — 리드젠 1차 / AI 코치 프리미엄 2차 (`docs/BUSINESS_MODEL.md`) · 엔진 결과 LeadCta
-✅ **Supabase 로컬 E2E** — `npm run verify:supabase` (마이그레이션·트리거·RLS). 클라우드는 무료 슬롯 확보 후 `docs/DEPLOY.md`
-✅ **Railway 배포 준비** — Dockerfile · railway.toml · `/api/health` · standalone
-✅ **컴플라이언스 페이지** — `/legal/disclaimer|terms|privacy`
-✅ **지출관리 (E) v1** — 요약·변동(캘린더)·고정 · Quiet Ledger 톤 (`docs/SPENDING_BACKLOG.md`)
+✅ **BM 확정** — 리드젠 1차 / AI 코치 프리미엄 2차 (`docs/BUSINESS_MODEL.md`)
+✅ **Railway 실배포** — looplus-production · healthcheck
+✅ **지출관리 (E) v1** + 엔진 실측 연동
+✅ **홈 정합성** — 진단 SoT · 현재/시점 달성률 · mock 제거
+✅ **아하→공유→리드 퍼널 UI** · **홈 주간 델타** · **linkedTool 크로스셀 CTA**
 
-**남은 v1.0 GA 항목:** 클라우드 Supabase 슬롯·Railway 실배포 클릭 · 온보딩 순서 개선 · 법무 감수.
-**지출 P1:** 엔진 연동 · Supabase spending sync · 진단 규칙 고도화.
-**아직 없음:** AI 코치(Anthropic API 키 필요) · 자동연동 · 커뮤니티.
+**운영 스위치 (수동):** PostHog / LEAD_URL / Auth Redirect — `docs/DEPLOY.md` 체크리스트.
+**다음 (ROI 순):** 온보딩 B→A A/B · 지출→진단 자동동기 옵션 · AI 코치 · 마이데이터.
+**아직 없음:** AI 코치 · 자동연동 · 커뮤니티 · 이메일/푸시 리마인더.
 
 ---
 
