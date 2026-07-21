@@ -78,7 +78,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 text-lg font-extrabold text-ink-800">
-              {configured ? "로그인" : "Supabase 연결"}
+              {configured ? "이메일 로그인" : "Supabase 연결"}
             </div>
             <div className="mt-4">
               <AuthForm onSuccess={() => setOpen(false)} />

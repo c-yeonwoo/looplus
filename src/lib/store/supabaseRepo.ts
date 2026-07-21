@@ -70,14 +70,19 @@ interface BucketRow {
   lock_until_age: number | null;
   linked_tool: string | null;
   position: number;
+  /** 클라이언트 Bucket.id (계층 복원용) */
+  client_key?: string | null;
+  parent_client_key?: string | null;
 }
 
 function rowToBucket(r: BucketRow): Bucket {
   return {
-    id: r.id,
+    // client_key가 있으면 로컬 계층 id 유지 (없으면 레거시: db uuid)
+    id: r.client_key?.trim() || r.id,
     category: r.category as BucketCategory,
     name: r.name,
     ratioPct: Number(r.ratio_pct),
+    parentId: r.parent_client_key?.trim() || null,
     expectedAnnualReturnPct: Number(r.expected_annual_return_pct),
     realizedYieldPct: Number(r.realized_yield_pct),
     isLocked: r.is_locked,
@@ -99,6 +104,8 @@ function bucketToRow(b: Bucket, userId: string) {
     lock_until_age: b.lockUntilAge ?? null,
     linked_tool: b.linkedTool ?? null,
     position: b.position,
+    client_key: b.id,
+    parent_client_key: b.parentId ?? null,
   };
 }
 
