@@ -98,7 +98,17 @@ export function EngineBuilder() {
   const [sharing, setSharing] = useState(false);
   const [justShared, setJustShared] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
+  const [mobileTab, setMobileTab] = useState<"result" | "build">("result");
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setPaletteOpen(!mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
     name: string;
@@ -123,7 +133,32 @@ export function EngineBuilder() {
   const monthlyIncome = sumMonthlyIncome(incomeSources);
   const sum = ratioSum(buckets);
   const sumOk = Math.round(sum) === 100;
+  /** 동기화 버그로 parentId가 사라진 평탄 트리 — 루트 합이 비정상적으로 큼 */
+  const treeLooksFlatBroken =
+    buckets.length >= 4 &&
+    buckets.every((b) => !b.parentId) &&
+    Math.round(sum) > 120;
   const spendSuggestionPending = useSpendSuggestionPending();
+
+  const applyRecommendDraft = () => {
+    const draft = suggestEngineFromSnapshot(snapshot);
+    setEngine(draft);
+    setPendingDraft(false);
+    setMobileTab("result");
+    track("engine_recommend_applied", { source: "one_tap_aha" });
+  };
+
+  const startAha = () => {
+    const hasIncome =
+      (snapshot.incomeSources?.length ?? 0) > 0 &&
+      sumMonthlyIncome(normalizeIncomeSources(snapshot.incomeSources)) > 0;
+    if (!hasIncome) {
+      setDiagnosisOpen(true);
+      return;
+    }
+    if (buckets.length > 0) setPendingDraft(true);
+    else applyRecommendDraft();
+  };
 
   const patchSources = (next: typeof incomeSources) => {
     setSnapshot({ ...snapshot, incomeSources: next });
@@ -318,10 +353,72 @@ export function EngineBuilder() {
         </Badge>
       </div>
 
+      {treeLooksFlatBroken && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          배분 트리가 평탄화되어 합이 {Math.round(sum)}%로 보여요.{" "}
+          <button
+            type="button"
+            className="font-bold underline"
+            onClick={startAha}
+          >
+            추천 배분으로 다시 잡기
+          </button>
+        </div>
+      )}
+
+      <div className="flex gap-1 rounded-lg border border-ink-200 bg-ink-50 p-0.5 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab("result")}
+          className={
+            mobileTab === "result"
+              ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 shadow-sm"
+              : "flex-1 px-3 py-1.5 text-xs font-semibold text-ink-500"
+          }
+        >
+          결과
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("build")}
+          className={
+            mobileTab === "build"
+              ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 shadow-sm"
+              : "flex-1 px-3 py-1.5 text-xs font-semibold text-ink-500"
+          }
+        >
+          배분
+        </button>
+      </div>
+
+      {buckets.length === 0 && (
+        <Card className="border-gold-200 bg-gold-50">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-extrabold text-ink-900">3분 만에 내 곡선 보기</div>
+              <p className="mt-1 text-xs text-ink-600">
+                현황을 넣고 추천 배분을 적용하면 바로 그래프가 그려져요.
+              </p>
+            </div>
+            <Button onClick={startAha}>추천 배분으로 시작</Button>
+          </div>
+        </Card>
+      )}
+
       <DiagnosisModal open={diagnosisOpen} onClose={() => setDiagnosisOpen(false)} />
+      <ConfirmModal
+        open={pendingDraft}
+        title="추천 배분으로 다시 그릴까요?"
+        message="현재 캔버스의 배분 트리를 추천 초안으로 바꿉니다."
+        confirmLabel="적용"
+        danger={false}
+        onCancel={() => setPendingDraft(false)}
+        onConfirm={applyRecommendDraft}
+      />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         {/* 항목 추가 */}
+        <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
         {paletteOpen ? (
           <Card pad={false} className="shrink-0 lg:w-[200px]">
             <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
@@ -355,15 +452,21 @@ export function EngineBuilder() {
             <Icon name="plus" size={16} /> 항목 추가
           </button>
         )}
+        </div>
 
         {/* 흐름도 + 결과 */}
         <div className="min-w-0 flex-1 space-y-4">
           {buckets.length > 0 && (
-            <div className="space-y-2">
+            <div
+              className={
+                mobileTab === "result" ? "hidden space-y-2 lg:block" : "space-y-2"
+              }
+            >
               <SpendRatioSuggestionBar />
               <PushBudgetToVariableBar />
             </div>
           )}
+          <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
           <EngineCanvas
             buckets={buckets}
             engine={engine}
@@ -453,8 +556,9 @@ export function EngineBuilder() {
               track("engine_recommend_applied", { source: "canvas_empty" });
             }}
           />
+          </div>
 
-          <Card>
+          <Card className={mobileTab === "build" ? "hidden lg:block" : undefined}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-800">
             <Icon name="trending-up" size={16} className="text-gold-500" />

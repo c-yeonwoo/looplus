@@ -53,10 +53,13 @@ supabase projects api-keys --project-ref <REF> -o env
 
 ### 운영 스위치 체크리스트 (GA)
 
-1. Supabase URL + publishable → Redeploy → `/login` 에 OTP 폼
-2. Auth Site URL / Redirect = Railway 도메인
-3. `NEXT_PUBLIC_POSTHOG_KEY` → 온보딩/아하 이벤트 수신
-4. `NEXT_PUBLIC_LEAD_URL` → 엔진·홈 CTA가 외부로 열림
+1. Supabase URL + publishable → Redeploy → `/login` 에 이메일·비밀번호 폼
+2. Auth → **Confirm email 끄기**(또는 SMTP 연결). 안 끄면 가입 시 확인 메일·발송 한도에 막힘
+3. Auth Site URL / Redirect URLs에 Railway·localhost 도메인 추가
+4. `NEXT_PUBLIC_POSTHOG_KEY` → 온보딩/아하 이벤트 수신
+5. `NEXT_PUBLIC_LEAD_URL` → 엔진·홈 CTA가 외부로 열림
+
+로그인: **이메일 + 비밀번호**가 기본. OTP(코드)는 보조(이메일 발송 한도·SMTP 필요).
 
 원격 스모크:
 

@@ -25,7 +25,7 @@ export const STAGE_NAMES: Record<number, string> = {
   2: "종잣돈",
   3: "투자 시작",
   4: "포트폴리오",
-  5: "레버리지",
+  5: "실물·담보",
   6: "현금흐름",
   7: "자산 확장",
   8: "경제적 자유",
@@ -114,22 +114,23 @@ function evalGates(s: FinancialSnapshot, m: SnapshotMetrics): Gate[] {
     { stage: 2, label: `비상금 확보 진행 + 저축률 ${t.savingsRateTarget}%↑`, met: hasEmergencyProgress && savingsOk },
     { stage: 3, label: "적립 투자·투자자산 존재", met: investStarted },
     { stage: 4, label: "포트폴리오 성장 궤도", met: growthTrajectory },
-    { stage: 5, label: "부동산 레버리지 진입", met: leverage },
+    { stage: 5, label: "실물·담보 자산 보유(상태)", met: leverage },
     { stage: 6, label: "자본·파이프라인 소득 발생", met: pipeline },
-    { stage: 7, label: "부동산 확장 보유", met: realEstateExpand },
+    { stage: 7, label: "실물 자산 규모 확대(상태)", met: realEstateExpand },
     { stage: 8, label: "passive income > 생활비", met: economicFreedom },
   ];
 }
 
+/** 처방형 종목·매물·레버리지 권유 금지 — 배분·습관·구조만 */
 const NEXT_STEP: Record<number, string> = {
   1: "매달 자동이체로 저축률을 40% 이상으로 끌어올려 보세요.",
   2: "비상금 3개월치를 확보하고 소액이라도 적립식 투자를 시작해요 → 3단계.",
   3: "절세계좌(연금·IRP)와 투자 비중을 늘려 포트폴리오를 키워요 → 4단계.",
-  4: "부동산 등 레버리지 자산 진입을 검토해요 (무리 없는 범위) → 5단계.",
-  5: "배당·임대·부수입 등 현금흐름 파이프라인을 만들어요 → 6단계.",
-  6: "부동산·투자자산을 확장해 자산 규모를 키워요 → 7단계.",
-  7: "실현 자본소득이 생활비를 넘도록 배분을 조정해요 → 8단계.",
-  8: "경제적 자유 상태예요. 목표를 재조정하거나 다음 비전을 그려보세요.",
+  4: "투자·저축 비중을 점검하고, 지출 누수를 줄여 적립액을 늘려보세요 → 5단계.",
+  5: "배당·이자·부수입 등 실현 현금흐름 비중을 조금씩 키워보세요 → 6단계.",
+  6: "저축·투자 적립을 유지하며 자산 규모와 현금흐름을 함께 키워보세요 → 7단계.",
+  7: "실현 자본소득이 생활비를 넘도록 배분 구조만 조정해 보세요 → 8단계.",
+  8: "경제적 자유 신호예요. 목표는 참고선이니 언제든 재조정하세요.",
 };
 
 /**

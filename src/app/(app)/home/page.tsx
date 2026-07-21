@@ -36,42 +36,40 @@ export default function HomePage() {
   );
 
   const targetYears = vision?.targetYears ?? 15;
+  const hasNumericGoal =
+    (vision?.goalNetworth ?? 0) > 0 || (vision?.goalPassiveIncome ?? 0) > 0;
   const hasVision =
     Boolean(vision) &&
-    ((vision?.goalNetworth ?? 0) > 0 ||
-      (vision?.goalPassiveIncome ?? 0) > 0 ||
+    (hasNumericGoal ||
       Boolean(vision?.why?.trim()) ||
       Boolean(vision?.scenes.some((s) => s.text.trim())));
 
-  // 현황(스냅샷) 없음 — 목표만 있어도 부분 요약
+  // 현황(스냅샷) 없음
   if (!snapshot || !stage) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center gap-2.5">
-          <LogoMark size={32} />
-          <div>
-            <div className="font-display text-lg font-bold text-ink-900">{BRAND.mark}</div>
-            <p className="text-xs text-ink-500">
-              {BRAND.ko} · {BRAND.descriptor}
-            </p>
+        <section className="rounded-xl bg-brand-900 px-6 py-10 text-white md:px-8 md:py-12">
+          <div className="flex items-center gap-2.5">
+            <LogoMark size={36} />
+            <div className="font-display text-xl font-bold tracking-tight">{BRAND.mark}</div>
           </div>
-        </div>
+          <h1 className="font-display mt-8 text-3xl font-extrabold tracking-tight">
+            3분 만에 내 곡선 보기
+          </h1>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">
+            현황을 넣고 배분을 조립하면, n년 뒤 자산이 어떻게 쌓이는지 바로 보여요.
+          </p>
+          <div className="mt-8">
+            <Link href="/engine">
+              <Button className="!bg-gold-400 !text-white hover:!bg-gold-600">
+                자산 설계 시작
+              </Button>
+            </Link>
+          </div>
+        </section>
 
-        {hasVision && vision ? (
+        {hasVision && vision && (
           <>
-            <section className="rounded-2xl bg-brand-900 p-5 text-white md:p-6">
-              <div className="text-xs text-white/45">목표만 있어요</div>
-              <h1 className="mt-1 text-xl font-extrabold tracking-tight">
-                {vision.goalNetworth > 0
-                  ? `목표 ${formatKRW(vision.goalNetworth)}`
-                  : "목표를 이어가요"}
-              </h1>
-              <p className="mt-2 text-sm text-white/55">
-                {vision.goalPassiveIncome > 0 &&
-                  `월 패시브 ${formatKRW(vision.goalPassiveIncome)} · `}
-                {targetYears}년 · 현황을 넣으면 단계·달성률이 계산돼요
-              </p>
-            </section>
             <VisionBoard vision={vision} />
             <Card>
               <EmptyState
@@ -79,29 +77,13 @@ export default function HomePage() {
                 title="지금 위치를 알려주세요"
                 desc="현금·투자·소득·지출을 넣으면 홈 대시보드가 채워집니다."
                 action={
-                  <div className="flex flex-wrap gap-2">
-                    <Link href="/onboarding">
-                      <Button>현황 입력</Button>
-                    </Link>
-                    <Link href="/goals">
-                      <Button variant="outline">목표 수정</Button>
-                    </Link>
-                  </div>
+                  <Link href="/engine">
+                    <Button>현황 입력</Button>
+                  </Link>
                 }
               />
             </Card>
           </>
-        ) : (
-          <EmptyState
-            icon="engine"
-            title="자산 설계로 현재 위치를 잡아봐요"
-            desc="목표와 현황을 넣으면 단계와 다음 할 일이 보여요."
-            action={
-              <Link href="/onboarding">
-                <Button>시작하기</Button>
-              </Link>
-            }
-          />
         )}
       </div>
     );
@@ -151,10 +133,15 @@ export default function HomePage() {
     });
   }, [m.netWorth, currentAchievePct, stage.stage]);
 
+  const showProjectionHero =
+    hasNumericGoal &&
+    Boolean(projection) &&
+    profile.engine.buckets.length > 0 &&
+    Boolean(atYear);
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* 단계 히어로 */}
-      <section className="rounded-2xl bg-brand-900 p-5 text-white md:p-6">
+      <section className="rounded-xl bg-brand-900 p-5 text-white md:p-6">
         <div className="mb-4 flex items-center gap-2.5">
           <LogoMark size={28} />
           <span className="font-display text-base font-bold tracking-tight text-white">
@@ -168,12 +155,16 @@ export default function HomePage() {
           <span className="mx-2 text-white/30">·</span>
           {STAGE_NAMES[stage.stage]}
         </h1>
-        {vision && (
+        {hasNumericGoal && vision ? (
           <p className="mt-2 text-sm text-white/55">
             목표 {formatKRW(vision.goalNetworth)}
             {vision.goalPassiveIncome > 0 &&
               ` · 월 패시브 ${formatKRW(vision.goalPassiveIncome)}`}
             {` · ${targetYears}년`}
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-white/55">
+            숫자 목표가 없으면 곡선은 참고용이에요. 목표를 정해 주세요.
           </p>
         )}
         {weekDelta && !weekDelta.isNewWeek && (
@@ -202,9 +193,7 @@ export default function HomePage() {
         )}
       </section>
 
-      <VisionBoard vision={vision} />
-
-      {/* N년 뒤 미리보기 + 지표 */}
+      {/* N년 뒤 미리보기 — 히어로 (목표 있을 때만 큰 숫자) */}
       <section>
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
@@ -218,7 +207,20 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {projection && profile.engine.buckets.length > 0 && atYear ? (
+        {!hasNumericGoal ? (
+          <Card className="border-gold-200 bg-gold-50">
+            <EmptyState
+              icon="target"
+              title="목표 숫자를 먼저 정해요"
+              desc="순자산·패시브 목표 없이 억 단위 곡선만 보면 오해가 생겨요. 참고선만 있어도 충분합니다."
+              action={
+                <Link href="/goals">
+                  <Button>목표 정하기</Button>
+                </Link>
+              }
+            />
+          </Card>
+        ) : showProjectionHero && projection && atYear ? (
           <Card className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <PreviewStat
@@ -247,10 +249,7 @@ export default function HomePage() {
                 value={formatAchievePct(horizonAchievePct)}
                 sub="예상 순자산 ÷ 목표"
               />
-              <PreviewStat
-                label="목표"
-                value={goalNw > 0 ? formatKRW(goalNw) : "—"}
-              />
+              <PreviewStat label="목표" value={formatKRW(goalNw)} />
             </div>
             <AssetChart
               curve={projection.curve.slice(0, targetYears + 1)}
@@ -259,24 +258,16 @@ export default function HomePage() {
               height={200}
               compact
             />
-            {(projection.passiveReachYear != null ||
-              projection.crossoverYear != null) && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-400">
-                {projection.passiveReachYear != null && (
-                  <span>패시브 목표 · {projection.passiveReachYear}년차</span>
-                )}
-                {projection.crossoverYear != null && (
-                  <span>자본≥근로 · {projection.crossoverYear}년차</span>
-                )}
-              </div>
-            )}
+            <p className="text-[11px] text-ink-400">
+              예시·가정 수익률 기반 · 수익을 보장하지 않습니다
+            </p>
           </Card>
         ) : (
           <Card>
             <EmptyState
               icon="engine"
               title="아직 배분이 없어요"
-              desc="항목을 추가하면 자산 곡선이 그려집니다."
+              desc="추천 배분으로 시작하면 자산 곡선이 그려집니다."
               action={
                 <Link href="/engine">
                   <Button>설계 시작</Button>
@@ -309,7 +300,16 @@ export default function HomePage() {
 
       <HomeMetricGrid metrics={homeMetrics} />
 
-      {engineSumOk && <LeadCta placement="home_retention" />}
+      {/* 비전보드는 secondary */}
+      {vision && <VisionBoard vision={vision} />}
+
+      <LeadCta placement="home_retention" />
+      {!engineSumOk && profile.engine.buckets.length > 0 && (
+        <p className="text-center text-[11px] text-ink-400">
+          수입 배분 합이 100%가 되면 아하·공유 루프가 열려요 (지금{" "}
+          {Math.round(ratioSum(profile.engine.buckets))}%)
+        </p>
+      )}
     </div>
   );
 }
@@ -326,7 +326,6 @@ function formatSignedPp(pp: number): string {
   return `${sign}${pp.toFixed(1)}%p`;
 }
 
-/** 1% 미만도 안 보이도록 자리수 조정 (0.0% 오인 방지) */
 function formatAchievePct(pct: number): string {
   if (!Number.isFinite(pct) || pct <= 0) return "0%";
   if (pct < 0.1) return `${pct.toFixed(2)}%`;

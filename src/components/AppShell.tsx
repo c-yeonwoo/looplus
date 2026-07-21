@@ -15,21 +15,21 @@ type NavItem = {
   core?: boolean;
 };
 
-/** 플랫 메뉴 — 홈 → 목표 → 설계 → 지출 → 실천 (진단은 엔진「내 현황」모달) */
+/** 1차: 홈·설계·실천 / 2차: 목표·지출 (진단은 엔진「내 현황」모달) */
 const NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
-  { href: "/goals", label: "목표", icon: "target" },
   { href: "/engine", label: "자산 설계", icon: "engine", core: true },
-  { href: "/spending", label: "지출", icon: "wallet" },
   { href: "/tracking", label: "실천", icon: "check-circle" },
+  { href: "/goals", label: "목표", icon: "target" },
+  { href: "/spending", label: "지출", icon: "wallet" },
 ];
 
 const MOBILE_NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
-  { href: "/goals", label: "목표", icon: "target" },
   { href: "/engine", label: "설계", icon: "engine", core: true },
-  { href: "/spending", label: "지출", icon: "wallet" },
   { href: "/tracking", label: "실천", icon: "check-circle" },
+  { href: "/goals", label: "목표", icon: "target" },
+  { href: "/spending", label: "지출", icon: "wallet" },
 ];
 
 const NAV_COLLAPSE_KEY = "looplus-nav-collapsed";

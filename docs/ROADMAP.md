@@ -8,24 +8,12 @@
 ---
 
 ## 지금 위치 (2026-07 기준)
-✅ MVP 스켈레톤 (온보딩 A → 진단 B → 엔진 C → 홈) · 하이브리드 복리 엔진 · 8단계 판정 · Cyrano 디자인 시스템 · 이모지 제거.
-✅ **수익률 프리셋 + 민감도 밴드** (거짓 확신 방지) — PR #3
-✅ **Supabase 이메일 OTP 인증 + 동기화** — 클라우드 Seoul 연동 · 로그인 필수
-✅ **결과 공유 이미지** (획득 루프) — PR #5
-✅ **모바일 엔진 인스펙터 바텀시트** — PR #6
-✅ **실천·트래킹 최소 (리텐션 루프)** — PR #7 (루틴·잔디 + 다음 걸음)
-✅ **핵심 지표 계측** — PostHog 선택 연결 · 온보딩/아하/리텐션/리드 CTA 이벤트
-✅ **BM 확정** — 리드젠 1차 / AI 코치 프리미엄 2차 (`docs/BUSINESS_MODEL.md`)
-✅ **Railway 실배포** — looplus-production · healthcheck
-✅ **지출관리 (E) v1** + 엔진 실측 연동
-✅ **홈 정합성** — 진단 SoT · 현재/시점 달성률 · mock 제거
-✅ **아하→공유→리드 퍼널 UI** · **홈 주간 델타** · **linkedTool 크로스셀 CTA**
-✅ **온보딩 B→A A/B** (기본 70% 진단먼저 · `NEXT_PUBLIC_ONBOARDING_ORDER` 강제 가능)
-✅ **지출→진단 자동동기** opt-in (`uiPrefs.autoSyncSpendToDiagnosis`)
+✅ MVP 스켈레톤 ~ 지출·실천·온보딩 A/B · Railway · BM 문서화
+✅ **보드 리뷰 적용 (2026-07-21)** — Compound Signal 브랜드 · 배분 parentId 영속 · 목표 없는 억곡선 억제 · 다음걸음 가드레일 · 모바일 엔진 결과탭 · 원탭 아하 · Sync fetch 디듀프 · AI 코치 스펙(`docs/AI_COACH_SPEC.md`)
 
-**운영 스위치 (수동):** PostHog / LEAD_URL / Auth Redirect — `docs/DEPLOY.md` 체크리스트.
-**다음 (ROI 순):** AI 코치 스펙·가드레일 · NL 진단 입력 · 마이데이터 · 이메일 리마인더.
-**아직 없음:** AI 코치 · 자동연동 · 커뮤니티 · 이메일/푸시 리마인더.
+**운영 스위치 (수동 · 아직 값 필요):** `NEXT_PUBLIC_POSTHOG_KEY` · `NEXT_PUBLIC_LEAD_URL` — Railway Variables + Redeploy.  
+**다음 (ROI 순):** PostHog/LEAD 실연결 → 아하·리드 baseline → AI 코치 thin slice → NL 진단 → 마이데이터 → 이메일 리마인더.  
+**아직 없음:** AI 코치 런타임 · 자동연동 · 커뮤니티 · 푸시/메일 리마인더.
 
 ---
 

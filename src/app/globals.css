@@ -3,12 +3,21 @@
 
 /* ============================================================
    Loop+ (루플러스) — Design Tokens
-   브랜드: Cool Mist · 쿨 슬레이트 + 스틸 블루 액센트
-   (토큰명 gold-* 는 하위호환 — 값은 쿨톤 액센트)
+   브랜드: Compound Signal · 잉크 지면 + 신호 틸 CTA
+   (토큰명 gold-* 는 하위호환 — 값은 Signal teal)
    ============================================================ */
 
+@font-face {
+  font-family: "SUIT Variable";
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/variable/woff2/SUIT-Variable.woff2")
+    format("woff2-variations");
+}
+
 @theme {
-  /* ---- Brand (cool slate) ---- */
+  /* ---- Brand (cool charcoal / ink) ---- */
   --color-brand-50: #f1f5f9;
   --color-brand-100: #e2e8f0;
   --color-brand-200: #cbd5e1;
@@ -17,17 +26,17 @@
   --color-brand-500: #475569;
   --color-brand-600: #334155;
   --color-brand-700: #1e293b;
-  --color-brand-800: #152033;
-  --color-brand-900: #0f172a;
+  --color-brand-800: #141c2b;
+  --color-brand-900: #0b1220;
 
-  /* ---- Accent: steel blue (CTA·강조) — 토큰명 gold-* 유지 ---- */
-  --color-gold-50: #eef6fa;
-  --color-gold-100: #d6ebf4;
-  --color-gold-200: #aed5e8;
-  --color-gold-300: #7bb8d4;
-  --color-gold-400: #4a90b8;
-  --color-gold-500: #3a7a9e;
-  --color-gold-600: #2d5f7c;
+  /* ---- Accent: Signal teal (CTA·강조) — 토큰명 gold-* 유지 ---- */
+  --color-gold-50: #ddf3ec;
+  --color-gold-100: #b8e5d4;
+  --color-gold-200: #7fcfb0;
+  --color-gold-300: #3db891;
+  --color-gold-400: #0f8b6b;
+  --color-gold-500: #0f8b6b;
+  --color-gold-600: #0c7359;
 
   /* ---- Soft moment (다음 한 걸음 등) ---- */
   --color-sage-50: #f0f7f6;
@@ -36,8 +45,8 @@
   --color-sage-600: #3d7169;
   --color-sage-700: #2f5852;
 
-  /* ---- Ink ---- */
-  --color-ink-50: #f8fafc;
+  /* ---- Ink / Paper ---- */
+  --color-ink-50: #f3f5f7;
   --color-ink-100: #f1f5f9;
   --color-ink-200: #e2e8f0;
   --color-ink-300: #cbd5e1;
@@ -46,7 +55,7 @@
   --color-ink-600: #475569;
   --color-ink-700: #334155;
   --color-ink-800: #1e293b;
-  --color-ink-900: #0f172a;
+  --color-ink-900: #0b1220;
 
   /* ---- 엔진 카테고리 (투자·저축·지출) ---- */
   --color-invest-50: #fffbeb;
@@ -76,13 +85,16 @@
   --color-warning: #d97706;
   --color-danger: #dc2626;
   --color-locked: #0d9488;
-  --color-goal: #4a90b8;
+  --color-goal: #0f8b6b;
 
-  --radius-card: 1rem;
+  --radius-card: 0.75rem;
   --radius-field: 0.75rem;
 
   --font-sans: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
     -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-display: "SUIT Variable", "Pretendard Variable", Pretendard,
+    ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
 }
 
 :root {
@@ -103,11 +115,10 @@ body {
   line-height: 1.5;
 }
 
-/* 디스플레이도 Pretendard 통일 — 굵기·자간으로만 계층 */
 .font-display {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .tnum {
@@ -131,7 +142,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 9999px;
   background: var(--color-gold-500);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 1px 3px rgba(11, 18, 32, 0.2);
 }
 
 .no-scrollbar::-webkit-scrollbar {

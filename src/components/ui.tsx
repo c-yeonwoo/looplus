@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "@/lib/clsx";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 
 export function Card({
@@ -146,16 +146,24 @@ export function TextInput({
   placeholder,
   className = "",
   id,
+  type = "text",
+  autoComplete,
+  onKeyDown,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
   id?: string;
+  type?: "text" | "email" | "password";
+  autoComplete?: string;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <input
       id={id}
+      type={type}
+      autoComplete={autoComplete}
       className={clsx(
         "w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500",
         className,
@@ -163,6 +171,7 @@ export function TextInput({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
+      onKeyDown={onKeyDown}
     />
   );
 }
