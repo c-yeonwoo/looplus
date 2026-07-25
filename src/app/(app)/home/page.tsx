@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useProfile } from "@/lib/store/useProfile";
 import { useDerived } from "@/lib/useDerived";
-import { STAGE_NAMES, ratioSum } from "@/lib/engine";
+import { STAGE_NAMES, ratioSum, selectGoalState } from "@/lib/engine";
 import { formatKRW, formatPct } from "@/lib/format";
 import { avgMonthlySpendWon } from "@/lib/spending";
 import { ensureSpending } from "@/lib/store/defaults";
@@ -36,8 +36,8 @@ export default function HomePage() {
   );
 
   const targetYears = vision?.targetYears ?? 15;
-  const hasNumericGoal =
-    (vision?.goalNetworth ?? 0) > 0 || (vision?.goalPassiveIncome ?? 0) > 0;
+  const goal = selectGoalState(vision, projection);
+  const hasNumericGoal = goal.hasNumericGoal;
   const hasVision =
     Boolean(vision) &&
     (hasNumericGoal ||
@@ -163,9 +163,7 @@ export default function HomePage() {
             {` · ${targetYears}년`}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-white/55">
-            숫자 목표가 없으면 곡선은 참고용이에요. 목표를 정해 주세요.
-          </p>
+          <p className="mt-2 text-sm text-white/55">{goal.guardCopy?.short}</p>
         )}
         {weekDelta && !weekDelta.isNewWeek && (
           <p className="mt-3 text-xs text-white/50">
@@ -173,10 +171,15 @@ export default function HomePage() {
             <span className="text-white/80">
               순자산 {formatSignedMan(weekDelta.netWorthDelta)}
             </span>
-            {" · "}
-            <span className="text-white/80">
-              달성 {formatSignedPp(weekDelta.achievementDeltaPp)}
-            </span>
+            {/* 목표 숫자가 없으면 달성 델타는 항상 0.0%p — 계산 결과로 오해된다 */}
+            {goal.hasNumericGoal && (
+              <>
+                {" · "}
+                <span className="text-white/80">
+                  달성 {formatSignedPp(weekDelta.achievementDeltaPp)}
+                </span>
+              </>
+            )}
             {weekDelta.stageDelta !== 0 && (
               <>
                 {" · "}
@@ -207,17 +210,15 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {!hasNumericGoal ? (
+        {goal.guardCopy ? (
           <Card className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gold-50 px-4 py-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-sm font-bold text-gold-700">
                   <Icon name="target" size={15} />
-                  목표 숫자를 먼저 정해요
+                  {goal.guardCopy.title}
                 </div>
-                <p className="mt-1 text-xs text-ink-500">
-                  순자산·패시브 목표가 없으면 억 단위 곡선은 참고용일 뿐이에요.
-                </p>
+                <p className="mt-1 text-xs text-ink-500">{goal.guardCopy.body}</p>
               </div>
               <Link href="/goals" className="shrink-0">
                 <Button>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useProfile, MAX_SCENARIOS_LIMIT } from "@/lib/store/useProfile";
 import { suggestEngineFromSnapshot, DEFAULT_SNAPSHOT } from "@/lib/store/defaults";
 import {
   projectEngine,
   ratioSum,
-  needsRealityNudge,
+  selectGoalState,
   adjustReturns,
   SENSITIVITY,
   childrenOf,
@@ -294,7 +295,7 @@ export function EngineBuilder() {
   const lowAt = atYear(band.low.curve);
   const highAt = atYear(band.high.curve);
 
-  const nudge = vision ? needsRealityNudge(projection.targetReachYear, targetYears) : false;
+  const goal = selectGoalState(vision, projection);
 
   const handleShare = async () => {
     setSharing(true);
@@ -307,6 +308,7 @@ export function EngineBuilder() {
         lowNetWorth: lowAt.totalNetWorth,
         highNetWorth: highAt.totalNetWorth,
         targetReachYear: projection.targetReachYear,
+        targetStatus: projection.targetStatus,
         achievementPct: projection.achievementPct,
       });
       await shareOrDownload(blob);
@@ -344,7 +346,15 @@ export function EngineBuilder() {
           {vision && (
             <span className="flex items-center gap-1.5 font-semibold">
               <Icon name="target" size={16} className="text-brand-600" />
-              목표 {formatKRW(vision.goalNetworth)} · {vision.targetYears}년 뒤
+              {goal.hasNumericGoal ? (
+                <>
+                  목표 {formatKRW(vision.goalNetworth)} · {vision.targetYears}년 뒤
+                </>
+              ) : (
+                <Link href="/goals" className="underline decoration-dotted">
+                  목표 미설정
+                </Link>
+              )}
             </span>
           )}
         </div>
@@ -599,13 +609,27 @@ export function EngineBuilder() {
           {SENSITIVITY[sens].deltaPp}%p · 띠는 보수(−3)~공격(+3) 범위
         </p>
 
-        {nudge && (
+        {goal.showRealityNudge && (
           <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             <Icon name="info" size={16} className="mt-0.5 shrink-0" />
             <span>
               이 속도면 {targetYears}년 안에 목표 도달이 어려울 수 있어요. 저축을 늘리거나 목표
               시점을 늦춰 보세요.
             </span>
+          </div>
+        )}
+
+        {goal.guardCopy && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gold-50 px-3 py-2.5">
+            <div className="flex items-start gap-2 text-sm text-gold-700">
+              <Icon name="target" size={16} className="mt-0.5 shrink-0" />
+              <span>{goal.guardCopy.short}</span>
+            </div>
+            <Link href="/goals" className="shrink-0">
+              <Button className="!py-1.5 !text-xs">
+                목표 정하기 <Icon name="arrow-right" size={14} />
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -624,19 +648,7 @@ export function EngineBuilder() {
               value={formatKRW(atTarget.totalNetWorth)}
               sub={`범위 ${formatKRW(lowAt.totalNetWorth)} ~ ${formatKRW(highAt.totalNetWorth)}`}
             />
-            <StatCard
-              label="목표 도달까지"
-              value={
-                projection.targetReachYear != null
-                  ? `약 ${projection.targetReachYear}년`
-                  : "시점 내 미도달"
-              }
-              sub={
-                vision
-                  ? `현재 달성 ${projection.achievementPct.toFixed(1)}% · 지금 순자산÷목표`
-                  : undefined
-              }
-            />
+            <StatCard label="목표 도달까지" value={goal.reachLabel} sub={goal.reachSub} />
             <StatCard
               label={`${targetYears}년 뒤 월 passive`}
               value={formatKRW(atTarget.monthlyPassiveIncome)}

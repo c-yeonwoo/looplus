@@ -1,6 +1,7 @@
 import type {
   Bucket,
   FinancialSnapshot,
+  GoalReachStatus,
   ProjectionResult,
   YearPoint,
 } from "../types";
@@ -182,6 +183,8 @@ export function projectEngine(input: ProjectionInput): ProjectionResult {
     goalPassive > 0
       ? curve.find((p) => p.monthlyPassiveIncome >= goalPassive)?.year ?? null
       : null;
+  const targetStatus = reachStatus(goalNetworth, targetReachYear);
+  const passiveStatus = reachStatus(goalPassive, passiveReachYear);
   const crossoverYear =
     curve.find((p) => p.year > 0 && p.capitalAnnual >= p.laborAnnual && p.laborAnnual > 0)
       ?.year ?? null;
@@ -193,12 +196,20 @@ export function projectEngine(input: ProjectionInput): ProjectionResult {
   return {
     curve,
     targetReachYear,
+    targetStatus,
     passiveReachYear,
+    passiveStatus,
     achievementPct,
     crossoverYear,
     finalNetWorth: last.totalNetWorth,
     finalMonthlyPassive: last.monthlyPassiveIncome,
   };
+}
+
+/** 목표값과 도달 연차로 판정. 목표 미설정(0 이하)은 미도달이 아니다. */
+function reachStatus(goal: number, reachYear: number | null): GoalReachStatus {
+  if (goal <= 0) return "unset";
+  return reachYear != null ? "reached" : "not_reached";
 }
 
 /** 루트(수입 바로 아래) 비율 합계 — 100% 검증용 */
@@ -233,12 +244,17 @@ export function adjustReturns(buckets: Bucket[], deltaPp: number): Bucket[] {
   });
 }
 
-/** ETA·달성률 넛지 판단 (§A 극단값) */
+/**
+ * ETA·달성률 넛지 판단 (§A 극단값).
+ * 목표를 아직 정하지 않은 상태(`unset`)는 실패가 아니므로 넛지를 띄우지 않는다.
+ */
 export function needsRealityNudge(
+  status: GoalReachStatus,
   targetReachYear: number | null,
   targetYears: number,
 ): boolean {
   if (targetYears <= 0) return false;
+  if (status === "unset") return false;
   if (targetReachYear === null) return true; // 목표 시점 내 도달 못함
   return targetReachYear > targetYears * 1.5;
 }

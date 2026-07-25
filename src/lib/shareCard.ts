@@ -1,5 +1,6 @@
-import type { YearPoint } from "./types";
+import type { GoalReachStatus, YearPoint } from "./types";
 import { formatKRW } from "./format";
+import { reachChipLabel } from "./engine/goalState";
 
 /**
  * 결과 공유 카드 — canvas로 브랜드 이미지를 렌더한다(외부 의존성 0).
@@ -14,6 +15,8 @@ export interface ShareCardData {
   lowNetWorth: number;
   highNetWorth: number;
   targetReachYear: number | null;
+  /** 목표 미설정이면 도달·달성률 칩을 그리지 않는다 */
+  targetStatus: GoalReachStatus;
   achievementPct: number;
 }
 
@@ -90,11 +93,14 @@ export async function renderShareCard(d: ShareCardData): Promise<Blob> {
 
   // 하단 요약 칩
   const chips: string[] = [];
-  if (d.goalNetworth) chips.push(`목표 ${formatKRW(d.goalNetworth)}`);
-  chips.push(
-    d.targetReachYear != null ? `도달 약 ${d.targetReachYear}년` : "시점 내 미도달",
-  );
-  if (d.goalNetworth) chips.push(`달성률 ${d.achievementPct.toFixed(1)}%`);
+  const reachChip = reachChipLabel(d.targetStatus, d.targetReachYear);
+  if (reachChip) {
+    if (d.goalNetworth) chips.push(`목표 ${formatKRW(d.goalNetworth)}`);
+    chips.push(reachChip);
+    if (d.goalNetworth) chips.push(`달성률 ${d.achievementPct.toFixed(1)}%`);
+  } else {
+    chips.push(`${d.targetYears}년 뒤 가정 기준 예측`);
+  }
 
   let chipX = 64;
   const chipY = 880;

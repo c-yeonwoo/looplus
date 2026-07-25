@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { computeStage, computeMetrics } from "./stage";
 import { projectEngine, ratioSum, needsRealityNudge, adjustReturns, SENSITIVITY } from "./projection";
+import { selectGoalState } from "./goalState";
+import { DEFAULT_VISION } from "../store/defaults";
 import type { Bucket, FinancialSnapshot } from "../types";
 
 function snapshot(overrides: Partial<FinancialSnapshot> = {}): FinancialSnapshot {
@@ -202,9 +204,90 @@ describe("helpers", () => {
     });
     expect(nested.finalNetWorth).toBe(flat.finalNetWorth);
   });
-  it("needsRealityNudge: 도달 못하면 true", () => {
-    expect(needsRealityNudge(null, 15)).toBe(true);
-    expect(needsRealityNudge(12, 15)).toBe(false);
-    expect(needsRealityNudge(30, 15)).toBe(true);
+  it("needsRealityNudge: 목표를 정한 뒤 도달 못하면 true", () => {
+    expect(needsRealityNudge("not_reached", null, 15)).toBe(true);
+    expect(needsRealityNudge("reached", 12, 15)).toBe(false);
+    expect(needsRealityNudge("reached", 30, 15)).toBe(true); // 시점의 1.5배 초과
+  });
+
+  it("needsRealityNudge: 목표 미설정은 실패가 아니므로 false", () => {
+    expect(needsRealityNudge("unset", null, 15)).toBe(false);
+  });
+});
+
+describe("목표 판정 — 미설정과 미도달을 구분한다", () => {
+  const invest100 = [
+    bucket({
+      category: "invest",
+      name: "주식",
+      ratioPct: 100,
+      expectedAnnualReturnPct: 7,
+      realizedYieldPct: 0,
+    }),
+  ];
+
+  it("목표를 안 정하면 targetStatus=unset (미도달이 아니다)", () => {
+    const r = projectEngine({ snapshot: snapshot(), buckets: invest100, horizonYears: 20 });
+    expect(r.targetStatus).toBe("unset");
+    expect(r.passiveStatus).toBe("unset");
+    expect(r.targetReachYear).toBeNull();
+    expect(r.achievementPct).toBe(0);
+  });
+
+  it("목표를 정하고 기간 내 도달하면 reached", () => {
+    const r = projectEngine({
+      snapshot: snapshot(),
+      buckets: invest100,
+      horizonYears: 40,
+      goalNetworth: 50000,
+    });
+    expect(r.targetStatus).toBe("reached");
+    expect(r.targetReachYear).not.toBeNull();
+  });
+
+  it("목표를 정했지만 기간 내 도달 못하면 not_reached", () => {
+    const r = projectEngine({
+      snapshot: snapshot(),
+      buckets: invest100,
+      horizonYears: 5,
+      goalNetworth: 10_000_000, // 1조 — 5년 내 도달 불가
+    });
+    expect(r.targetStatus).toBe("not_reached");
+    expect(r.targetReachYear).toBeNull();
+  });
+
+  it("selectGoalState: 미설정이면 안내 문구를 주고 넛지·달성률을 숨긴다", () => {
+    const r = projectEngine({ snapshot: snapshot(), buckets: invest100, horizonYears: 20 });
+    const g = selectGoalState({ ...DEFAULT_VISION, targetYears: 10 }, r);
+    expect(g.hasNumericGoal).toBe(false);
+    expect(g.showRealityNudge).toBe(false);
+    expect(g.showBigNumbers).toBe(false);
+    expect(g.achievementPct).toBeNull();
+    expect(g.reachLabel).toBe("목표 미설정");
+    expect(g.guardCopy).not.toBeNull();
+  });
+
+  it("selectGoalState: 목표가 있으면 안내 문구가 사라지고 도달 라벨이 나온다", () => {
+    const r = projectEngine({
+      snapshot: snapshot(),
+      buckets: invest100,
+      horizonYears: 40,
+      goalNetworth: 50000,
+    });
+    const g = selectGoalState(
+      { ...DEFAULT_VISION, goalNetworth: 50000, targetYears: 40 },
+      r,
+    );
+    expect(g.hasNumericGoal).toBe(true);
+    expect(g.guardCopy).toBeNull();
+    expect(g.showBigNumbers).toBe(true);
+    expect(g.reachLabel).toMatch(/^약 \d+년$/);
+  });
+
+  it("selectGoalState: vision 이 없어도 미설정으로 안전하게 판정한다", () => {
+    const g = selectGoalState(null, null);
+    expect(g.targetStatus).toBe("unset");
+    expect(g.showRealityNudge).toBe(false);
+    expect(g.guardCopy).not.toBeNull();
   });
 });
