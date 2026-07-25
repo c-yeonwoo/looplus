@@ -233,12 +233,22 @@ export interface YearPoint {
   capitalAnnual: number; // 자본 연 소득(만원)
 }
 
+/**
+ * 목표 도달 판정. `targetReachYear: null` 하나로는 "목표를 아직 안 정했다"와
+ * "정했지만 기간 내 도달 못 한다"를 구분할 수 없어, 전자를 실패로 오해석했다.
+ */
+export type GoalReachStatus = "unset" | "not_reached" | "reached";
+
 export interface ProjectionResult {
   curve: YearPoint[];
-  /** 목표 순자산 도달 연차 (없으면 null) */
+  /** 목표 순자산 도달 연차 (미설정·미도달 모두 null → 판정은 targetStatus 를 쓴다) */
   targetReachYear: number | null;
+  /** 목표 순자산 판정 */
+  targetStatus: GoalReachStatus;
   /** 목표 passive income 도달 연차 */
   passiveReachYear: number | null;
+  /** 목표 passive income 판정 */
+  passiveStatus: GoalReachStatus;
   /** 현재 순자산 / 목표 순자산 (%) */
   achievementPct: number;
   /** 자본소득 > 근로소득 교차 연차 */
