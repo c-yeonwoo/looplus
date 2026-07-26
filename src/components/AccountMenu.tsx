@@ -8,7 +8,7 @@ import { Button } from "./ui";
 import { AuthForm } from "./AuthForm";
 
 export function AccountMenu({ compact = false }: { compact?: boolean }) {
-  const { configured, user, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   if (loading) {
@@ -66,7 +66,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
         }
       >
         <Icon name="users" size={16} />
-        {!compact && (configured ? "로그인" : "로그인 연결")}
+        {!compact && "로그인"}
       </button>
       {open && (
         <div
@@ -77,9 +77,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-1 text-lg font-extrabold text-ink-800">
-              {configured ? "이메일 로그인" : "Supabase 연결"}
-            </div>
+            <div className="mb-1 text-lg font-extrabold text-ink-800">이메일 로그인</div>
             <div className="mt-4">
               <AuthForm onSuccess={() => setOpen(false)} />
             </div>

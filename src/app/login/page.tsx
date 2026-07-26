@@ -21,6 +21,10 @@ function LoginInner() {
     router.replace(onboardedAt ? "/home" : "/onboarding");
   }, [user, loading, onboardedAt, router]);
 
+  const subtitle = configured
+    ? "이메일·비밀번호로 로그인 · 클라우드 저장"
+    : "지금은 이 기기에 저장됩니다";
+
   return (
     <div className="flex min-h-dvh w-full flex-col md:flex-row">
       {/* 브랜드 패널 — 모바일: 상단 스트립 / 데스크톱: 좌측 고정 */}
@@ -61,20 +65,12 @@ function LoginInner() {
         <div className="w-full max-w-md">
           <div className="mb-6 hidden md:block">
             <div className="font-display text-xl text-ink-900">시작하기</div>
-            <p className="mt-1 text-sm text-ink-500">
-              {configured
-                ? "이메일·비밀번호로 로그인 · 클라우드 저장"
-                : "Supabase 연결이 필요합니다"}
-            </p>
+            <p className="mt-1 text-sm text-ink-500">{subtitle}</p>
           </div>
           <div className="mb-6 flex items-center gap-2.5 md:hidden">
             <div>
               <div className="font-display text-lg text-ink-900">시작하기</div>
-              <p className="text-xs text-ink-500">
-                {configured
-                  ? "이메일·비밀번호로 로그인 · 클라우드 저장"
-                  : "Supabase 연결이 필요합니다"}
-              </p>
+              <p className="text-xs text-ink-500">{subtitle}</p>
             </div>
           </div>
           <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm sm:p-8">
