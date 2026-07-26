@@ -16,7 +16,11 @@ export function SpendDiagnosisSync() {
   );
   const profile = useProfile((s) => s.profile);
   const setSnapshot = useProfile((s) => s.setSnapshot);
-  const spending = selectSpending(profile);
+  /*
+    selectSpending 은 매 렌더 새 객체를 만든다. 그래서 effect 는 객체가 아니라 실제로
+    쓰는 두 필드만 본다 — 객체째로 의존하면 렌더마다 이펙트가 다시 돈다.
+  */
+  const { logs, fixed } = selectSpending(profile);
   const lastSynced = useRef<number | null>(null);
 
   useEffect(() => {
@@ -26,7 +30,7 @@ export function SpendDiagnosisSync() {
     }
     const now = new Date();
     const measured = monthSpendingBreakdown(
-      spending,
+      { logs, fixed },
       now.getFullYear(),
       now.getMonth(),
     );
@@ -46,13 +50,7 @@ export function SpendDiagnosisSync() {
       variable_won: measured.variableWon,
       fixed_won: measured.fixedWon,
     });
-  }, [
-    autoSync,
-    spending.logs,
-    spending.fixed,
-    profile.snapshot,
-    setSnapshot,
-  ]);
+  }, [autoSync, logs, fixed, profile.snapshot, setSnapshot]);
 
   return null;
 }

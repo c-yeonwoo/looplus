@@ -19,7 +19,9 @@ export function manwonToWon(manwon: number): number {
 
 /** Phase A / 엔진 sync용 — 당월 변동 + 고정 전체(결제일 무관) */
 export function monthSpendingBreakdown(
-  spending: SpendingState,
+  /* 실제로 보는 두 필드만 받는다 — 호출부가 매 렌더 새로 만들어지는 전체 객체를
+     effect deps 에 넣지 않아도 되게 한다 */
+  spending: Pick<SpendingState, "logs" | "fixed">,
   year: number,
   monthIndex: number,
 ): {
@@ -159,7 +161,6 @@ export function applySpendRatioToBuckets(
 
   let next = [...buckets];
   let spend = findSpendRoot(next);
-  let createdSpend = false;
   let createdChildren = false;
 
   if (!spend) {
@@ -207,7 +208,8 @@ export function applySpendRatioToBuckets(
     );
   }
 
-  return { buckets: next, createdSpend, createdChildren };
+  // 여기까지 왔으면 지출 루트가 이미 있었다 (없으면 위에서 early return)
+  return { buckets: next, createdSpend: false, createdChildren };
 }
 
 /** Phase C — 엔진 지출 한도 → 변동지출 예산(원) 제안 */

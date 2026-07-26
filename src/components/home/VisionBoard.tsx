@@ -51,6 +51,9 @@ export function VisionBoard({ vision }: { vision: Vision | null }) {
                 className="relative aspect-[5/3] overflow-hidden rounded-xl border border-ink-200 bg-brand-900"
               >
                 {scene.imageUrl ? (
+                  // 사용자가 넣은 임의 URL·data URL 이라 next/image 의 remotePatterns
+                  // 로 화이트리스트할 수 없다.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={scene.imageUrl}
                     alt={meta.label}
