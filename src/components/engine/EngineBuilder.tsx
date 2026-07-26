@@ -149,11 +149,16 @@ export function EngineBuilder() {
     track("engine_recommend_applied", { source: "one_tap_aha" });
   };
 
+  /**
+   * 월수입이 0이면 배분할 대상이 없어 추천도 곡선도 만들 수 없다.
+   * 이 사실을 버튼을 누른 뒤가 아니라 누르기 전에 알려준다 — 이전에는 "추천 배분으로
+   * 시작"을 눌러도 말없이 현황 입력 모달이 떠서, 왜 곡선이 아닌 입력 폼이 나왔는지
+   * 알 수 없었다.
+   */
+  const needsIncome = monthlyIncome <= 0;
+
   const startAha = () => {
-    const hasIncome =
-      (snapshot.incomeSources?.length ?? 0) > 0 &&
-      sumMonthlyIncome(normalizeIncomeSources(snapshot.incomeSources)) > 0;
-    if (!hasIncome) {
+    if (needsIncome) {
       setDiagnosisOpen(true);
       return;
     }
@@ -371,7 +376,7 @@ export function EngineBuilder() {
             className="font-bold underline"
             onClick={startAha}
           >
-            추천 배분으로 다시 잡기
+            {needsIncome ? "월수입 입력하기" : "추천 배분으로 다시 잡기"}
           </button>
         </div>
       )}
@@ -405,12 +410,18 @@ export function EngineBuilder() {
         <Card className="border-gold-200 bg-gold-50">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-extrabold text-ink-900">3분 만에 내 곡선 보기</div>
+              <div className="text-sm font-extrabold text-ink-900">
+                {needsIncome ? "월수입을 먼저 알려주세요" : "3분 만에 내 곡선 보기"}
+              </div>
               <p className="mt-1 text-xs text-ink-600">
-                현황을 넣고 추천 배분을 적용하면 바로 그래프가 그려져요.
+                {needsIncome
+                  ? "나눌 돈이 정해져야 추천 배분과 곡선을 만들 수 있어요."
+                  : "현황을 넣고 추천 배분을 적용하면 바로 그래프가 그려져요."}
               </p>
             </div>
-            <Button onClick={startAha}>추천 배분으로 시작</Button>
+            <Button onClick={startAha}>
+              {needsIncome ? "월수입 입력" : "추천 배분으로 시작"}
+            </Button>
           </div>
         </Card>
       )}
@@ -464,19 +475,30 @@ export function EngineBuilder() {
         )}
         </div>
 
-        {/* 흐름도 + 결과 */}
-        <div className="min-w-0 flex-1 space-y-4">
+        {/*
+          흐름도 + 결과.
+          데스크톱에서는 결과를 먼저 놓는다(lg:order). 캔버스가 화면 높이를 다 쓰는 탓에
+          결과 카드가 fold 밖으로 밀려서, 아하의 순간을 보려면 스크롤을 내려야 했다.
+          모바일은 탭으로 하나만 보여주므로 DOM 순서 그대로 둔다.
+        */}
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
           {buckets.length > 0 && (
             <div
               className={
-                mobileTab === "result" ? "hidden space-y-2 lg:block" : "space-y-2"
+                mobileTab === "result"
+                  ? "hidden space-y-2 lg:order-2 lg:block"
+                  : "space-y-2 lg:order-2"
               }
             >
               <SpendRatioSuggestionBar />
               <PushBudgetToVariableBar />
             </div>
           )}
-          <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
+          <div
+            className={
+              mobileTab === "result" ? "hidden lg:order-3 lg:block" : "lg:order-3"
+            }
+          >
           <EngineCanvas
             buckets={buckets}
             engine={engine}
@@ -561,14 +583,25 @@ export function EngineBuilder() {
                 incomeSources.map((s) => ({ ...s, canvasX: null, canvasY: null })),
               );
             }}
+            canRecommend={!needsIncome}
             onRecommend={() => {
+              // 캔버스 빈 상태의 추천도 같은 게이트를 지난다 (여기만 우회하면 0원을
+              // 배분한 평평한 곡선이 '결과'로 나온다)
+              if (needsIncome) {
+                setDiagnosisOpen(true);
+                return;
+              }
               setEngine(suggestEngineFromSnapshot(snapshot));
               track("engine_recommend_applied", { source: "canvas_empty" });
             }}
           />
           </div>
 
-          <Card className={mobileTab === "build" ? "hidden lg:block" : undefined}>
+          <Card
+            className={
+              mobileTab === "build" ? "hidden lg:order-1 lg:block" : "lg:order-1"
+            }
+          >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-800">
             <Icon name="trending-up" size={16} className="text-gold-500" />
@@ -633,7 +666,12 @@ export function EngineBuilder() {
           </div>
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+        {/*
+          곡선을 숫자 옆에 두지 않는다. 팔레트(200px)와 항목 수정(280px) 사이드바 때문에
+          이 가운데 칼럼은 1440px 화면에서도 566px뿐이어서, 고정 300px 숫자 칼럼과
+          나누면 정작 주인공인 곡선이 246px로 눌렸다. 숫자를 아래로 내려 곡선에 폭을 준다.
+        */}
+        <div className="space-y-4">
           <AssetChart
             curve={projection.curve}
             compareCurve={compareProjection?.curve ?? null}
@@ -642,7 +680,7 @@ export function EngineBuilder() {
             targetReachYear={projection.targetReachYear}
             height={260}
           />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard
               label={`${targetYears}년 뒤 예상 순자산`}
               value={formatKRW(atTarget.totalNetWorth)}
