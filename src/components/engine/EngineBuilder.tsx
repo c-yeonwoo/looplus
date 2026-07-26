@@ -14,11 +14,14 @@ import {
   collectDescendantIds,
   type SensitivityKey,
 } from "@/lib/engine";
-import type { Bucket, HoldingReturns } from "@/lib/types";
+import type { Bucket } from "@/lib/types";
 import {
-  holdingsRealizedAnnual,
+  bucketsRealizedAnnual,
+  residualHoldings,
+  residualTotal,
   resolveHoldingReturns,
-  totalHoldings,
+  snapshotAssetsFromBuckets,
+  totalBucketBalances,
 } from "@/lib/engine/holdings";
 import { normalizeIncomeSources, sumMonthlyIncome } from "@/lib/income";
 import { GROUP_PRESETS, bucketFromPreset } from "@/lib/catalog";
@@ -313,12 +316,24 @@ export function EngineBuilder() {
       ? incomeSources.find((s) => s.id === selectedId) ?? null
       : null;
   /**
-   * 보유 자산에서 지금 나오는 현금흐름(월).
-   * 프로젝션이 매년 자본소득으로 자동 재유입하므로 따로 수입원을 만들지 않는다.
+   * 버킷 보유액에서 나오는 현금흐름(월) + 미배분 잔여.
+   * 프로젝션이 매년 자본소득으로 자동 재유입한다.
    */
-  const cashflowMonthly = useMemo(
-    () => holdingsRealizedAnnual(snapshot, holdingReturns) / 12,
-    [snapshot, holdingReturns],
+  const cashflowMonthly = useMemo(() => {
+    const fromBuckets = bucketsRealizedAnnual(buckets) / 12;
+    const residual = residualHoldings(snapshot, buckets);
+    const inv = holdingReturns.invest;
+    const cash = holdingReturns.cash;
+    const fromResidual =
+      (residual.invest * Math.min(inv.realizedYieldPct, inv.expectedAnnualReturnPct) +
+        residual.cash * Math.min(cash.realizedYieldPct, cash.expectedAnnualReturnPct)) /
+      100 /
+      12;
+    return fromBuckets + fromResidual;
+  }, [buckets, snapshot, holdingReturns]);
+  const assetsOnBoard = useMemo(
+    () => totalBucketBalances(buckets) + residualTotal(snapshot, buckets),
+    [buckets, snapshot],
   );
   const showIncomeSources = engine.showIncomeSources !== false;
   const setShowIncomeSources = (show: boolean) => {
@@ -331,8 +346,12 @@ export function EngineBuilder() {
       selectNode(null);
     }
   };
-  const setHoldingReturns = (next: HoldingReturns) => {
-    setEngine({ ...engine, holdingReturns: next });
+  /** 버킷 보유액이 있으면 진단 총액도 맞춰 홈·단계가 어긋나지 않게 */
+  const commitBuckets = (next: Bucket[]) => {
+    setBuckets(next);
+    if (totalBucketBalances(next) > 0) {
+      setSnapshot({ ...snapshot, ...snapshotAssetsFromBuckets(snapshot, next) });
+    }
   };
   const targetYears = vision?.targetYears ?? 15;
   const atYear = (curve: typeof projection.curve) =>
@@ -602,7 +621,7 @@ export function EngineBuilder() {
             onRequestDelete={requestDelete}
             spendSuggestionPending={spendSuggestionPending}
             cashflowMonthly={cashflowMonthly}
-            holdingsTotal={totalHoldings(snapshot)}
+            holdingsTotal={assetsOnBoard}
             editable={editing}
             onOpenDiagnosis={() => setDiagnosisOpen(true)}
             onShowIncomeSourcesChange={setShowIncomeSources}
@@ -928,11 +947,11 @@ export function EngineBuilder() {
               />
             ) : selectedId === "__pool__" ? (
               <PoolHubInspector
+                buckets={buckets}
                 snapshot={snapshot}
-                returns={holdingReturns}
-                onChangeSnapshot={(patch) => setSnapshot({ ...snapshot, ...patch })}
-                onChangeReturns={setHoldingReturns}
+                onChangeBuckets={commitBuckets}
                 onOpenDiagnosis={() => setDiagnosisOpen(true)}
+                onSelectBucket={(id) => selectNode(id)}
               />
             ) : selectedSource ? (
               <SourceInspector
@@ -958,7 +977,17 @@ export function EngineBuilder() {
                   all={buckets}
                   monthlyIncome={monthlyIncome}
                   structureEditable={editing}
-                  onChange={(patch) => updateBucket(selected.id, patch)}
+                  onChange={(patch) => {
+                    if ("currentBalance" in patch) {
+                      commitBuckets(
+                        buckets.map((b) =>
+                          b.id === selected.id ? { ...b, ...patch } : b,
+                        ),
+                      );
+                    } else {
+                      updateBucket(selected.id, patch);
+                    }
+                  }}
                   onDelete={() => requestDelete(selected.id)}
                   onDuplicate={() => duplicate(selected)}
                   onMoveSibling={(dir) => moveSibling(selected.id, dir)}
@@ -1011,11 +1040,11 @@ export function EngineBuilder() {
         )}
         {selectedId === "__pool__" && (
           <PoolHubInspector
+            buckets={buckets}
             snapshot={snapshot}
-            returns={holdingReturns}
-            onChangeSnapshot={(patch) => setSnapshot({ ...snapshot, ...patch })}
-            onChangeReturns={setHoldingReturns}
+            onChangeBuckets={commitBuckets}
             onOpenDiagnosis={() => setDiagnosisOpen(true)}
+            onSelectBucket={(id) => selectNode(id)}
           />
         )}
         {selectedSource && (
@@ -1042,7 +1071,17 @@ export function EngineBuilder() {
             all={buckets}
             monthlyIncome={monthlyIncome}
             structureEditable={editing}
-            onChange={(patch) => updateBucket(selected.id, patch)}
+            onChange={(patch) => {
+              if ("currentBalance" in patch) {
+                commitBuckets(
+                  buckets.map((b) =>
+                    b.id === selected.id ? { ...b, ...patch } : b,
+                  ),
+                );
+              } else {
+                updateBucket(selected.id, patch);
+              }
+            }}
             onDelete={() => requestDelete(selected.id)}
             onDuplicate={() => duplicate(selected)}
             onMoveSibling={(dir) => moveSibling(selected.id, dir)}

@@ -2,28 +2,28 @@ import type { Bucket, EngineConfig, IncomeSource } from "../types";
 import { normalizeIncomeSources, sumMonthlyIncome } from "../income";
 import { childrenOf, roots } from "./tree";
 
-export const NODE_W = 168;
-export const NODE_H = 70;
-export const COL_GAP = 44;
-export const ROW_GAP = 12;
-export const PAD_X = 16;
-export const PAD_Y = 36;
-export const SOURCE_W = 118;
-export const SOURCE_H = 52;
-export const INCOME_W = 140;
-export const INCOME_H = 88;
-export const POOL_W = 120;
-export const POOL_H = 108;
+export const NODE_W = 176;
+export const NODE_H = 78;
+export const COL_GAP = 48;
+export const ROW_GAP = 14;
+export const PAD_X = 20;
+export const PAD_Y = 40;
+export const SOURCE_W = 124;
+export const SOURCE_H = 56;
+export const INCOME_W = 152;
+export const INCOME_H = 96;
+export const POOL_W = 148;
+export const POOL_H = 118;
 /** 성장(투자·저축) 밴드와 지출 밴드 사이 간격 */
-export const SPEND_BAND_GAP = 36;
+export const SPEND_BAND_GAP = 40;
 
 /** depth 1=루트 묶음, 2+=하위(작아짐). depth -1 = 수입 항목 */
 export function sizeForDepth(depth: number): { w: number; h: number } {
   if (depth === -1) return { w: SOURCE_W, h: SOURCE_H };
   if (depth <= 0) return { w: INCOME_W, h: INCOME_H };
   if (depth === 1) return { w: NODE_W, h: NODE_H };
-  if (depth === 2) return { w: 138, h: 54 };
-  return { w: 120, h: 48 };
+  if (depth === 2) return { w: 152, h: 72 };
+  return { w: 136, h: 64 };
 }
 
 export type GraphNodeKind = "source" | "income" | "bucket" | "pool";

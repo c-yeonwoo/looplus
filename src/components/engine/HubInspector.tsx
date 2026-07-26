@@ -2,19 +2,18 @@
 
 import {
   INCOME_SOURCE_META,
+  type Bucket,
   type FinancialSnapshot,
-  type HoldingKind,
-  type HoldingReturn,
-  type HoldingReturns,
   type IncomeSource,
 } from "@/lib/types";
 import { incomeSourceLabel } from "@/lib/income";
 import {
-  HOLDING_KINDS,
-  HOLDING_META,
-  holdingBalance,
-  holdingsRealizedAnnual,
-  totalHoldings,
+  assetLeaves,
+  bucketBalance,
+  bucketsRealizedAnnual,
+  residualTotal,
+  seedBalancesFromSnapshot,
+  totalBucketBalances,
 } from "@/lib/engine/holdings";
 import { Field, NumberInput, Button, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
@@ -27,7 +26,6 @@ export function IncomeHubInspector({
   structureEditable = true,
 }: {
   monthlyIncome: number;
-  /** 캔버스 수입원 노드 표시 */
   showIncomeSources?: boolean;
   onShowIncomeSourcesChange?: (show: boolean) => void;
   onAddGroup: () => void;
@@ -66,44 +64,45 @@ export function IncomeHubInspector({
 }
 
 /**
- * 보유 자산 노드.
- * 이미 가진 돈(현금·투자자산·부동산)의 금액과 수익 가정을 한곳에서 다룬다.
- * 여기서 나오는 실현 수익은 프로젝션이 매년 자본소득으로 자동 재유입한다.
+ * 자산 현황 허브 — 각 버킷에 모아 둔 돈 + 거기서 나오는 현금흐름.
  */
 export function PoolHubInspector({
+  buckets,
   snapshot,
-  returns,
-  onChangeSnapshot,
-  onChangeReturns,
+  onChangeBuckets,
   onOpenDiagnosis,
+  onSelectBucket,
 }: {
+  buckets: Bucket[];
   snapshot: FinancialSnapshot;
-  returns: HoldingReturns;
-  onChangeSnapshot: (patch: Partial<FinancialSnapshot>) => void;
-  onChangeReturns: (next: HoldingReturns) => void;
+  onChangeBuckets: (next: Bucket[]) => void;
   onOpenDiagnosis?: () => void;
+  onSelectBucket?: (id: string) => void;
 }) {
-  const total = totalHoldings(snapshot);
-  const monthly = holdingsRealizedAnnual(snapshot, returns) / 12;
-  const patchKind = (kind: HoldingKind, patch: Partial<HoldingReturn>) => {
-    const merged = { ...returns[kind], ...patch };
-    onChangeReturns({
-      ...returns,
-      // 현금으로 나오는 몫이 총수익을 넘을 수 없다
-      [kind]: {
-        ...merged,
-        realizedYieldPct: Math.min(merged.realizedYieldPct, merged.expectedAnnualReturnPct),
-      },
-    });
+  const leaves = assetLeaves(buckets);
+  const total = totalBucketBalances(buckets);
+  const leftover = residualTotal(snapshot, buckets);
+  const monthly = bucketsRealizedAnnual(buckets) / 12;
+
+  const setBalance = (id: string, value: number) => {
+    onChangeBuckets(
+      buckets.map((b) =>
+        b.id === id ? { ...b, currentBalance: Math.max(0, value) } : b,
+      ),
+    );
+  };
+
+  const fillFromDiagnosis = () => {
+    onChangeBuckets(seedBalancesFromSnapshot(buckets, snapshot));
   };
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-bold text-ink-800">보유 자산</div>
+      <div className="text-sm font-bold text-ink-800">자산 현황</div>
 
       <div className="grid grid-cols-2 gap-2 rounded-xl border border-sage-100 bg-sage-50 px-3 py-2.5 text-center">
         <div>
-          <div className="text-[11px] font-semibold text-sage-600">지금 보유</div>
+          <div className="text-[11px] font-semibold text-sage-600">버킷에 모은 돈</div>
           <div className="tnum text-base font-extrabold text-sage-700">{Math.round(total)}만</div>
         </div>
         <div>
@@ -114,43 +113,48 @@ export function PoolHubInspector({
         </div>
       </div>
       <p className="text-[11px] leading-relaxed text-ink-400">
-        배당·임대·이자로 나오는 몫은 다음 해 수입에 자동으로 더해져 다시 배분돼요.
+        각 항목에 지금 얼마가 있는지를 적어요. 배당·임대는 다음 해 수입으로 자동 반영됩니다.
       </p>
 
-      {HOLDING_KINDS.map((kind) => {
-        const meta = HOLDING_META[kind];
-        const ret = returns[kind];
-        return (
-          <div key={kind} className="space-y-2 rounded-xl border border-ink-100 px-3 py-2.5">
-            <Field label={meta.label}>
+      {leaves.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-ink-200 px-3 py-4 text-center text-xs text-ink-400">
+          투자·저축 항목을 추가하면 여기에 보유액을 넣을 수 있어요
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {leaves.map((b) => (
+            <div key={b.id} className="rounded-xl border border-ink-100 px-3 py-2.5">
+              <button
+                type="button"
+                className="mb-1.5 flex w-full items-center justify-between text-left"
+                onClick={() => onSelectBucket?.(b.id)}
+              >
+                <span className="text-sm font-semibold text-ink-700">{b.name}</span>
+                <span className="text-[10px] font-medium text-ink-400">
+                  {b.category === "invest" ? (b.isLocked ? "잠금" : "투자") : "저축"}
+                </span>
+              </button>
               <NumberInput
-                value={holdingBalance(snapshot, kind)}
-                onChange={(n) => onChangeSnapshot(snapshotPatch(kind, Math.max(0, n)))}
+                value={bucketBalance(b)}
+                onChange={(n) => setBalance(b.id, n)}
                 suffix="만원"
               />
-            </Field>
-            {/* grid 자식은 기본 min-width:auto 라 좁은 패널에서 넘친다 */}
-            <div className="grid min-w-0 grid-cols-2 gap-2 [&>label]:min-w-0">
-              <Field label="기대 수익률">
-                <NumberInput
-                  value={ret.expectedAnnualReturnPct}
-                  onChange={(n) => patchKind(kind, { expectedAnnualReturnPct: clampPct(n) })}
-                  suffix="%"
-                  showZero
-                />
-              </Field>
-              <Field label={`현금(${meta.hint})`}>
-                <NumberInput
-                  value={ret.realizedYieldPct}
-                  onChange={(n) => patchKind(kind, { realizedYieldPct: clampPct(n) })}
-                  suffix="%"
-                  showZero
-                />
-              </Field>
             </div>
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      )}
+
+      {leftover > 0 && (
+        <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+          <p className="text-[11px] leading-relaxed text-amber-800">
+            현황에만 있고 버킷에 안 넣은 금액이{" "}
+            <span className="tnum font-bold">{Math.round(leftover)}만</span> 있어요.
+          </p>
+          <Button variant="outline" className="w-full !py-1.5 !text-xs" onClick={fillFromDiagnosis}>
+            버킷 비율대로 나눠 넣기
+          </Button>
+        </div>
+      )}
 
       {onOpenDiagnosis && (
         <Button variant="outline" className="w-full" onClick={onOpenDiagnosis}>
@@ -159,17 +163,6 @@ export function PoolHubInspector({
       )}
     </div>
   );
-}
-
-function clampPct(n: number): number {
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, n));
-}
-
-function snapshotPatch(kind: HoldingKind, value: number): Partial<FinancialSnapshot> {
-  if (kind === "cash") return { cash: value };
-  if (kind === "invest") return { investAssets: value };
-  return { realEstate: value };
 }
 
 export function SourceInspector({

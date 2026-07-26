@@ -81,6 +81,7 @@ interface BucketRow {
   parent_client_key?: string | null;
   canvas_x?: number | null;
   canvas_y?: number | null;
+  current_balance?: number | null;
 }
 
 function num(v: unknown): number | null {
@@ -103,6 +104,7 @@ function rowToBucket(r: BucketRow): Bucket {
     position: r.position,
     canvasX: num(r.canvas_x),
     canvasY: num(r.canvas_y),
+    currentBalance: num(r.current_balance) ?? undefined,
   };
 }
 
@@ -122,6 +124,7 @@ function bucketToRow(b: Bucket, userId: string) {
     parent_client_key: b.parentId ?? null,
     canvas_x: b.canvasX ?? null,
     canvas_y: b.canvasY ?? null,
+    current_balance: b.currentBalance ?? null,
   };
 }
 

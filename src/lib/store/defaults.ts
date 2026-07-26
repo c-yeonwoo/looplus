@@ -2,6 +2,7 @@ import type { Bucket, EngineConfig, FinancialSnapshot, Profile, Vision } from ".
 import { emptyTracking } from "../types";
 import { emptySpending } from "../spending/types";
 import { GROUP_PRESETS, ITEM_PRESETS, bucketFromPreset } from "../catalog";
+import { seedBalancesFromSnapshot } from "../engine/holdings";
 
 export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   cash: 0,
@@ -83,6 +84,9 @@ export function suggestEngineFromSnapshot(s: FinancialSnapshot): EngineConfig {
   const variable = bucketFromPreset(preset("variable"), 1, spend.id);
   variable.ratioPct = 40;
 
-  const buckets: Bucket[] = [invest, save, spend, stock, pension, emergency, fixed, variable];
+  const buckets: Bucket[] = seedBalancesFromSnapshot(
+    [invest, save, spend, stock, pension, emergency, fixed, variable],
+    s,
+  );
   return { buckets };
 }
