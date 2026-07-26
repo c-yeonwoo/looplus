@@ -50,6 +50,8 @@ supabase projects api-keys --project-ref <REF> -o env
 | `NEXT_PUBLIC_LEAD_URL` | (선택) 리드젠 CTA — 없으면 "곧 연결" |
 | `NEXT_PUBLIC_LEAD_URL_SIGNAL_DESK` | (선택) 주식 버킷 크로스셀 |
 | `NEXT_PUBLIC_LEAD_URL_SIGNAL_APT` | (선택) 부동산 버킷 크로스셀 |
+| `GEMINI_API_KEY` | (선택) 비전보드 사진 생성 — **서버 전용·런타임**. 없으면 버튼이 안 보임 |
+| `GEMINI_IMAGE_MODEL` | (선택) 기본 `gemini-3-pro-image` |
 
 ### 운영 스위치 체크리스트 (GA)
 
@@ -92,6 +94,11 @@ Dockerfile builder 스테이지에 `ARG` 선언이 있어야 `next build` 가 �
 
 새 `NEXT_PUBLIC_*` 를 추가할 때는 **Dockerfile 의 `ARG`/`ENV` 목록에도 넣어야 한다.**
 빠뜨리면 `scripts/check-build-env.mjs` 가 빌드를 실패시킨다 (필수 키에 한해).
+
+반대로 `GEMINI_API_KEY` 처럼 **서버에서만 읽는 값은 런타임 변수**라 `ARG` 가 필요 없다.
+Railway Variables 에 넣고 재시작하면 재빌드 없이 켜진다. 대신 그 값을 읽는 라우트는
+`export const dynamic = "force-dynamic"` 로 정적 프리렌더를 막아야 한다 —
+안 그러면 빌드 시점의 "키 없음" 상태가 응답에 굳는다.
 
 로컬 Docker 검증:
 

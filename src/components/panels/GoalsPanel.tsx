@@ -1,11 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useProfile } from "@/lib/store/useProfile";
 import { DEFAULT_VISION } from "@/lib/store/defaults";
 import { SCENE_META, type Scene, type SceneType, type Vision } from "@/lib/types";
 import { formatKRW } from "@/lib/format";
-import { Card, Field, NumberInput, AssumptionNote } from "@/components/ui";
+import { generateSceneImage, isVisionImageEnabled } from "@/lib/vision/clientImage";
+import { Card, Field, NumberInput, AssumptionNote, Button } from "@/components/ui";
 import { Icon, type IconName } from "@/components/Icon";
 
 const SCENE_ORDER: SceneType[] = ["place", "day", "work", "people"];
@@ -27,10 +28,101 @@ function QuietSection({
   );
 }
 
+/** 장면 사진 — 적어둔 문장으로 만든다. 키가 없으면 아무것도 안 보인다. */
+function SceneImage({
+  scene,
+  why,
+  enabled,
+  onChange,
+}: {
+  scene: Scene;
+  why: string;
+  enabled: boolean;
+  onChange: (imageUrl: string | undefined) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasText = scene.text.trim().length > 0;
+
+  if (!enabled && !scene.imageUrl) return null;
+
+  const run = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      onChange(await generateSceneImage(scene.type, scene.text, why));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "이미지를 만들지 못했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {scene.imageUrl && (
+        <div className="relative aspect-[5/3] overflow-hidden rounded-xl border border-ink-100">
+          {/* 생성된 data URL 이라 next/image 의 remotePatterns 로 다룰 수 없다 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={scene.imageUrl}
+            alt={`${SCENE_META[scene.type].label} 장면`}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+      {enabled && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="!py-1.5 !text-xs"
+            disabled={!hasText || busy}
+            onClick={run}
+          >
+            <Icon name="image" size={13} />
+            {busy ? "만드는 중…" : scene.imageUrl ? "다시 만들기" : "사진 만들기"}
+          </Button>
+          {scene.imageUrl && !busy && (
+            <button
+              type="button"
+              className="text-xs text-ink-400 hover:text-ink-600 hover:underline"
+              onClick={() => {
+                setError(null);
+                onChange(undefined);
+              }}
+            >
+              지우기
+            </button>
+          )}
+        </div>
+      )}
+      {!hasText && enabled && !scene.imageUrl && (
+        <p className="text-[11px] text-ink-400">장면을 한 줄 적으면 사진을 만들 수 있어요.</p>
+      )}
+      {error && (
+        <p role="alert" className="text-[11px] text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function GoalsPanel() {
   const stored = useProfile((s) => s.profile.vision);
   const setVision = useProfile((s) => s.setVision);
   const v = stored ?? DEFAULT_VISION;
+  const [imageEnabled, setImageEnabled] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    isVisionImageEnabled().then((on) => {
+      if (alive) setImageEnabled(on);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const patch = (p: Partial<Vision>) => setVision({ ...v, ...p });
   const getScene = (type: SceneType): Scene =>
@@ -70,6 +162,12 @@ export function GoalsPanel() {
                     placeholder={meta.placeholder}
                     value={sc.text}
                     onChange={(e) => setScene(type, { text: e.target.value })}
+                  />
+                  <SceneImage
+                    scene={sc}
+                    why={v.why}
+                    enabled={imageEnabled}
+                    onChange={(imageUrl) => setScene(type, { imageUrl })}
                   />
                 </div>
               );
