@@ -45,6 +45,34 @@ export default function HomePage() {
       Boolean(vision?.why?.trim()) ||
       Boolean(vision?.scenes.some((s) => s.text.trim())));
 
+  const currentAchievePct = projection?.achievementPct ?? 0;
+
+  /*
+    훅은 아래 early return 보다 위에 있어야 한다. 스냅샷이 없다가 생기면 렌더 간 훅
+    개수가 달라져 React 가 던진다("Rendered more hooks than during the previous
+    render"). 대신 대시보드가 실제로 뜨는 조건은 이펙트 안에서 지킨다 — 스냅샷 없는
+    사용자에게 주간 델타를 기록하면 다음 주 기준선이 0으로 오염된다.
+    deps 는 원시값으로 둔다. stage 객체를 넣으면 리렌더마다 이펙트가 다시 돈다.
+  */
+  const [weekDelta, setWeekDelta] = useState<WeekDelta | null>(null);
+  const netWorth = stage?.metrics.netWorth ?? 0;
+  const stageKey = stage?.stage ?? null;
+
+  useEffect(() => {
+    if (stageKey == null) return;
+    const d = computeWeekDelta({
+      netWorth,
+      achievementPct: currentAchievePct,
+      stage: stageKey,
+    });
+    setWeekDelta(d);
+    track("home_week_delta_viewed", {
+      is_new_week: d.isNewWeek,
+      nw_delta: Math.round(d.netWorthDelta),
+      stage_delta: d.stageDelta,
+    });
+  }, [netWorth, currentAchievePct, stageKey]);
+
   // 현황(스냅샷) 없음
   if (!snapshot || !stage) {
     return (
@@ -98,7 +126,6 @@ export default function HomePage() {
     : null;
 
   const goalNw = vision?.goalNetworth ?? 0;
-  const currentAchievePct = projection?.achievementPct ?? 0;
   const horizonAchievePct =
     goalNw > 0 && atYear ? (atYear.totalNetWorth / goalNw) * 100 : 0;
 
@@ -118,21 +145,6 @@ export default function HomePage() {
   });
 
   const engineSumOk = Math.round(ratioSum(profile.engine.buckets)) === 100;
-  const [weekDelta, setWeekDelta] = useState<WeekDelta | null>(null);
-
-  useEffect(() => {
-    const d = computeWeekDelta({
-      netWorth: m.netWorth,
-      achievementPct: currentAchievePct,
-      stage: stage.stage,
-    });
-    setWeekDelta(d);
-    track("home_week_delta_viewed", {
-      is_new_week: d.isNewWeek,
-      nw_delta: Math.round(d.netWorthDelta),
-      stage_delta: d.stageDelta,
-    });
-  }, [m.netWorth, currentAchievePct, stage.stage]);
 
   const showProjectionHero =
     hasNumericGoal &&
