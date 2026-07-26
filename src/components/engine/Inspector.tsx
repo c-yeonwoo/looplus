@@ -89,6 +89,7 @@ export function Inspector({
         value={bucket.ratioPct}
         onChange={(n) => onChange({ ratioPct: clampPct(n) })}
         suffix="%"
+        showZero
       />
       <div
         className={`rounded-lg border px-2.5 py-1.5 text-center text-[11px] font-semibold ${
@@ -107,6 +108,7 @@ export function Inspector({
               value={bucket.expectedAnnualReturnPct}
               onChange={(n) => onChange({ expectedAnnualReturnPct: n })}
               suffix="%"
+              showZero
             />
           </Field>
           <p className="text-[11px] leading-relaxed text-ink-400">
@@ -126,6 +128,7 @@ export function Inspector({
                 onChange({ realizedYieldPct: Math.min(n, bucket.expectedAnnualReturnPct) })
               }
               suffix="%"
+              showZero
             />
           </Field>
           <p className="text-[11px] leading-relaxed text-ink-400">

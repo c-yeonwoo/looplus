@@ -112,18 +112,23 @@ export function NumberInput({
   onChange,
   suffix,
   placeholder,
-  /** true면 0을 빈 칸으로 보여 placeholder가 보이게 함 (나이 등) */
-  blankZero = false,
+  /**
+   * 0 을 "0" 으로 표시할지. 기본은 빈 칸 —
+   * 대부분의 칸에서 0 은 '아직 안 넣음'이라, 0 을 찍어두면 신규 사용자에게
+   * 폼이 미리 채워진 것처럼 보인다. 비율·수익률처럼 0 이 의도된 가정인
+   * 칸에서만 켠다.
+   */
+  showZero = false,
 }: {
   value: number;
   onChange: (n: number) => void;
   suffix?: string;
   placeholder?: string;
-  blankZero?: boolean;
+  showZero?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const canonical =
-    (blankZero && value === 0) || !Number.isFinite(value) ? "" : String(value);
+    !Number.isFinite(value) || (value === 0 && !showZero) ? "" : String(value);
   /** 편집 중에는 입력한 표기를 그대로 둔다 — "7." 이 7 로 정규화되며 소수점이 지워지는 것 방지.
    *  단 부모가 값을 보정(clamp)하면 draft 와 어긋나므로 보정값을 보여준다. */
   const display = draft !== null && parseNum(draft) === value ? draft : canonical;
