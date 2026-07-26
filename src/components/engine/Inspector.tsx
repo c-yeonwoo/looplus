@@ -62,7 +62,7 @@ export function Inspector({
 
       <div className="grid grid-cols-2 gap-2 rounded-xl border border-ink-100 bg-ink-50/80 px-3 py-2.5 text-xs">
         <div>
-          <div className="text-ink-400">월 환산</div>
+          <div className="text-ink-400">월 흐름</div>
           <div className="tnum text-sm font-extrabold text-ink-800">{month}만</div>
         </div>
         <div>
@@ -72,6 +72,21 @@ export function Inspector({
           </div>
         </div>
       </div>
+
+      {leaf && bucket.category !== "spend" && (
+        <div className="space-y-1">
+          <Field label="지금 모아 둔 금액">
+            <NumberInput
+              value={bucket.currentBalance ?? 0}
+              onChange={(n) => onChange({ currentBalance: Math.max(0, n) })}
+              suffix="만원"
+            />
+          </Field>
+          <p className="text-[11px] leading-relaxed text-ink-400">
+            이 항목에 이미 들어 있는 돈. 매달 들어오는 흐름과 따로 굴러가요.
+          </p>
+        </div>
+      )}
 
       {bucket.category === "spend" && (
         <div className="space-y-2">

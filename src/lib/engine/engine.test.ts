@@ -130,9 +130,89 @@ describe("projectEngine", () => {
     expect(a.curve[10].totalNetWorth).toBeCloseTo(b.curve[10].totalNetWorth, 5);
   });
 
-  it("보유 자산은 버킷 구성과 무관하게 자기 가정으로 굴러간다", () => {
-    // 예전엔 보유 자산을 ratioPct 로 쪼개 버킷에 심어서, 흐름 배분만 바꿔도
-    // 이미 가진 돈의 성장률이 달라졌다. 이제는 분리돼 있어야 한다.
+  it("버킷 currentBalance 가 시드가 된다", () => {
+    const bare = snapshot({
+      cash: 0,
+      investAssets: 0,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const r = projectEngine({
+      snapshot: bare,
+      horizonYears: 1,
+      buckets: [
+        bucket({
+          category: "invest",
+          ratioPct: 0,
+          expectedAnnualReturnPct: 0,
+          realizedYieldPct: 0,
+          currentBalance: 5000,
+        }),
+      ],
+    });
+    expect(r.curve[0].totalNetWorth).toBe(5000);
+  });
+
+  it("버킷별 수익률로 굴러간다 — 주식과 현금 버킷이 섞이지 않는다", () => {
+    const bare = snapshot({
+      cash: 0,
+      investAssets: 0,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const r = projectEngine({
+      snapshot: bare,
+      horizonYears: 10,
+      buckets: [
+        bucket({
+          category: "invest",
+          name: "주식",
+          ratioPct: 0,
+          expectedAnnualReturnPct: 10,
+          realizedYieldPct: 0,
+          currentBalance: 5000,
+        }),
+        bucket({
+          category: "save",
+          name: "예금",
+          ratioPct: 0,
+          expectedAnnualReturnPct: 2,
+          realizedYieldPct: 0,
+          currentBalance: 5000,
+        }),
+      ],
+    });
+    expect(r.finalNetWorth).toBeCloseTo(5000 * 1.1 ** 10 + 5000 * 1.02 ** 10, 4);
+  });
+
+  it("버킷 실현분이 자본소득으로 재유입된다", () => {
+    const bare = snapshot({
+      cash: 0,
+      investAssets: 0,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const r = projectEngine({
+      snapshot: bare,
+      horizonYears: 5,
+      buckets: [
+        bucket({
+          category: "invest",
+          ratioPct: 100,
+          expectedAnnualReturnPct: 4,
+          realizedYieldPct: 3,
+          currentBalance: 10000,
+        }),
+      ],
+    });
+    expect(r.curve[0].monthlyPassiveIncome).toBeCloseTo(25, 6);
+    expect(r.curve[1].totalNetWorth).toBeGreaterThan(r.curve[0].totalNetWorth);
+  });
+
+  it("스냅샷에만 있고 버킷에 안 넣은 금액은 잔여로 남는다", () => {
     const s = snapshot({
       cash: 0,
       investAssets: 10000,
@@ -140,103 +220,45 @@ describe("projectEngine", () => {
       liabilities: 0,
       incomeSources: [{ type: "labor", monthly: 0 }],
     });
-    const holdingReturns = {
-      cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
-      invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
-      realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
-    };
-    // 배분 0% → 흐름은 없고 보유 자산만 남는다. 버킷 구성이 달라도 결과가 같아야 한다.
-    const a = projectEngine({
+    const r = projectEngine({
       snapshot: s,
       horizonYears: 10,
-      holdingReturns,
-      buckets: [bucket({ category: "invest", ratioPct: 0, expectedAnnualReturnPct: 8, realizedYieldPct: 2 })],
-    });
-    const b = projectEngine({
-      snapshot: s,
-      horizonYears: 10,
-      holdingReturns,
-      buckets: [
-        bucket({ category: "invest", ratioPct: 0, expectedAnnualReturnPct: 12, isLocked: true }),
-        bucket({ category: "save", ratioPct: 0, expectedAnnualReturnPct: 3 }),
-      ],
-    });
-    // 미실현 1%(= 기대 4% − 실현 3%)로만 복리
-    expect(a.finalNetWorth).toBeCloseTo(10000 * 1.01 ** 10, 4);
-    expect(b.finalNetWorth).toBeCloseTo(a.finalNetWorth, 6);
-  });
-
-  it("보유 자산 종류별 가정을 따른다 — 현금은 주식 수익률로 불어나지 않는다", () => {
-    const cashOnly = snapshot({
-      cash: 10000,
-      investAssets: 0,
-      realEstate: 0,
-      liabilities: 0,
-      incomeSources: [{ type: "labor", monthly: 0 }],
-    });
-    const r = projectEngine({
-      snapshot: cashOnly,
-      buckets: invest100,
-      horizonYears: 10,
-      holdingReturns: {
-        cash: { expectedAnnualReturnPct: 2, realizedYieldPct: 0 },
-        invest: { expectedAnnualReturnPct: 20, realizedYieldPct: 10 },
-        realEstate: { expectedAnnualReturnPct: 20, realizedYieldPct: 10 },
-      },
-    });
-    // 현금 1억이 연 2% 로만 성장 — 투자 가정(20%) 이 새어들지 않는다
-    expect(r.curve[10].totalNetWorth).toBeCloseTo(10000 * 1.02 ** 10, 4);
-    expect(r.curve[10].monthlyPassiveIncome).toBe(0); // 실현 0%
-  });
-
-  it("보유 자산 실현분이 자본소득으로 자동 재유입된다", () => {
-    const holdingsOnly = snapshot({
-      cash: 0,
-      investAssets: 10000,
-      realEstate: 0,
-      liabilities: 0,
-      incomeSources: [{ type: "labor", monthly: 0 }],
-    });
-    const r = projectEngine({
-      snapshot: holdingsOnly,
-      buckets: invest100,
-      horizonYears: 5,
       holdingReturns: {
         cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
         invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
         realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
       },
+      // 버킷 잔액 0 → 스냅샷 전액이 잔여
+      buckets: [bucket({ category: "invest", ratioPct: 0, expectedAnnualReturnPct: 8, realizedYieldPct: 2 })],
     });
-    // 1억 × 3% = 연 300만 → 월 25만
-    expect(r.curve[0].monthlyPassiveIncome).toBeCloseTo(25, 6);
-    // 그 자본소득이 다음 해 배분 대상(수입)이 되어 버킷에 쌓인다
-    expect(r.curve[1].totalNetWorth).toBeGreaterThan(r.curve[0].totalNetWorth);
+    expect(r.finalNetWorth).toBeCloseTo(10000 * 1.01 ** 10, 4);
   });
 
-  it("입력한 자본소득과 보유 자산 추정을 중복으로 더하지 않는다", () => {
-    // 월 25만 자본소득 = 1억 × 3% 실현. 같은 자산에서 나온 돈이라 두 번 세면 안 된다.
-    const returns = {
-      cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
-      invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
-      realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
-    };
-    const base = {
+  it("입력한 자본소득과 버킷 실현 추정을 중복으로 더하지 않는다", () => {
+    const bare = {
       cash: 0,
-      investAssets: 10000,
+      investAssets: 0,
       realEstate: 0,
       liabilities: 0,
     };
+    const buckets = [
+      bucket({
+        category: "invest",
+        ratioPct: 100,
+        expectedAnnualReturnPct: 4,
+        realizedYieldPct: 3,
+        currentBalance: 10000,
+      }),
+    ];
     const declared = projectEngine({
-      snapshot: snapshot({ ...base, incomeSources: [{ type: "capital", monthly: 25 }] }),
-      buckets: invest100,
+      snapshot: snapshot({ ...bare, incomeSources: [{ type: "capital", monthly: 25 }] }),
+      buckets,
       horizonYears: 5,
-      holdingReturns: returns,
     });
     const silent = projectEngine({
-      snapshot: snapshot({ ...base, incomeSources: [{ type: "labor", monthly: 0 }] }),
-      buckets: invest100,
+      snapshot: snapshot({ ...bare, incomeSources: [{ type: "labor", monthly: 0 }] }),
+      buckets,
       horizonYears: 5,
-      holdingReturns: returns,
     });
     expect(declared.curve[0].monthlyPassiveIncome).toBeCloseTo(25, 6);
     expect(declared.finalNetWorth).toBeCloseTo(silent.finalNetWorth, 6);

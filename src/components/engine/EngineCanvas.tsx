@@ -17,6 +17,7 @@ import {
   pathToRoot,
   ratioOfTotal,
 } from "@/lib/engine/tree";
+import { bucketBalance, subtreeBalance } from "@/lib/engine/holdings";
 import {
   anchorsFromEngine,
   defaultEdgeControl,
@@ -32,11 +33,14 @@ import {
 import { Button, EmptyState, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
-/** 투자 amber · 저축 emerald · 지출 rose */
+/** 투자 amber · 저축 emerald · 지출 rose — 보드가 제품의 얼굴이라 톤을 또렷하게 */
 const CAT_NODE: Record<string, string> = {
-  invest: "border-invest-300 border-l-[3px] border-l-invest-500 bg-invest-50 text-invest-800",
-  save: "border-save-300 border-l-[3px] border-l-save-500 bg-save-50 text-save-800",
-  spend: "border-spend-300 border-l-[3px] border-l-spend-500 bg-spend-50 text-spend-800",
+  invest:
+    "border-invest-200/90 border-l-[3px] border-l-invest-500 bg-gradient-to-br from-invest-50 to-white text-invest-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
+  save:
+    "border-save-200/90 border-l-[3px] border-l-save-500 bg-gradient-to-br from-save-50 to-white text-save-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
+  spend:
+    "border-spend-200/90 border-l-[3px] border-l-spend-500 bg-gradient-to-br from-spend-50 to-white text-spend-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
 };
 
 function linkWidth(ratio: number) {
@@ -584,8 +588,8 @@ export function EngineCanvas({
       >
         <EmptyState
           icon="layers"
-          title="월수입과 자산 흐름을 만드세요"
-          desc="수입 → 월수입 → 자산(복리·현금흐름) · 지출은 아래"
+          title="현금흐름과 자산 현황을 한 장에"
+          desc="수입 → 배분 → 각 항목의 보유액 · 거기서 나오는 현금이 다시 흐름으로"
           action={
             <div className="flex flex-wrap justify-center gap-2">
               {onOpenDiagnosis && (
@@ -623,9 +627,10 @@ export function EngineCanvas({
     const leaf = isLeaf(b, buckets);
     const ofTotal = ratioOfTotal(b, buckets);
     const month = monthlyManwon(b, buckets, monthlyIncome);
+    const held = leaf ? bucketBalance(b) : subtreeBalance(b, buckets);
+    const showHeld = b.category !== "spend" && held > 0;
     const selected = selectedIds.includes(b.id);
-    const parentLabel = b.parentId ? "상위" : "월수입";
-    const compact = n.depth >= 2;
+    const compact = n.depth >= 3;
     const dragging = drag?.id === b.id || (drag != null && drag.group.some((g) => g.id === b.id));
     const p = posOf(n);
 
@@ -644,7 +649,7 @@ export function EngineCanvas({
           className={`group flex h-full w-full select-none flex-col justify-center border text-left transition-shadow ${
             compact ? "rounded-lg px-2 py-1" : "rounded-xl px-2.5 py-1.5"
           } ${CAT_NODE[b.category]} ${
-            selected ? "ring-2 ring-brand-500 shadow-sm" : "hover:shadow-sm"
+            selected ? "ring-2 ring-brand-500 shadow-md" : "hover:shadow-sm"
           } ${
             dragging
               ? "cursor-grabbing opacity-90 shadow-md"
@@ -656,33 +661,44 @@ export function EngineCanvas({
           <div className="flex items-start gap-1">
             <div className="min-w-0 flex-1">
               <div
-                className={`flex items-center gap-0.5 font-bold leading-tight ${
+                className={`flex items-center gap-1 font-bold leading-tight tracking-tight ${
                   compact ? "text-[11px]" : "text-[13px]"
                 }`}
               >
-                {b.isLocked && <Icon name="lock" size={compact ? 10 : 11} className="text-locked" />}
+                {b.isLocked && (
+                  <Icon name="lock" size={compact ? 10 : 11} className="shrink-0 text-locked" />
+                )}
                 <span className="truncate">{displayBucketName(b.name)}</span>
+                {!leaf && (
+                  <span className="shrink-0 rounded bg-black/5 px-1 py-px text-[9px] font-semibold opacity-60">
+                    묶음
+                  </span>
+                )}
                 {spendSuggestionPending &&
                   b.category === "spend" &&
                   !b.parentId &&
                   !compact && (
-                    <span className="ml-0.5 shrink-0 rounded bg-white/80 px-1 py-px text-[8px] font-bold text-spend-700">
+                    <span className="shrink-0 rounded bg-white/80 px-1 py-px text-[8px] font-bold text-spend-700">
                       실측
                     </span>
                   )}
               </div>
+              {/* 흐름(매월) · 보유(지금) — 이 보드의 두 축 */}
               <div
-                className={`mt-0.5 flex flex-wrap gap-x-1.5 opacity-80 ${
-                  compact ? "text-[9px]" : "text-[10px]"
+                className={`mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 ${
+                  compact ? "text-[10px]" : "text-[11px]"
                 }`}
               >
-                <span className="tnum font-semibold">
-                  {parentLabel} {b.ratioPct}%
+                <span className="tnum font-semibold opacity-80">
+                  월 {month}만
+                  <span className="ml-0.5 font-medium opacity-55">{ofTotal.toFixed(0)}%</span>
                 </span>
-                {!compact && (
-                  <span className="tnum">전체 {ofTotal.toFixed(1).replace(/\.0$/, "")}%</span>
+                {showHeld ? (
+                  <span className="tnum font-extrabold">보유 {Math.round(held)}만</span>
+                ) : (
+                  b.category !== "spend" &&
+                  leaf && <span className="font-medium opacity-35">보유 —</span>
                 )}
-                <span className="tnum font-semibold">월 {month}만</span>
               </div>
             </div>
             {editable && (
@@ -699,9 +715,6 @@ export function EngineCanvas({
               </button>
             )}
           </div>
-          {!leaf && !compact && (
-            <div className="mt-0.5 text-[9px] font-semibold opacity-50">묶음</div>
-          )}
         </div>
       </foreignObject>
     );
@@ -720,11 +733,13 @@ export function EngineCanvas({
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
-      className={`relative rounded-xl border bg-white transition-colors ${
-        dragOver ? "border-2 border-dashed border-brand-400 bg-brand-50/40" : "border-ink-200"
+      className={`relative overflow-hidden rounded-2xl border transition-colors ${
+        dragOver
+          ? "border-2 border-dashed border-brand-400 bg-brand-50/40"
+          : "border-ink-200/90 bg-[radial-gradient(circle_at_20%_0%,rgba(212,175,55,0.07),transparent_42%),radial-gradient(circle_at_90%_30%,rgba(94,140,106,0.08),transparent_40%),linear-gradient(180deg,#ffffff_0%,#faf9f6_100%)]"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-1 border-b border-ink-100 px-3 py-2 text-xs">
+      <div className="flex flex-wrap items-center gap-1 border-b border-ink-100/80 bg-white/70 px-3 py-2 text-xs backdrop-blur-sm">
         <button
           type="button"
           onClick={() => onSelect("__income__")}
@@ -950,8 +965,8 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, "__income__", n)}
-                    className={`flex h-full w-full select-none flex-col justify-center rounded-xl border border-gold-300 bg-gold-50 px-2 text-center ${
-                      selected ? "ring-2 ring-gold-500" : "hover:shadow-sm"
+                    className={`flex h-full w-full select-none flex-col justify-center rounded-2xl border border-gold-300/80 bg-gradient-to-br from-gold-50 to-white px-2.5 text-center shadow-[0_1px_0_rgba(15,23,42,0.04)] ${
+                      selected ? "ring-2 ring-gold-500 shadow-md" : "hover:shadow-sm"
                     } ${
                       dragging
                         ? "cursor-grabbing opacity-90"
@@ -960,10 +975,11 @@ export function EngineCanvas({
                           : "cursor-pointer"
                     }`}
                   >
-                    <div className="text-[11px] font-semibold text-gold-600">월수입</div>
-                    <div className="tnum mt-0.5 text-base font-extrabold text-gold-700">
+                    <div className="text-[10px] font-bold tracking-wide text-gold-600">월수입</div>
+                    <div className="tnum mt-0.5 text-lg font-extrabold leading-none text-gold-800">
                       {monthlyIncome}만
                     </div>
+                    <div className="mt-1 text-[10px] font-medium text-gold-600/70">흐름의 시작</div>
                   </div>
                 </foreignObject>
               );
@@ -981,8 +997,8 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, "__pool__", n)}
-                    className={`flex h-full w-full select-none flex-col items-center justify-center rounded-xl border border-sage-500/35 bg-sage-50 px-2 text-center ${
-                      selected ? "ring-2 ring-sage-500" : "hover:shadow-sm"
+                    className={`flex h-full w-full select-none flex-col items-center justify-center rounded-2xl border border-sage-400/40 bg-gradient-to-br from-sage-50 via-white to-sage-50/80 px-2.5 text-center shadow-[0_1px_0_rgba(15,23,42,0.04)] ${
+                      selected ? "ring-2 ring-sage-500 shadow-md" : "hover:shadow-sm"
                     } ${
                       dragging
                         ? "cursor-grabbing opacity-90"
@@ -991,19 +1007,17 @@ export function EngineCanvas({
                           : "cursor-pointer"
                     }`}
                   >
-                    <div className="text-sm font-bold text-sage-700">
-                      자산
-                      {holdingsTotal > 0 ? (
-                        <span className="tnum ml-1 font-extrabold">
-                          {Math.round(holdingsTotal)}만
-                        </span>
-                      ) : null}
+                    <div className="text-[10px] font-bold tracking-wide text-sage-600/90">
+                      자산 현황
                     </div>
-                    {cashflowMonthly > 0 ? (
-                      <div className="tnum mt-1 text-[11px] font-semibold text-sage-600">
-                        현금 월 {Math.round(cashflowMonthly)}만
-                      </div>
-                    ) : null}
+                    <div className="tnum mt-0.5 text-lg font-extrabold leading-none text-sage-800">
+                      {holdingsTotal > 0 ? `${Math.round(holdingsTotal)}만` : "—"}
+                    </div>
+                    <div className="tnum mt-1.5 text-[11px] font-semibold text-sage-600">
+                      {cashflowMonthly > 0
+                        ? `현금흐름 월 ${Math.round(cashflowMonthly)}만`
+                        : "현금흐름 —"}
+                    </div>
                   </div>
                 </foreignObject>
               );

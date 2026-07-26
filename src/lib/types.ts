@@ -118,6 +118,11 @@ export interface Bucket {
   /** 캔버스 수동 위치(SVG 좌표). 없으면 자동 레이아웃 */
   canvasX?: number | null;
   canvasY?: number | null;
+  /**
+   * 지금 이 버킷에 모아 둔 금액(만원). 투자·저축 리프만 의미 있음.
+   * 프로젝션 시드 — 흐름(ratioPct)과 별개로 '이미 가진 돈'.
+   */
+  currentBalance?: number;
 }
 
 export interface EngineConfig {
