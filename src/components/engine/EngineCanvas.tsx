@@ -195,6 +195,7 @@ export function EngineCanvas({
   onSelectIds,
   onResetLayout,
   onRecommend,
+  canRecommend = true,
   onOpenDiagnosis,
   onShowIncomeSourcesChange,
   spendSuggestionPending = false,
@@ -217,6 +218,8 @@ export function EngineCanvas({
   onSelectIds: (ids: string[], opts?: { additive?: boolean }) => void;
   onResetLayout: () => void;
   onRecommend: () => void;
+  /** 추천을 제안할 수 있는 상태인가 (월수입 0이면 false) */
+  canRecommend?: boolean;
   /** 내 현황(진단) 모달 */
   onOpenDiagnosis?: () => void;
   /** 월수입 — 수입원 노드 표시 on/off */
@@ -577,9 +580,12 @@ export function EngineCanvas({
                   <Icon name="diagnosis" size={14} /> 내 현황 입력
                 </Button>
               )}
-              <Button variant={onOpenDiagnosis ? "outline" : "primary"} onClick={onRecommend}>
-                추천 배분으로 시작
-              </Button>
+              {/* 월수입이 없으면 추천할 대상이 없다 — 옆의 「내 현황 입력」이 그 역할 */}
+              {canRecommend && (
+                <Button variant={onOpenDiagnosis ? "outline" : "primary"} onClick={onRecommend}>
+                  추천 배분으로 시작
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setQuickAddParent(null)}>
                 묶음부터 추가
               </Button>
