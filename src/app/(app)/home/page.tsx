@@ -21,6 +21,7 @@ import { LeadCta } from "@/components/LeadCta";
 import { computeDailyStreak, normalizeTracking } from "@/lib/tracking";
 import { computeWeekDelta, type WeekDelta } from "@/lib/homeDelta";
 import { track } from "@/lib/analytics";
+import { GoalGuardTracker } from "@/components/GoalGuardTracker";
 import { emptyTracking } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
 
@@ -212,6 +213,7 @@ export default function HomePage() {
 
         {goal.guardCopy ? (
           <Card className="space-y-4">
+            <GoalGuardTracker surface="home" />
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gold-50 px-4 py-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-sm font-bold text-gold-700">

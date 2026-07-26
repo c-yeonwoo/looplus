@@ -26,6 +26,15 @@ export type AnalyticsEvent =
   | "page_viewed"
   | "engine_recommend_applied"
   | "aha_engine_allocated"
+  /**
+   * 아하 도달률의 분자. `aha_engine_allocated` 는 루트 합 100%(sumOk)일 때만 울려서
+   * "결과를 봤다"보다 좁다 — 합이 안 맞아도 곡선은 보인다. 이 이벤트가 실제 열람이다.
+   */
+  | "engine_result_viewed"
+  /** 월수입 0으로 추천·곡선을 막은 순간 (아하 직전 이탈 지점) */
+  | "income_gate_blocked"
+  /** 목표 미설정 가드를 띄운 순간 */
+  | "goal_guard_shown"
   | "sensitivity_changed"
   | "scenario_saved"
   | "share_card_shared"
@@ -154,6 +163,26 @@ export function trackOnboardingStartedOnce(): void {
   track("onboarding_started");
 }
 
+/**
+ * 세션당 1회만 보낸다.
+ * 퍼널 단계는 화면이 다시 렌더될 때마다 울리면 분자가 부풀어 비율이 무의미해진다.
+ */
+export function trackOncePerSession(
+  dedupeKey: string,
+  event: AnalyticsEvent,
+  properties?: Props,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const k = `looplus_once_${dedupeKey}`;
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, "1");
+  } catch {
+    /* ignore */
+  }
+  track(event, properties);
+}
+
 /** 엔진 100% 배분 아하 — 브라우저당 1회 */
 export function trackAhaAllocatedOnce(properties?: Props): void {
   if (typeof window === "undefined") return;
@@ -201,6 +230,9 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "page_viewed",
   "engine_recommend_applied",
   "aha_engine_allocated",
+  "engine_result_viewed",
+  "income_gate_blocked",
+  "goal_guard_shown",
   "sensitivity_changed",
   "scenario_saved",
   "share_card_shared",
