@@ -14,12 +14,13 @@ import {
   collectDescendantIds,
   type SensitivityKey,
 } from "@/lib/engine";
-import type { Bucket } from "@/lib/types";
+import type { Bucket, HoldingReturns } from "@/lib/types";
 import {
-  ASSET_CASHFLOW_SOURCE_ID,
-  normalizeIncomeSources,
-  sumMonthlyIncome,
-} from "@/lib/income";
+  holdingsRealizedAnnual,
+  resolveHoldingReturns,
+  totalHoldings,
+} from "@/lib/engine/holdings";
+import { normalizeIncomeSources, sumMonthlyIncome } from "@/lib/income";
 import { GROUP_PRESETS, bucketFromPreset } from "@/lib/catalog";
 import { formatKRW } from "@/lib/format";
 import { renderShareCard, shareOrDownload } from "@/lib/shareCard";
@@ -222,6 +223,10 @@ export function EngineBuilder() {
   }, [sumOk, buckets.length]);
 
   const horizon = Math.max(vision?.targetYears ?? 15, 30);
+  const holdingReturns = useMemo(
+    () => resolveHoldingReturns(engine.holdingReturns),
+    [engine.holdingReturns],
+  );
 
   // 선택한 가정(보수/기본/공격)을 반영한 메인 곡선
   const projection = useMemo(
@@ -232,8 +237,17 @@ export function EngineBuilder() {
         horizonYears: horizon,
         goalNetworth: vision?.goalNetworth,
         goalPassiveIncome: vision?.goalPassiveIncome,
+        holdingReturns,
       }),
-    [snapshot, buckets, sens, horizon, vision?.goalNetworth, vision?.goalPassiveIncome],
+    [
+      snapshot,
+      buckets,
+      sens,
+      horizon,
+      vision?.goalNetworth,
+      vision?.goalPassiveIncome,
+      holdingReturns,
+    ],
   );
 
   // 민감도 밴드: 보수~공격 범위 (항상 표시)
@@ -243,15 +257,17 @@ export function EngineBuilder() {
       buckets: adjustReturns(buckets, SENSITIVITY.conservative.deltaPp),
       horizonYears: horizon,
       goalNetworth: vision?.goalNetworth,
+      holdingReturns,
     });
     const high = projectEngine({
       snapshot,
       buckets: adjustReturns(buckets, SENSITIVITY.aggressive.deltaPp),
       horizonYears: horizon,
       goalNetworth: vision?.goalNetworth,
+      holdingReturns,
     });
     return { low, high };
-  }, [snapshot, buckets, horizon, vision?.goalNetworth]);
+  }, [snapshot, buckets, horizon, vision?.goalNetworth, holdingReturns]);
 
   const compareProjection = useMemo(() => {
     const sc = scenarios.find((x) => x.id === compareId);
@@ -261,24 +277,23 @@ export function EngineBuilder() {
       buckets: sc.buckets,
       horizonYears: horizon,
       goalNetworth: vision?.goalNetworth,
+      holdingReturns,
     });
-  }, [compareId, scenarios, snapshot, horizon, vision?.goalNetworth]);
+  }, [compareId, scenarios, snapshot, horizon, vision?.goalNetworth, holdingReturns]);
 
   const selected = buckets.find((b) => b.id === selectedId) ?? null;
   const selectedSource =
     selectedId && !selected && selectedId !== "__income__" && selectedId !== "__pool__"
       ? incomeSources.find((s) => s.id === selectedId) ?? null
       : null;
-  /** 자본소득 합 — y1 패시브에서 빼면 자산 실현분(월) 추정 */
-  const capitalMonthly = incomeSources
-    .filter((s) => s.type === "capital")
-    .reduce((a, s) => a + s.monthly, 0);
-  const cashflowMonthly = useMemo(() => {
-    const y1 = projection.curve[1];
-    if (!y1) return 0;
-    return Math.max(0, y1.monthlyPassiveIncome - capitalMonthly);
-  }, [projection.curve, capitalMonthly]);
-  const cashflowLinked = incomeSources.some((s) => s.id === ASSET_CASHFLOW_SOURCE_ID);
+  /**
+   * 보유 자산에서 지금 나오는 현금흐름(월).
+   * 프로젝션이 매년 자본소득으로 자동 재유입하므로 따로 수입원을 만들지 않는다.
+   */
+  const cashflowMonthly = useMemo(
+    () => holdingsRealizedAnnual(snapshot, holdingReturns) / 12,
+    [snapshot, holdingReturns],
+  );
   const showIncomeSources = engine.showIncomeSources !== false;
   const setShowIncomeSources = (show: boolean) => {
     setEngine({ ...engine, showIncomeSources: show });
@@ -290,30 +305,8 @@ export function EngineBuilder() {
       selectNode(null);
     }
   };
-  const linkCashflowToIncome = () => {
-    const amt = Math.round(cashflowMonthly);
-    if (amt <= 0) return;
-    if (cashflowLinked) {
-      patchSources(
-        incomeSources.map((s) =>
-          s.id === ASSET_CASHFLOW_SOURCE_ID
-            ? { ...s, monthly: amt, name: s.name || "자산 현금흐름" }
-            : s,
-        ),
-      );
-      return;
-    }
-    const maxPos = incomeSources.reduce((m, s) => Math.max(m, s.position ?? 0), -1);
-    patchSources([
-      ...incomeSources,
-      {
-        id: ASSET_CASHFLOW_SOURCE_ID,
-        type: "capital" as const,
-        monthly: amt,
-        name: "자산 현금흐름",
-        position: maxPos + 1,
-      },
-    ]);
+  const setHoldingReturns = (next: HoldingReturns) => {
+    setEngine({ ...engine, holdingReturns: next });
   };
   const targetYears = vision?.targetYears ?? 15;
   const atYear = (curve: typeof projection.curve) =>
@@ -557,6 +550,7 @@ export function EngineBuilder() {
             onRequestDelete={requestDelete}
             spendSuggestionPending={spendSuggestionPending}
             cashflowMonthly={cashflowMonthly}
+            holdingsTotal={totalHoldings(snapshot)}
             onOpenDiagnosis={() => setDiagnosisOpen(true)}
             onShowIncomeSourcesChange={setShowIncomeSources}
             onMoveNodes={(moves) => {
@@ -867,9 +861,11 @@ export function EngineBuilder() {
               />
             ) : selectedId === "__pool__" ? (
               <PoolHubInspector
-                cashflowMonthly={cashflowMonthly}
-                cashflowLinked={cashflowLinked}
-                onLinkCashflow={linkCashflowToIncome}
+                snapshot={snapshot}
+                returns={holdingReturns}
+                onChangeSnapshot={(patch) => setSnapshot({ ...snapshot, ...patch })}
+                onChangeReturns={setHoldingReturns}
+                onOpenDiagnosis={() => setDiagnosisOpen(true)}
               />
             ) : selectedSource ? (
               <SourceInspector
@@ -944,9 +940,11 @@ export function EngineBuilder() {
         )}
         {selectedId === "__pool__" && (
           <PoolHubInspector
-            cashflowMonthly={cashflowMonthly}
-            cashflowLinked={cashflowLinked}
-            onLinkCashflow={linkCashflowToIncome}
+            snapshot={snapshot}
+            returns={holdingReturns}
+            onChangeSnapshot={(patch) => setSnapshot({ ...snapshot, ...patch })}
+            onChangeReturns={setHoldingReturns}
+            onOpenDiagnosis={() => setDiagnosisOpen(true)}
           />
         )}
         {selectedSource && (

@@ -100,7 +100,8 @@ export function Field({
         {hint && <span className="text-xs text-ink-400">{hint}</span>}
       </div>
       <div className="flex items-center gap-2">
-        <div className="flex-1">{children}</div>
+        {/* min-w-0 없으면 flex 자식이 min-content 아래로 안 줄어 좁은 패널에서 넘친다 */}
+        <div className="min-w-0 flex-1">{children}</div>
         {suffix}
       </div>
     </label>

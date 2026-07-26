@@ -137,7 +137,25 @@ export interface EngineConfig {
    * 미설정·true = 표시, false = 숨김 (월수입 합계·배분은 유지).
    */
   showIncomeSources?: boolean;
+  /** 보유 자산의 수익 가정. 미설정이면 DEFAULT_HOLDING_RETURNS. */
+  holdingReturns?: HoldingReturns;
 }
+
+/** 진단에 입력한 보유 자산의 종류 */
+export type HoldingKind = "cash" | "invest" | "realEstate";
+
+/**
+ * 보유 자산 종류별 수익 가정.
+ * 버킷(월수입을 어디로 보낼지)과 달리 '이미 가진 돈'이 어떻게 불어나는지를 다룬다.
+ */
+export interface HoldingReturn {
+  /** 기대 연 총수익률 % — 시세 상승 + 실현분 */
+  expectedAnnualReturnPct: number;
+  /** 그중 현금으로 나오는 몫 % (배당·임대·이자) → 다음 해 수입으로 재유입 */
+  realizedYieldPct: number;
+}
+
+export type HoldingReturns = Record<HoldingKind, HoldingReturn>;
 
 export interface Scenario {
   id: string;

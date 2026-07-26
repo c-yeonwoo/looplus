@@ -59,6 +59,7 @@ export function mergeRemoteIntoLocal(loaded: LoadedProfile, local: Profile): Pro
             poolCanvasY: local.engine.poolCanvasY ?? null,
             edgeControls: local.engine.edgeControls ?? {},
             showIncomeSources: local.engine.showIncomeSources ?? true,
+            holdingReturns: local.engine.holdingReturns,
           }),
       buckets: withLocalCanvas(remote.engine.buckets, local.engine.buckets),
     },
