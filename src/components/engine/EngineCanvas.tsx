@@ -200,6 +200,8 @@ export function EngineCanvas({
   spendSuggestionPending = false,
   cashflowMonthly = 0,
   holdingsTotal = 0,
+  /** false = 보기 모드. 드래그·추가·삭제·선 편집 숨김. 선택·팬·줌은 유지 */
+  editable = true,
 }: {
   buckets: Bucket[];
   engine: EngineConfig;
@@ -230,6 +232,7 @@ export function EngineCanvas({
   cashflowMonthly?: number;
   /** 보유 자산 합계(만원) */
   holdingsTotal?: number;
+  editable?: boolean;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -397,6 +400,11 @@ export function EngineCanvas({
     id: string,
     n: { x: number; y: number },
   ) => {
+    if (!editable) {
+      // 보기 모드: 드래그 대신 선택만
+      onSelect(id, e.shiftKey || e.metaKey || e.ctrlKey ? { toggle: true } : undefined);
+      return;
+    }
     const ids =
       selectedIds.includes(id) && selectedIds.length > 1 ? selectedIds : [id];
     const group = ids.map((gid) => {
@@ -410,6 +418,7 @@ export function EngineCanvas({
     e: React.PointerEvent,
     edge: { id: string; fromId: string; toId: string; x1: number; y1: number; x2: number; y2: number },
   ) => {
+    if (!editable) return;
     e.stopPropagation();
     e.preventDefault();
     const saved = engine.edgeControls?.[edge.id];
@@ -433,6 +442,7 @@ export function EngineCanvas({
   };
 
   const beginMarquee = (e: React.PointerEvent) => {
+    if (!editable) return;
     if (e.button !== 0) return;
     e.preventDefault();
     const p = clientToContent(e.clientX, e.clientY);
@@ -545,6 +555,7 @@ export function EngineCanvas({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+    if (!editable) return;
     const key = e.dataTransfer.getData("application/bucket-preset");
     const preset = presetByKey(key);
     if (!preset) return;
@@ -634,7 +645,13 @@ export function EngineCanvas({
             compact ? "rounded-lg px-2 py-1" : "rounded-xl px-2.5 py-1.5"
           } ${CAT_NODE[b.category]} ${
             selected ? "ring-2 ring-brand-500 shadow-sm" : "hover:shadow-sm"
-          } ${dragging ? "cursor-grabbing opacity-90 shadow-md" : "cursor-grab"}`}
+          } ${
+            dragging
+              ? "cursor-grabbing opacity-90 shadow-md"
+              : editable
+                ? "cursor-grab"
+                : "cursor-pointer"
+          }`}
         >
           <div className="flex items-start gap-1">
             <div className="min-w-0 flex-1">
@@ -668,17 +685,19 @@ export function EngineCanvas({
                 <span className="tnum font-semibold">월 {month}만</span>
               </div>
             </div>
-            <button
-              type="button"
-              aria-label={`${b.name} 삭제`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRequestDelete(b.id);
-              }}
-              className="shrink-0 rounded p-0.5 text-ink-400 opacity-0 hover:text-red-500 group-hover:opacity-100"
-            >
-              <Icon name="x" size={compact ? 11 : 12} />
-            </button>
+            {editable && (
+              <button
+                type="button"
+                aria-label={`${b.name} 삭제`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestDelete(b.id);
+                }}
+                className="shrink-0 rounded p-0.5 text-ink-400 opacity-0 hover:text-red-500 group-hover:opacity-100"
+              >
+                <Icon name="x" size={compact ? 11 : 12} />
+              </button>
+            )}
           </div>
           {!leaf && !compact && (
             <div className="mt-0.5 text-[9px] font-semibold opacity-50">묶음</div>
@@ -731,7 +750,7 @@ export function EngineCanvas({
             </button>
           </span>
         ))}
-        {selectedBucket && (
+        {editable && selectedBucket && (
           <button
             type="button"
             onClick={() => setQuickAddParent(selectedBucket.id)}
@@ -740,7 +759,7 @@ export function EngineCanvas({
             <Icon name="plus" size={12} /> 하위 추가
           </button>
         )}
-        {selectedId === "__income__" && (
+        {editable && selectedId === "__income__" && (
           <>
             {onShowIncomeSourcesChange && (
               <label className="ml-1 flex cursor-pointer items-center gap-1 rounded-md border border-ink-200 bg-white px-1.5 py-0.5 font-semibold text-ink-600 hover:bg-ink-50">
@@ -763,7 +782,7 @@ export function EngineCanvas({
           </>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {hasCustomLayout && (
+          {editable && hasCustomLayout && (
             <button
               type="button"
               onClick={onResetLayout}
@@ -833,14 +852,16 @@ export function EngineCanvas({
                   opacity={0.9}
                   style={{ pointerEvents: "none" }}
                 />
-                <path
-                  d={d}
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth={16}
-                  className="cursor-grab"
-                  onPointerDown={(ev) => beginEdgeDrag(ev, e)}
-                />
+                {editable && (
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={16}
+                    className="cursor-grab"
+                    onPointerDown={(ev) => beginEdgeDrag(ev, e)}
+                  />
+                )}
                 {animate && !drag && (
                   <>
                     <path
@@ -896,9 +917,15 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, n.id, n)}
-                    className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-lg border border-brand-200 bg-white px-2 text-left ${
+                    className={`flex h-full w-full select-none flex-col justify-center rounded-lg border border-brand-200 bg-white px-2 text-left ${
                       selected ? "ring-2 ring-brand-500" : "hover:shadow-sm"
-                    } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
+                    } ${
+                      dragging
+                        ? "cursor-grabbing opacity-90"
+                        : editable
+                          ? "cursor-grab"
+                          : "cursor-pointer"
+                    }`}
                   >
                     <div className="truncate text-[11px] font-bold text-brand-800">
                       {incomeSourceLabel(src)}
@@ -923,9 +950,15 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, "__income__", n)}
-                    className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-xl border border-gold-300 bg-gold-50 px-2 text-center ${
+                    className={`flex h-full w-full select-none flex-col justify-center rounded-xl border border-gold-300 bg-gold-50 px-2 text-center ${
                       selected ? "ring-2 ring-gold-500" : "hover:shadow-sm"
-                    } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
+                    } ${
+                      dragging
+                        ? "cursor-grabbing opacity-90"
+                        : editable
+                          ? "cursor-grab"
+                          : "cursor-pointer"
+                    }`}
                   >
                     <div className="text-[11px] font-semibold text-gold-600">월수입</div>
                     <div className="tnum mt-0.5 text-base font-extrabold text-gold-700">
@@ -948,9 +981,15 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, "__pool__", n)}
-                    className={`flex h-full w-full cursor-grab select-none flex-col items-center justify-center rounded-xl border border-sage-500/35 bg-sage-50 px-2 text-center ${
+                    className={`flex h-full w-full select-none flex-col items-center justify-center rounded-xl border border-sage-500/35 bg-sage-50 px-2 text-center ${
                       selected ? "ring-2 ring-sage-500" : "hover:shadow-sm"
-                    } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
+                    } ${
+                      dragging
+                        ? "cursor-grabbing opacity-90"
+                        : editable
+                          ? "cursor-grab"
+                          : "cursor-pointer"
+                    }`}
                   >
                     <div className="text-sm font-bold text-sage-700">
                       자산
@@ -973,30 +1012,31 @@ export function EngineCanvas({
             return renderBucket(n);
           })}
 
-          {edges.map((raw) => {
-            const e = shiftedEdge(raw);
-            const ctl = edgeControlOf(e);
-            const handle = ctl ?? defaultEdgeControl(e);
-            const edgeActive = drag?.mode === "edge" && drag.id === e.id;
-            const customized = Boolean(engine.edgeControls?.[e.id]);
-            return (
-              <circle
-                key={`handle-${e.id}`}
-                cx={handle.x}
-                cy={handle.y}
-                r={edgeActive || customized ? 5.5 : 4}
-                fill="white"
-                stroke={
-                  edgeActive || customized
-                    ? "var(--color-brand-500)"
-                    : "var(--color-ink-300)"
-                }
-                strokeWidth={edgeActive || customized ? 2 : 1.25}
-                className="cursor-grab"
-                onPointerDown={(ev) => beginEdgeDrag(ev, e)}
-              />
-            );
-          })}
+          {editable &&
+            edges.map((raw) => {
+              const e = shiftedEdge(raw);
+              const ctl = edgeControlOf(e);
+              const handle = ctl ?? defaultEdgeControl(e);
+              const edgeActive = drag?.mode === "edge" && drag.id === e.id;
+              const customized = Boolean(engine.edgeControls?.[e.id]);
+              return (
+                <circle
+                  key={`handle-${e.id}`}
+                  cx={handle.x}
+                  cy={handle.y}
+                  r={edgeActive || customized ? 5.5 : 4}
+                  fill="white"
+                  stroke={
+                    edgeActive || customized
+                      ? "var(--color-brand-500)"
+                      : "var(--color-ink-300)"
+                  }
+                  strokeWidth={edgeActive || customized ? 2 : 1.25}
+                  className="cursor-grab"
+                  onPointerDown={(ev) => beginEdgeDrag(ev, e)}
+                />
+              );
+            })}
 
           {marquee && (
             <rect

@@ -24,6 +24,8 @@ export function Inspector({
   onDelete,
   onDuplicate,
   onMoveSibling,
+  /** false = 보기 모드. 비율·수익률은 고칠 수 있고 삭제·복제·순서만 숨긴다 */
+  structureEditable = true,
 }: {
   bucket: Bucket;
   all: Bucket[];
@@ -33,6 +35,7 @@ export function Inspector({
   onDuplicate: () => void;
   /** 같은 레이어(형제) 순서 — SDUI 빌더식 */
   onMoveSibling?: (dir: -1 | 1) => void;
+  structureEditable?: boolean;
 }) {
   const isInvest = bucket.category === "invest";
   const meta = CATEGORY_META[bucket.category];
@@ -196,7 +199,7 @@ export function Inspector({
         );
       })()}
 
-      {onMoveSibling && (
+      {structureEditable && onMoveSibling && (
         <div>
           <div className="mb-1.5 text-xs font-medium text-ink-500">같은 레이어 순서</div>
           <div className="flex gap-2">
@@ -210,14 +213,16 @@ export function Inspector({
         </div>
       )}
 
-      <div className="flex gap-2 pt-1">
-        <Button variant="outline" className="flex-1" onClick={onDuplicate}>
-          복제
-        </Button>
-        <Button variant="danger" className="flex-1" onClick={onDelete}>
-          삭제
-        </Button>
-      </div>
+      {structureEditable && (
+        <div className="flex gap-2 pt-1">
+          <Button variant="outline" className="flex-1" onClick={onDuplicate}>
+            복제
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={onDelete}>
+            삭제
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { getSupabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/store/useProfile";
 import { loadProfile, saveProfile, profileHasData } from "@/lib/store/supabaseRepo";
 import { mergeRemoteIntoLocal, type LoadedProfile } from "@/lib/store/mergeProfile";
+import { useSaveStatus } from "@/lib/store/saveStatus";
 import { Icon } from "@/components/Icon";
 
 /** 동일 유저 짧은 재마운트·StrictMode 이중 호출 시 중복 GET 방지 */
@@ -88,27 +89,42 @@ export function SyncManager() {
   }, [userId]);
 
   useEffect(() => {
-    if (!configured || !userId) return;
+    if (!configured || !userId) {
+      useSaveStatus.getState().setCloud(false);
+      return;
+    }
     const sb = getSupabase();
-    if (!sb) return;
+    if (!sb) {
+      useSaveStatus.getState().setCloud(false);
+      return;
+    }
 
+    useSaveStatus.getState().setCloud(true);
     let cancelled = false;
     readyRef.current = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const scheduleSave = () => {
       if (!readyRef.current || cancelled) return;
+      useSaveStatus.getState().markPending();
       clearTimeout(timer);
       timer = setTimeout(async () => {
+        if (cancelled) return;
+        useSaveStatus.getState().markSaving();
         try {
           const profile = useProfile.getState().profile;
           await saveProfile(sb, userId, profile);
           invalidate(userId); // 저장 후 캐시 무효화(다음 로드가 최신 반영)
-          if (!cancelled) setSaveError(null);
+          if (!cancelled) {
+            setSaveError(null);
+            useSaveStatus.getState().markSaved();
+          }
         } catch (e) {
           console.error("[sync] save failed", e);
           if (!cancelled) {
-            setSaveError(e instanceof Error ? e.message : "알 수 없는 오류");
+            const msg = e instanceof Error ? e.message : "알 수 없는 오류";
+            setSaveError(msg);
+            useSaveStatus.getState().markError(msg);
           }
         }
       }, 1200);
@@ -138,6 +154,7 @@ export function SyncManager() {
         }
       } finally {
         readyRef.current = true;
+        if (!cancelled) useSaveStatus.getState().markSaved();
       }
     })();
 
@@ -145,6 +162,7 @@ export function SyncManager() {
       cancelled = true;
       clearTimeout(timer);
       unsub();
+      useSaveStatus.getState().setCloud(false);
     };
   }, [configured, userId, replaceProfile]);
 
