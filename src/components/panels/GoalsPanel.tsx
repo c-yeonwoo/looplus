@@ -114,7 +114,6 @@ export function GoalsPanel() {
                   }
                   suffix="세"
                   placeholder="예: 32"
-                  blankZero
                 />
               </Field>
             </div>
