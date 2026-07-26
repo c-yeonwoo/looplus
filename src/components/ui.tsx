@@ -1,7 +1,8 @@
 "use client";
 
 import { clsx } from "@/lib/clsx";
-import type { KeyboardEvent, ReactNode } from "react";
+import { parseNum } from "@/lib/format";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 
 export function Card({
@@ -120,18 +121,25 @@ export function NumberInput({
   placeholder?: string;
   blankZero?: boolean;
 }) {
-  const showBlank = blankZero && value === 0;
+  const [draft, setDraft] = useState<string | null>(null);
+  const canonical =
+    (blankZero && value === 0) || !Number.isFinite(value) ? "" : String(value);
+  /** 편집 중에는 입력한 표기를 그대로 둔다 — "7." 이 7 로 정규화되며 소수점이 지워지는 것 방지.
+   *  단 부모가 값을 보정(clamp)하면 draft 와 어긋나므로 보정값을 보여준다. */
+  const display = draft !== null && parseNum(draft) === value ? draft : canonical;
   return (
     <div className="flex min-w-0 items-center rounded-lg border border-ink-300 bg-white focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
       <input
-        inputMode="numeric"
+        inputMode="decimal"
         className="tnum min-w-0 flex-1 rounded-lg bg-transparent px-3 py-2 text-sm text-ink-900 outline-none"
-        value={showBlank ? "" : Number.isFinite(value) ? String(value) : ""}
+        value={display}
         placeholder={placeholder ?? "0"}
         onChange={(e) => {
           const cleaned = e.target.value.replace(/[^0-9.-]/g, "");
-          onChange(cleaned === "" ? 0 : Number(cleaned));
+          setDraft(cleaned);
+          onChange(parseNum(cleaned));
         }}
+        onBlur={() => setDraft(null)}
       />
       {suffix && (
         <span className="shrink-0 whitespace-nowrap pr-3 text-sm text-ink-400">{suffix}</span>
