@@ -66,23 +66,29 @@ export function SyncManager() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
 
+  /*
+    id 만 본다. user 객체는 세션이 갱신될 때마다 새 객체가 되므로, 그대로 의존하면
+    같은 사용자인데도 구독을 끊고 원격 프로필을 다시 불러온다.
+  */
+  const userId = user?.id ?? null;
+
   const retry = useCallback(async () => {
     const sb = getSupabase();
-    if (!sb || !user) return;
+    if (!sb || !userId) return;
     setRetrying(true);
     try {
-      await saveProfile(sb, user.id, useProfile.getState().profile);
-      invalidate(user.id);
+      await saveProfile(sb, userId, useProfile.getState().profile);
+      invalidate(userId);
       setSaveError(null);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "알 수 없는 오류");
     } finally {
       setRetrying(false);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!configured || !user) return;
+    if (!configured || !userId) return;
     const sb = getSupabase();
     if (!sb) return;
 
@@ -96,8 +102,8 @@ export function SyncManager() {
       timer = setTimeout(async () => {
         try {
           const profile = useProfile.getState().profile;
-          await saveProfile(sb, user.id, profile);
-          invalidate(user.id); // 저장 후 캐시 무효화(다음 로드가 최신 반영)
+          await saveProfile(sb, userId, profile);
+          invalidate(userId); // 저장 후 캐시 무효화(다음 로드가 최신 반영)
           if (!cancelled) setSaveError(null);
         } catch (e) {
           console.error("[sync] save failed", e);
@@ -114,14 +120,14 @@ export function SyncManager() {
 
     (async () => {
       try {
-        const remote = await loadProfileCached(sb, user.id);
+        const remote = await loadProfileCached(sb, userId);
         if (cancelled) return;
         const local = useProfile.getState().profile;
         if (remote && profileHasData(remote.profile)) {
           replaceProfile(mergeRemoteIntoLocal(remote, local));
         } else if (profileHasData(local)) {
-          await saveProfile(sb, user.id, local);
-          invalidate(user.id);
+          await saveProfile(sb, userId, local);
+          invalidate(userId);
         } else if (remote) {
           replaceProfile(mergeRemoteIntoLocal(remote, local));
         }
@@ -140,7 +146,7 @@ export function SyncManager() {
       clearTimeout(timer);
       unsub();
     };
-  }, [configured, user?.id, replaceProfile]);
+  }, [configured, userId, replaceProfile]);
 
   if (!saveError) return null;
 

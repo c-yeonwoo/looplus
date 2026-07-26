@@ -814,7 +814,6 @@ export function EngineCanvas({
             const e = shiftedEdge(raw);
             const ctl = edgeControlOf(e);
             const d = edgePath(e, false, ctl);
-            const handle = ctl ?? defaultEdgeControl(e);
             const stroke =
               e.tone === "spend"
                 ? "var(--color-spend-500)"
