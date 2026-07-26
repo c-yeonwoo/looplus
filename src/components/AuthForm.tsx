@@ -28,24 +28,32 @@ export function AuthForm({
     return (
       <div className={compact ? "space-y-2" : "space-y-3"}>
         <p className="text-sm text-ink-600">
-          Supabase 환경변수가 없어 로그인을 쓸 수 없어요.
+          지금은 로그인을 쓸 수 없어요. 입력한 내용은 이 기기에 그대로 저장되니 계속
+          이어서 쓰시면 됩니다.
         </p>
-        <div className="space-y-3 text-xs leading-relaxed text-ink-500">
-          <div>
-            <p className="mb-1 font-semibold text-ink-600">로컬 개발</p>
-            <ol className="list-decimal space-y-1 pl-4">
-              <li>
-                <code className="rounded bg-ink-100 px-1">.env.local</code>에{" "}
-                <code className="rounded bg-ink-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> ·{" "}
-                <code className="rounded bg-ink-100 px-1">
-                  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-                </code>{" "}
-                설정
-              </li>
-              <li>앱 재시작 후 이메일·비밀번호로 로그인</li>
-            </ol>
+        {/* 환경변수 안내는 개발자용 — 배포된 앱에서는 노출하지 않는다 */}
+        {process.env.NODE_ENV === "development" ? (
+          <div className="space-y-3 text-xs leading-relaxed text-ink-500">
+            <div>
+              <p className="mb-1 font-semibold text-ink-600">로컬 개발</p>
+              <ol className="list-decimal space-y-1 pl-4">
+                <li>
+                  <code className="rounded bg-ink-100 px-1">.env.local</code>에{" "}
+                  <code className="rounded bg-ink-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> ·{" "}
+                  <code className="rounded bg-ink-100 px-1">
+                    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+                  </code>{" "}
+                  설정
+                </li>
+                <li>앱 재시작 후 이메일·비밀번호로 로그인</li>
+              </ol>
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-xs leading-relaxed text-ink-500">
+            기기 간 동기화는 잠시 뒤 다시 시도해주세요.
+          </p>
+        )}
       </div>
     );
   }
