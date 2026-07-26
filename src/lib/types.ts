@@ -54,7 +54,8 @@ export interface Scene {
   type: SceneType;
   text: string;
   emoji?: string;
-  imageUrl?: string; // fast-follow: AI 장면 생성
+  /** 생성된 장면 사진 (768px webp data URL). 저장 크기 때문에 원본은 안 담는다. */
+  imageUrl?: string;
 }
 
 /** A. Vision / 목표 */
