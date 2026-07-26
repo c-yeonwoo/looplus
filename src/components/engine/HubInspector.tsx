@@ -24,12 +24,14 @@ export function IncomeHubInspector({
   showIncomeSources = true,
   onShowIncomeSourcesChange,
   onAddGroup,
+  structureEditable = true,
 }: {
   monthlyIncome: number;
   /** 캔버스 수입원 노드 표시 */
   showIncomeSources?: boolean;
   onShowIncomeSourcesChange?: (show: boolean) => void;
   onAddGroup: () => void;
+  structureEditable?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -38,7 +40,7 @@ export function IncomeHubInspector({
         <div className="tnum text-xl font-extrabold text-gold-700">{monthlyIncome}만</div>
         <div className="mt-0.5 text-[11px] text-gold-500">이번 달 기준</div>
       </div>
-      {onShowIncomeSourcesChange && (
+      {structureEditable && onShowIncomeSourcesChange && (
         <label className="flex items-center justify-between rounded-xl border border-ink-200 px-3 py-2.5 text-sm">
           <span className="text-ink-700">
             <span className="font-semibold">수입원 표시</span>
@@ -54,9 +56,11 @@ export function IncomeHubInspector({
           />
         </label>
       )}
-      <Button className="w-full" onClick={onAddGroup}>
-        <Icon name="plus" size={14} /> 묶음 추가
-      </Button>
+      {structureEditable && (
+        <Button className="w-full" onClick={onAddGroup}>
+          <Icon name="plus" size={14} /> 묶음 추가
+        </Button>
+      )}
     </div>
   );
 }
@@ -173,11 +177,13 @@ export function SourceInspector({
   onChange,
   onDelete,
   onMoveSibling,
+  structureEditable = true,
 }: {
   source: IncomeSource;
   onChange: (patch: Partial<IncomeSource>) => void;
   onDelete: () => void;
   onMoveSibling?: (dir: -1 | 1) => void;
+  structureEditable?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -196,7 +202,7 @@ export function SourceInspector({
           suffix="만원"
         />
       </Field>
-      {onMoveSibling && (
+      {structureEditable && onMoveSibling && (
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={() => onMoveSibling(-1)}>
             위로
@@ -206,9 +212,11 @@ export function SourceInspector({
           </Button>
         </div>
       )}
-      <Button variant="danger" className="w-full" onClick={onDelete}>
-        삭제
-      </Button>
+      {structureEditable && (
+        <Button variant="danger" className="w-full" onClick={onDelete}>
+          삭제
+        </Button>
+      )}
     </div>
   );
 }

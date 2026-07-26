@@ -7,6 +7,7 @@ import { clsx } from "@/lib/clsx";
 import { Icon, type IconName } from "./Icon";
 import { Logo, LogoMark } from "./Logo";
 import { AccountMenu } from "./AccountMenu";
+import { SaveStatusChip } from "./SaveStatus";
 
 type NavItem = {
   href: string;
@@ -131,24 +132,30 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
         <div className="mt-auto space-y-2 border-t border-ink-100 pt-3">
           {!collapsed && (
-            <div className="flex flex-wrap gap-x-2 gap-y-1 px-2 text-[11px] text-ink-400">
-              <Link href="/legal/disclaimer" className="hover:text-ink-600">
-                투자 고지
-              </Link>
-              <Link href="/legal/terms" className="hover:text-ink-600">
-                약관
-              </Link>
-              <Link href="/legal/privacy" className="hover:text-ink-600">
-                개인정보
-              </Link>
-            </div>
+            <>
+              <div className="px-2">
+                <SaveStatusChip />
+              </div>
+              <div className="flex flex-wrap gap-x-2 gap-y-1 px-2 text-[11px] text-ink-400">
+                <Link href="/legal/disclaimer" className="hover:text-ink-600">
+                  투자 고지
+                </Link>
+                <Link href="/legal/terms" className="hover:text-ink-600">
+                  약관
+                </Link>
+                <Link href="/legal/privacy" className="hover:text-ink-600">
+                  개인정보
+                </Link>
+              </div>
+            </>
           )}
           <AccountMenu compact={collapsed} />
         </div>
       </aside>
 
       <main className="min-w-0 flex-1 px-5 pb-24 pt-5 md:px-6 md:pb-10 lg:px-8 xl:px-10">
-        <div className="mb-3 flex justify-end md:hidden">
+        <div className="mb-3 flex items-center justify-between gap-2 md:hidden">
+          <SaveStatusChip />
           <div className="rounded-xl border border-ink-200 bg-white px-1">
             <AccountMenu />
           </div>

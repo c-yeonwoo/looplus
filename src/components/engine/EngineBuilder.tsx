@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useProfile, MAX_SCENARIOS_LIMIT } from "@/lib/store/useProfile";
 import { suggestEngineFromSnapshot, DEFAULT_SNAPSHOT } from "@/lib/store/defaults";
@@ -49,6 +49,9 @@ import { DiagnosisModal } from "./DiagnosisModal";
 
 /** 월수입 게이트에 막힌 지점 — 어느 CTA에서 이탈하는지 구분한다 */
 type IncomeGateSource = "empty_card" | "flat_banner" | "canvas_empty";
+
+/** 보기 = 보드·결과 중심. 수정 = 팔레트·구조 편집. */
+type EngineMode = "view" | "edit";
 
 /**
  * lg 브레이크포인트(1024px) — 결과 카드가 탭 없이 보이는 폭인지.
@@ -120,18 +123,40 @@ export function EngineBuilder() {
   const [sharing, setSharing] = useState(false);
   const [justShared, setJustShared] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
-  const [mobileTab, setMobileTab] = useState<"result" | "build">("result");
+  /** 보드가 메인 — 모바일도 흐름 탭부터 */
+  const [mobileTab, setMobileTab] = useState<"result" | "build">("build");
   const isWide = useIsWide();
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [pendingDraft, setPendingDraft] = useState(false);
+  /**
+   * 배분이 없으면 무조건 수정(조립). 있으면 보기가 기본.
+   * 세션 상태 — 토글할 때마다 클라우드에 올릴 이유가 없다.
+   * persist 재수화 전에는 buckets 가 비어 보일 수 있어, hydration 뒤에 한 번만 초기화한다.
+   */
+  const hasHydrated = useProfile((s) => s.hasHydrated);
+  const [mode, setMode] = useState<EngineMode>("view");
+  const modeInited = useRef(false);
+  useEffect(() => {
+    if (!hasHydrated || modeInited.current) return;
+    modeInited.current = true;
+    setMode(buckets.length === 0 ? "edit" : "view");
+  }, [hasHydrated, buckets.length]);
+  useEffect(() => {
+    if (buckets.length === 0 && mode !== "edit") setMode("edit");
+  }, [buckets.length, mode]);
+  const editing = mode === "edit" || buckets.length === 0;
 
   useEffect(() => {
+    if (!editing) {
+      setPaletteOpen(false);
+      return;
+    }
     const mq = window.matchMedia("(max-width: 1023px)");
     const apply = () => setPaletteOpen(!mq.matches);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
-  }, []);
+  }, [editing]);
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
     name: string;
@@ -167,7 +192,8 @@ export function EngineBuilder() {
     const draft = suggestEngineFromSnapshot(snapshot);
     setEngine(draft);
     setPendingDraft(false);
-    setMobileTab("result");
+    setMode("edit");
+    setMobileTab("build");
     track("engine_recommend_applied", { source: "one_tap_aha" });
   };
 
@@ -404,9 +430,41 @@ export function EngineBuilder() {
             </span>
           )}
         </div>
-        <Badge tone={sumOk ? "emerald" : "amber"}>
-          수입 배분 {Math.round(sum)}% {sumOk ? "✓" : "(루트 합 100%)"}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          {buckets.length > 0 && (
+            <div
+              className="flex rounded-lg border border-ink-200 bg-ink-50 p-0.5 text-xs"
+              role="group"
+              aria-label="엔진 모드"
+            >
+              <button
+                type="button"
+                onClick={() => setMode("view")}
+                className={
+                  !editing
+                    ? "rounded-md bg-white px-2.5 py-1.5 font-semibold text-ink-800 shadow-sm"
+                    : "px-2.5 py-1.5 font-semibold text-ink-500"
+                }
+              >
+                현황 보기
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className={
+                  editing
+                    ? "rounded-md bg-white px-2.5 py-1.5 font-semibold text-ink-800 shadow-sm"
+                    : "px-2.5 py-1.5 font-semibold text-ink-500"
+                }
+              >
+                배분 수정
+              </button>
+            </div>
+          )}
+          <Badge tone={sumOk ? "emerald" : "amber"}>
+            수입 배분 {Math.round(sum)}% {sumOk ? "✓" : "(루트 합 100%)"}
+          </Badge>
+        </div>
       </div>
 
       {treeLooksFlatBroken && (
@@ -425,6 +483,17 @@ export function EngineBuilder() {
       <div className="flex gap-1 rounded-lg border border-ink-200 bg-ink-50 p-0.5 lg:hidden">
         <button
           type="button"
+          onClick={() => setMobileTab("build")}
+          className={
+            mobileTab === "build"
+              ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 shadow-sm"
+              : "flex-1 px-3 py-1.5 text-xs font-semibold text-ink-500"
+          }
+        >
+          흐름
+        </button>
+        <button
+          type="button"
           onClick={() => setMobileTab("result")}
           className={
             mobileTab === "result"
@@ -433,17 +502,6 @@ export function EngineBuilder() {
           }
         >
           결과
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileTab("build")}
-          className={
-            mobileTab === "build"
-              ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 shadow-sm"
-              : "flex-1 px-3 py-1.5 text-xs font-semibold text-ink-500"
-          }
-        >
-          배분
         </button>
       </div>
 
@@ -479,67 +537,61 @@ export function EngineBuilder() {
       />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* 항목 추가 */}
-        <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
-        {paletteOpen ? (
-          <Card pad={false} className="shrink-0 lg:w-[200px]">
-            <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
-              <span className="text-sm font-bold text-ink-800">항목 추가</span>
+        {/* 항목 추가 — 배분 수정 모드에서만 */}
+        {editing && (
+          <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
+            {paletteOpen ? (
+              <Card pad={false} className="shrink-0 lg:w-[200px]">
+                <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
+                  <span className="text-sm font-bold text-ink-800">항목 추가</span>
+                  <button
+                    onClick={() => setPaletteOpen(false)}
+                    aria-label="접기"
+                    className="text-ink-400 hover:text-ink-700"
+                  >
+                    <Icon name="x" size={16} />
+                  </button>
+                </div>
+                <div className="p-3">
+                  <Palette
+                    buckets={buckets}
+                    selectedId={selected && selectedId ? selectedId : null}
+                    incomeCount={incomeSources.length}
+                    onAdd={addBucket}
+                    onAddIncome={(s) => {
+                      patchSources([...incomeSources, s]);
+                      if (s.id) selectNode(s.id);
+                    }}
+                  />
+                </div>
+              </Card>
+            ) : (
               <button
-                onClick={() => setPaletteOpen(false)}
-                aria-label="접기"
-                className="text-ink-400 hover:text-ink-700"
+                onClick={() => setPaletteOpen(true)}
+                className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-50"
               >
-                <Icon name="x" size={16} />
+                <Icon name="plus" size={16} /> 항목 추가
               </button>
-            </div>
-            <div className="p-3">
-              <Palette
-                buckets={buckets}
-                selectedId={selected && selectedId ? selectedId : null}
-                incomeCount={incomeSources.length}
-                onAdd={addBucket}
-                onAddIncome={(s) => {
-                  patchSources([...incomeSources, s]);
-                  if (s.id) selectNode(s.id);
-                }}
-              />
-            </div>
-          </Card>
-        ) : (
-          <button
-            onClick={() => setPaletteOpen(true)}
-            className="flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-50"
-          >
-            <Icon name="plus" size={16} /> 항목 추가
-          </button>
+            )}
+          </div>
         )}
-        </div>
 
         {/*
-          흐름도 + 결과.
-          데스크톱에서는 결과를 먼저 놓는다(lg:order). 캔버스가 화면 높이를 다 쓰는 탓에
-          결과 카드가 fold 밖으로 밀려서, 아하의 순간을 보려면 스크롤을 내려야 했다.
-          모바일은 탭으로 하나만 보여주므로 DOM 순서 그대로 둔다.
+          보드가 메인, 결과는 그 아래.
+          모바일은 탭으로 하나만. 데스크톱은 DOM 순서 = 시각 순서.
         */}
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          {buckets.length > 0 && (
+          {editing && buckets.length > 0 && (
             <div
               className={
-                mobileTab === "result"
-                  ? "hidden space-y-2 lg:order-2 lg:block"
-                  : "space-y-2 lg:order-2"
+                mobileTab === "result" ? "hidden space-y-2 lg:block" : "space-y-2"
               }
             >
               <SpendRatioSuggestionBar />
               <PushBudgetToVariableBar />
             </div>
           )}
-          <div
-            className={
-              mobileTab === "result" ? "hidden lg:order-3 lg:block" : "lg:order-3"
-            }
-          >
+          <div className={mobileTab === "result" ? "hidden lg:block" : undefined}>
           <EngineCanvas
             buckets={buckets}
             engine={engine}
@@ -551,6 +603,7 @@ export function EngineBuilder() {
             spendSuggestionPending={spendSuggestionPending}
             cashflowMonthly={cashflowMonthly}
             holdingsTotal={totalHoldings(snapshot)}
+            editable={editing}
             onOpenDiagnosis={() => setDiagnosisOpen(true)}
             onShowIncomeSourcesChange={setShowIncomeSources}
             onMoveNodes={(moves) => {
@@ -641,9 +694,7 @@ export function EngineBuilder() {
           </div>
 
           <Card
-            className={
-              mobileTab === "build" ? "hidden lg:order-1 lg:block" : "lg:order-1"
-            }
+            className={mobileTab === "build" ? "hidden lg:block" : undefined}
           >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-800">
@@ -831,13 +882,15 @@ export function EngineBuilder() {
           </Card>
         </div>
 
-        {/* 항목 수정 — 항상 고정 폭 */}
+        {/* 항목 패널 — 보기에서도 숫자 확인·미세 조정용으로 유지 */}
         <Card
           pad={false}
           className="sticky top-4 hidden max-h-[calc(100vh-2rem)] w-[280px] shrink-0 overflow-y-auto border-ink-200 lg:block"
         >
           <div className="flex items-center justify-between border-b border-ink-100 px-3 py-2.5">
-            <span className="text-sm font-bold text-ink-800">항목 수정</span>
+            <span className="text-sm font-bold text-ink-800">
+              {editing ? "항목 수정" : "항목"}
+            </span>
             {selectedId && (
               <button
                 onClick={() => selectNode(null)}
@@ -849,11 +902,25 @@ export function EngineBuilder() {
             )}
           </div>
           <div className="p-3">
+            {!editing && !selectedId && selectedIds.length <= 1 && (
+              <div className="mb-3 rounded-lg border border-ink-100 bg-ink-50 px-3 py-2 text-[11px] leading-relaxed text-ink-500">
+                노드를 누르면 숫자를 볼 수 있어요. 항목을 더하거나 옮기려면{" "}
+                <button
+                  type="button"
+                  className="font-semibold text-brand-700 underline"
+                  onClick={() => setMode("edit")}
+                >
+                  배분 수정
+                </button>
+                .
+              </div>
+            )}
             {selectedId === "__income__" ? (
               <IncomeHubInspector
                 monthlyIncome={monthlyIncome}
                 showIncomeSources={showIncomeSources}
                 onShowIncomeSourcesChange={setShowIncomeSources}
+                structureEditable={editing}
                 onAddGroup={() => {
                   const pos = childrenOf(null, buckets).length;
                   addBucket(bucketFromPreset(GROUP_PRESETS[0]!, pos, null));
@@ -870,6 +937,7 @@ export function EngineBuilder() {
             ) : selectedSource ? (
               <SourceInspector
                 source={selectedSource}
+                structureEditable={editing}
                 onChange={(patch) =>
                   patchSources(
                     incomeSources.map((s) =>
@@ -889,6 +957,7 @@ export function EngineBuilder() {
                   bucket={selected}
                   all={buckets}
                   monthlyIncome={monthlyIncome}
+                  structureEditable={editing}
                   onChange={(patch) => updateBucket(selected.id, patch)}
                   onDelete={() => requestDelete(selected.id)}
                   onDuplicate={() => duplicate(selected)}
@@ -907,7 +976,8 @@ export function EngineBuilder() {
               </>
             ) : selectedIds.length > 1 ? (
               <div className="px-2 py-8 text-center text-sm text-ink-500">
-                {selectedIds.length}개 선택 · 드래그하면 함께 움직여요
+                {selectedIds.length}개 선택
+                {editing ? " · 드래그하면 함께 움직여요" : ""}
               </div>
             ) : (
               <div className="flex flex-col items-center px-2 py-10 text-center">
@@ -925,13 +995,14 @@ export function EngineBuilder() {
       <BottomSheet
         open={selectedId !== null}
         onClose={() => selectNode(null)}
-        title="항목 수정"
+        title={editing ? "항목 수정" : "항목"}
       >
         {selectedId === "__income__" && (
           <IncomeHubInspector
             monthlyIncome={monthlyIncome}
             showIncomeSources={showIncomeSources}
             onShowIncomeSourcesChange={setShowIncomeSources}
+            structureEditable={editing}
             onAddGroup={() => {
               const pos = childrenOf(null, buckets).length;
               addBucket(bucketFromPreset(GROUP_PRESETS[0]!, pos, null));
@@ -950,6 +1021,7 @@ export function EngineBuilder() {
         {selectedSource && (
           <SourceInspector
             source={selectedSource}
+            structureEditable={editing}
             onChange={(patch) =>
               patchSources(
                 incomeSources.map((s) =>
@@ -969,6 +1041,7 @@ export function EngineBuilder() {
             bucket={selected}
             all={buckets}
             monthlyIncome={monthlyIncome}
+            structureEditable={editing}
             onChange={(patch) => updateBucket(selected.id, patch)}
             onDelete={() => requestDelete(selected.id)}
             onDuplicate={() => duplicate(selected)}
