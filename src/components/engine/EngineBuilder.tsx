@@ -23,7 +23,8 @@ import {
 import { GROUP_PRESETS, bucketFromPreset } from "@/lib/catalog";
 import { formatKRW } from "@/lib/format";
 import { renderShareCard, shareOrDownload } from "@/lib/shareCard";
-import { track, trackAhaAllocatedOnce } from "@/lib/analytics";
+import { track, trackAhaAllocatedOnce, trackOncePerSession } from "@/lib/analytics";
+import { GoalGuardTracker } from "@/components/GoalGuardTracker";
 import { Card, Button, Badge, TextInput, AssumptionNote, StatCard } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { LeadCta } from "@/components/LeadCta";
@@ -44,6 +45,25 @@ import {
 } from "./SpendRatioSuggestion";
 import { PushBudgetToVariableBar } from "./PushBudgetToVariable";
 import { DiagnosisModal } from "./DiagnosisModal";
+
+/** 월수입 게이트에 막힌 지점 — 어느 CTA에서 이탈하는지 구분한다 */
+type IncomeGateSource = "empty_card" | "flat_banner" | "canvas_empty";
+
+/**
+ * lg 브레이크포인트(1024px) — 결과 카드가 탭 없이 보이는 폭인지.
+ * 확정 전에는 null. 첫 렌더에 false 로 시작하면 데스크톱 열람이 mobile 로 기록된다.
+ */
+function useIsWide(): boolean | null {
+  const [wide, setWide] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return wide;
+}
 
 export function EngineBuilder() {
   const snapshot = useProfile((s) => s.profile.snapshot) ?? DEFAULT_SNAPSHOT;
@@ -100,6 +120,7 @@ export function EngineBuilder() {
   const [justShared, setJustShared] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [mobileTab, setMobileTab] = useState<"result" | "build">("result");
+  const isWide = useIsWide();
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [pendingDraft, setPendingDraft] = useState(false);
 
@@ -157,8 +178,9 @@ export function EngineBuilder() {
    */
   const needsIncome = monthlyIncome <= 0;
 
-  const startAha = () => {
+  const startAha = (source: IncomeGateSource) => {
     if (needsIncome) {
+      track("income_gate_blocked", { source });
       setDiagnosisOpen(true);
       return;
     }
@@ -302,6 +324,32 @@ export function EngineBuilder() {
 
   const goal = selectGoalState(vision, projection);
 
+  // 모바일은 탭으로 한쪽만 보여주므로, 결과 카드가 실제로 보일 때만 열람으로 센다.
+  // isWide 가 확정될 때까지 기다린다 — 안 그러면 viewport 속성이 전부 mobile 이 된다.
+  const resultOnScreen =
+    isWide !== null && buckets.length > 0 && (isWide || mobileTab === "result");
+  useEffect(() => {
+    if (!resultOnScreen) return;
+    trackOncePerSession("engine_result_viewed", "engine_result_viewed", {
+      bucket_count: buckets.length,
+      sum_pct: Math.round(sum),
+      sum_ok: sumOk,
+      has_numeric_goal: goal.hasNumericGoal,
+      target_status: goal.targetStatus,
+      sensitivity: sens,
+      viewport: isWide ? "desktop" : "mobile",
+    });
+  }, [
+    resultOnScreen,
+    buckets.length,
+    sum,
+    sumOk,
+    goal.hasNumericGoal,
+    goal.targetStatus,
+    sens,
+    isWide,
+  ]);
+
   const handleShare = async () => {
     setSharing(true);
     try {
@@ -374,7 +422,7 @@ export function EngineBuilder() {
           <button
             type="button"
             className="font-bold underline"
-            onClick={startAha}
+            onClick={() => startAha("flat_banner")}
           >
             {needsIncome ? "월수입 입력하기" : "추천 배분으로 다시 잡기"}
           </button>
@@ -419,7 +467,7 @@ export function EngineBuilder() {
                   : "현황을 넣고 추천 배분을 적용하면 바로 그래프가 그려져요."}
               </p>
             </div>
-            <Button onClick={startAha}>
+            <Button onClick={() => startAha("empty_card")}>
               {needsIncome ? "월수입 입력" : "추천 배분으로 시작"}
             </Button>
           </div>
@@ -588,6 +636,7 @@ export function EngineBuilder() {
               // 캔버스 빈 상태의 추천도 같은 게이트를 지난다 (여기만 우회하면 0원을
               // 배분한 평평한 곡선이 '결과'로 나온다)
               if (needsIncome) {
+                track("income_gate_blocked", { source: "canvas_empty" });
                 setDiagnosisOpen(true);
                 return;
               }
@@ -654,6 +703,7 @@ export function EngineBuilder() {
 
         {goal.guardCopy && (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gold-50 px-3 py-2.5">
+            <GoalGuardTracker surface="engine" />
             <div className="flex items-start gap-2 text-sm text-gold-700">
               <Icon name="target" size={16} className="mt-0.5 shrink-0" />
               <span>{goal.guardCopy.short}</span>
