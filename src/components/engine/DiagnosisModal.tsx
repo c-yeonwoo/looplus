@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useProfile } from "@/lib/store/useProfile";
+import { useDialog } from "@/lib/useDialog";
 import { DEFAULT_SNAPSHOT, suggestEngineFromSnapshot } from "@/lib/store/defaults";
 import { computeStage, STAGE_NAMES } from "@/lib/engine";
 import type { FinancialSnapshot } from "@/lib/types";
@@ -34,7 +35,7 @@ export function DiagnosisModal({
   const s = stored ?? DEFAULT_SNAPSHOT;
 
   const [confirmDraft, setConfirmDraft] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useDialog<HTMLButtonElement>(open, onClose);
 
   const patch = (p: Partial<FinancialSnapshot>) => setSnapshot({ ...s, ...p });
   const monthlyIncome = sumMonthlyIncome(s.incomeSources);
@@ -59,16 +60,6 @@ export function DiagnosisModal({
 
   const result = computeStage(s);
   const m = result.metrics;
-
-  useEffect(() => {
-    if (!open) return;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
 
   const applyDraft = () => {
     setEngine(suggestEngineFromSnapshot(s));
