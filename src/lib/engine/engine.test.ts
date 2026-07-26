@@ -104,9 +104,14 @@ describe("projectEngine", () => {
     const locked: Bucket[] = [
       bucket({ category: "invest", name: "연금", ratioPct: 100, expectedAnnualReturnPct: 7, realizedYieldPct: 5, isLocked: true }),
     ];
-    // 자본소득 없는 스냅샷으로 격리 → locked 실현분이 passive로 새지 않음을 검증
-    const noCapital = snapshot({ incomeSources: [{ type: "labor", monthly: 300 }] });
-    const r = projectEngine({ snapshot: noCapital, buckets: locked, horizonYears: 10 });
+    // 자본소득·보유 자산 없는 스냅샷으로 격리 → locked 실현분이 passive로 새지 않음을 검증
+    const bare = snapshot({
+      incomeSources: [{ type: "labor", monthly: 300 }],
+      cash: 0,
+      investAssets: 0,
+      realEstate: 0,
+    });
+    const r = projectEngine({ snapshot: bare, buckets: locked, horizonYears: 10 });
     expect(r.curve[10].lockedAssets).toBeGreaterThan(0);
     expect(r.curve[10].monthlyPassiveIncome).toBe(0); // 실현분도 잠김
   });
@@ -123,6 +128,118 @@ describe("projectEngine", () => {
     const b = projectEngine({ snapshot: snapshot(), buckets: onlyInvest, horizonYears: 10 });
     // 같은 투자 배분이면 지출 버킷 유무는 자산 결과에 영향 없음
     expect(a.curve[10].totalNetWorth).toBeCloseTo(b.curve[10].totalNetWorth, 5);
+  });
+
+  it("보유 자산은 버킷 구성과 무관하게 자기 가정으로 굴러간다", () => {
+    // 예전엔 보유 자산을 ratioPct 로 쪼개 버킷에 심어서, 흐름 배분만 바꿔도
+    // 이미 가진 돈의 성장률이 달라졌다. 이제는 분리돼 있어야 한다.
+    const s = snapshot({
+      cash: 0,
+      investAssets: 10000,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const holdingReturns = {
+      cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+      invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
+      realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+    };
+    // 배분 0% → 흐름은 없고 보유 자산만 남는다. 버킷 구성이 달라도 결과가 같아야 한다.
+    const a = projectEngine({
+      snapshot: s,
+      horizonYears: 10,
+      holdingReturns,
+      buckets: [bucket({ category: "invest", ratioPct: 0, expectedAnnualReturnPct: 8, realizedYieldPct: 2 })],
+    });
+    const b = projectEngine({
+      snapshot: s,
+      horizonYears: 10,
+      holdingReturns,
+      buckets: [
+        bucket({ category: "invest", ratioPct: 0, expectedAnnualReturnPct: 12, isLocked: true }),
+        bucket({ category: "save", ratioPct: 0, expectedAnnualReturnPct: 3 }),
+      ],
+    });
+    // 미실현 1%(= 기대 4% − 실현 3%)로만 복리
+    expect(a.finalNetWorth).toBeCloseTo(10000 * 1.01 ** 10, 4);
+    expect(b.finalNetWorth).toBeCloseTo(a.finalNetWorth, 6);
+  });
+
+  it("보유 자산 종류별 가정을 따른다 — 현금은 주식 수익률로 불어나지 않는다", () => {
+    const cashOnly = snapshot({
+      cash: 10000,
+      investAssets: 0,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const r = projectEngine({
+      snapshot: cashOnly,
+      buckets: invest100,
+      horizonYears: 10,
+      holdingReturns: {
+        cash: { expectedAnnualReturnPct: 2, realizedYieldPct: 0 },
+        invest: { expectedAnnualReturnPct: 20, realizedYieldPct: 10 },
+        realEstate: { expectedAnnualReturnPct: 20, realizedYieldPct: 10 },
+      },
+    });
+    // 현금 1억이 연 2% 로만 성장 — 투자 가정(20%) 이 새어들지 않는다
+    expect(r.curve[10].totalNetWorth).toBeCloseTo(10000 * 1.02 ** 10, 4);
+    expect(r.curve[10].monthlyPassiveIncome).toBe(0); // 실현 0%
+  });
+
+  it("보유 자산 실현분이 자본소득으로 자동 재유입된다", () => {
+    const holdingsOnly = snapshot({
+      cash: 0,
+      investAssets: 10000,
+      realEstate: 0,
+      liabilities: 0,
+      incomeSources: [{ type: "labor", monthly: 0 }],
+    });
+    const r = projectEngine({
+      snapshot: holdingsOnly,
+      buckets: invest100,
+      horizonYears: 5,
+      holdingReturns: {
+        cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+        invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
+        realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+      },
+    });
+    // 1억 × 3% = 연 300만 → 월 25만
+    expect(r.curve[0].monthlyPassiveIncome).toBeCloseTo(25, 6);
+    // 그 자본소득이 다음 해 배분 대상(수입)이 되어 버킷에 쌓인다
+    expect(r.curve[1].totalNetWorth).toBeGreaterThan(r.curve[0].totalNetWorth);
+  });
+
+  it("입력한 자본소득과 보유 자산 추정을 중복으로 더하지 않는다", () => {
+    // 월 25만 자본소득 = 1억 × 3% 실현. 같은 자산에서 나온 돈이라 두 번 세면 안 된다.
+    const returns = {
+      cash: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+      invest: { expectedAnnualReturnPct: 4, realizedYieldPct: 3 },
+      realEstate: { expectedAnnualReturnPct: 0, realizedYieldPct: 0 },
+    };
+    const base = {
+      cash: 0,
+      investAssets: 10000,
+      realEstate: 0,
+      liabilities: 0,
+    };
+    const declared = projectEngine({
+      snapshot: snapshot({ ...base, incomeSources: [{ type: "capital", monthly: 25 }] }),
+      buckets: invest100,
+      horizonYears: 5,
+      holdingReturns: returns,
+    });
+    const silent = projectEngine({
+      snapshot: snapshot({ ...base, incomeSources: [{ type: "labor", monthly: 0 }] }),
+      buckets: invest100,
+      horizonYears: 5,
+      holdingReturns: returns,
+    });
+    expect(declared.curve[0].monthlyPassiveIncome).toBeCloseTo(25, 6);
+    expect(declared.finalNetWorth).toBeCloseTo(silent.finalNetWorth, 6);
   });
 
   it("목표 순자산 도달 연차(ETA)와 달성률을 계산한다", () => {

@@ -42,6 +42,8 @@ export function Inspector({
   const month = monthlyManwon(bucket, all, monthlyIncome);
   const sibSum = siblingRatioSum(bucket.parentId, all);
   const ratioLabel = parent ? `"${parent.name}" 대비` : "월 수입 대비";
+  /** 합계 100% 검증의 범위 — 같은 부모 아래 항목들 */
+  const sumScope = parent ? `"${parent.name}" 안에서` : "월 수입 배분";
 
   return (
     <div className="space-y-4">
@@ -98,7 +100,8 @@ export function Inspector({
             : "border-amber-200 bg-amber-50 text-amber-700"
         }`}
       >
-        형제 합 {Math.round(sibSum)}% {Math.round(sibSum) === 100 ? "" : "· 100%에 맞춰 주세요"}
+        {sumScope} 합계 {Math.round(sibSum)}%
+        {Math.round(sibSum) === 100 ? "" : " · 100%에 맞춰 주세요"}
       </div>
 
       {leaf && bucket.category !== "spend" && (

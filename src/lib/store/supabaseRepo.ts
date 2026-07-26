@@ -17,6 +17,7 @@ import type { SpendingState } from "../spending/types";
 import { emptySpending } from "../spending/types";
 import type { LoadedProfile } from "./mergeProfile";
 import { emptyProfile } from "./defaults";
+import { resolveHoldingReturns } from "../engine/holdings";
 import { normalizeTracking } from "../tracking";
 
 /** action_items jsonb: 레거시 ActionItem[] 또는 v2 { routines, logs, actions } */
@@ -135,6 +136,7 @@ function layoutToDb(e: EngineConfig): EngineLayout {
     poolCanvasY: e.poolCanvasY ?? null,
     edgeControls: e.edgeControls ?? {},
     showIncomeSources: e.showIncomeSources ?? true,
+    holdingReturns: resolveHoldingReturns(e.holdingReturns),
   };
 }
 
@@ -148,6 +150,7 @@ function layoutFromDb(raw: unknown): EngineLayout {
     poolCanvasY: o.poolCanvasY ?? null,
     edgeControls: o.edgeControls ?? {},
     showIncomeSources: o.showIncomeSources ?? true,
+    holdingReturns: resolveHoldingReturns(o.holdingReturns),
   };
 }
 

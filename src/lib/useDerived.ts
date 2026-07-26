@@ -27,6 +27,7 @@ export function useDerived(): Derived {
         horizonYears: horizon,
         goalNetworth: vision?.goalNetworth,
         goalPassiveIncome: vision?.goalPassiveIncome,
+        holdingReturns: engine.holdingReturns,
       });
     }
     return { stage, projection };

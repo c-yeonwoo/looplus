@@ -2,10 +2,17 @@ import type {
   Bucket,
   FinancialSnapshot,
   GoalReachStatus,
+  HoldingKind,
+  HoldingReturns,
   ProjectionResult,
   YearPoint,
 } from "../types";
 import { incomeByType } from "./stage";
+import {
+  HOLDING_KINDS,
+  holdingBalance,
+  resolveHoldingReturns,
+} from "./holdings";
 import { flattenLeavesForProjection, rootRatioSum } from "./tree";
 
 /**
@@ -18,12 +25,13 @@ import { flattenLeavesForProjection, rootRatioSum } from "./tree";
  *    = 다음 해 '자본소득'으로 upstream 재유입 → 재배분. (하이브리드, 1년 지연)
  *  - 연금·IRP(locked): 실현분도 계좌 내부 복리로 잠김 → passive/재유입 제외, '잠긴 자산'.
  *  - 저축 버킷: 저(무)수익 누적. 지출 버킷: 소비(out), 자산 제외.
+ *  - 보유 자산(현금·투자자산·부동산)은 버킷과 별개로 종류별 가정으로 굴린다.
+ *    흐름 비율(ratioPct)로 쪼개면 실제 보유 구성과 무관한 배분이 되기 때문. (holdings.ts)
  *
  * 가정 (모두 '예시·가정', README 기록):
  *  - granularity = 연 단위. 급여 성장률·인플레이션 0. 부채 상수.
  *  - 기여는 연말 납입(당해 수익 미발생), 수익은 기초 잔액 기준.
- *  - 시작 잔액 seed: 투자자산+부동산 → open-invest 버킷에 비율 배분,
- *    현금 → 저축 버킷에 비율 배분(저축 버킷 없으면 정적 보유). locked 버킷은 0에서 시작.
+ *  - 버킷은 0에서 시작해 배분액만 쌓인다. 이미 가진 돈은 보유 자산 쪽에 있다.
  */
 
 export interface ProjectionInput {
@@ -32,6 +40,8 @@ export interface ProjectionInput {
   horizonYears: number;
   goalNetworth?: number;
   goalPassiveIncome?: number; // 월
+  /** 보유 자산 수익 가정. 미지정이면 기본값 */
+  holdingReturns?: HoldingReturns;
 }
 
 interface RunState {
@@ -39,35 +49,29 @@ interface RunState {
   bucket: Bucket;
 }
 
-function seedBalances(snapshot: FinancialSnapshot, buckets: Bucket[]) {
-  const invest = buckets.filter((b) => b.category === "invest");
-  const save = buckets.filter((b) => b.category === "save");
+interface HoldingState {
+  kind: HoldingKind;
+  balance: number;
+  /** 연 미실현 성장률 (0~1) */
+  unrealizedRate: number;
+  /** 연 실현률 — 현금으로 빠져나와 수입에 재유입 (0~1) */
+  realizedRate: number;
+}
 
-  const investSeedTotal = snapshot.investAssets + snapshot.realEstate;
-  const investRatioSum = invest.reduce((s, b) => s + b.ratioPct, 0);
-  const saveRatioSum = save.reduce((s, b) => s + b.ratioPct, 0);
-
-  const states: RunState[] = [];
-
-  // 기존 투자자산+부동산 → 모든 투자 버킷(open+locked)에 비율 배분
-  for (const b of invest) {
-    const share =
-      investRatioSum > 0 ? b.ratioPct / investRatioSum : 1 / Math.max(1, invest.length);
-    states.push({ bucket: b, balance: investSeedTotal * share });
-  }
-  // 현금 → 저축 버킷에 비율 배분
-  for (const b of save) {
-    const share =
-      saveRatioSum > 0 ? b.ratioPct / saveRatioSum : 1 / Math.max(1, save.length);
-    states.push({ bucket: b, balance: snapshot.cash * share });
-  }
-  // spend 버킷은 잔액 없음 (소비)
-
-  // 엣지케이스 정적 보유분 (버킷이 없어 흡수 못한 자산)
-  const staticInvest = invest.length === 0 ? investSeedTotal : 0;
-  const staticCash = save.length === 0 ? snapshot.cash : 0;
-
-  return { states, staticInvest, staticCash };
+function holdingStates(
+  snapshot: FinancialSnapshot,
+  returns: HoldingReturns,
+): HoldingState[] {
+  return HOLDING_KINDS.map((kind) => {
+    const r = returns[kind];
+    const realizedRate = Math.min(r.realizedYieldPct, r.expectedAnnualReturnPct) / 100;
+    return {
+      kind,
+      balance: holdingBalance(snapshot, kind),
+      unrealizedRate: Math.max(0, r.expectedAnnualReturnPct / 100 - realizedRate),
+      realizedRate,
+    };
+  }).filter((h) => h.balance > 0);
 }
 
 export function projectEngine(input: ProjectionInput): ProjectionResult {
@@ -81,38 +85,43 @@ export function projectEngine(input: ProjectionInput): ProjectionResult {
       incomeByType(snapshot, "platform") +
       incomeByType(snapshot, "freelance")) *
     12;
+  /** 진단에 직접 입력한 자본소득 — 대부분 보유 자산에서 나온 실측치 */
   const capitalBaseAnnual = incomeByType(snapshot, "capital") * 12;
 
-  const { states, staticInvest, staticCash } = seedBalances(snapshot, buckets);
+  const states: RunState[] = buckets.map((bucket) => ({ bucket, balance: 0 }));
+  const holdings = holdingStates(snapshot, resolveHoldingReturns(input.holdingReturns));
+
+  const holdingsTotal = () => holdings.reduce((s, h) => s + h.balance, 0);
+  /**
+   * 보유 자산발 자본소득 = max(실측, 모델 추정).
+   * 사용자가 입력한 자본소득도 결국 이 자산에서 나오는 돈이라, 더하면 같은 돈을 두 번 센다.
+   */
+  const holdingsCapital = (modelRealized: number) =>
+    Math.max(capitalBaseAnnual, modelRealized);
 
   const curve: YearPoint[] = [];
 
   // year 0 (현재)
-  const year0Liquid =
-    states
-      .filter((st) => !st.bucket.isLocked)
-      .reduce((s, st) => s + st.balance, 0) +
-    staticInvest +
-    staticCash;
-  const year0Locked = states
-    .filter((st) => st.bucket.isLocked)
-    .reduce((s, st) => s + st.balance, 0);
+  const year0Realized = holdings.reduce((s, h) => s + h.balance * h.realizedRate, 0);
+  const year0Capital = holdingsCapital(year0Realized);
+  const year0Liquid = holdingsTotal();
   curve.push({
     year: 0,
-    totalNetWorth: year0Liquid + year0Locked - snapshot.liabilities,
+    totalNetWorth: year0Liquid - snapshot.liabilities,
     liquidAssets: year0Liquid,
-    lockedAssets: year0Locked,
-    monthlyPassiveIncome: capitalBaseAnnual / 12,
-    annualIncome: laborLikeAnnual + capitalBaseAnnual,
+    lockedAssets: 0, // 버킷은 아직 0에서 시작
+    monthlyPassiveIncome: year0Capital / 12,
+    annualIncome: laborLikeAnnual + year0Capital,
     laborAnnual: laborLikeAnnual,
-    capitalAnnual: capitalBaseAnnual,
+    capitalAnnual: year0Capital,
   });
 
-  let realizedPrev = 0; // 전년도 실현 자본소득 → 올해 재유입
-  let staticInvestBal = staticInvest;
+  // 전년도 실현분 → 올해 수입으로 재유입 (하이브리드, 1년 지연)
+  let holdingRealizedPrev = year0Realized;
+  let bucketRealizedPrev = 0;
 
   for (let y = 1; y <= horizon; y++) {
-    const capitalAnnual = capitalBaseAnnual + realizedPrev;
+    const capitalAnnual = holdingsCapital(holdingRealizedPrev) + bucketRealizedPrev;
     const annualIncome = laborLikeAnnual + capitalAnnual;
 
     let realizedThisYear = 0;
@@ -140,21 +149,20 @@ export function projectEngine(input: ProjectionInput): ProjectionResult {
       }
     }
 
-    // 정적 투자분 (버킷 없을 때) — 기본 4% 성장, 2% 실현 가정
-    if (staticInvestBal > 0) {
-      const realized = staticInvestBal * 0.02;
-      staticInvestBal = staticInvestBal * 1.02 + realized; // 미실현+실현 모두 유지(단순화)
-      realizedThisYear += realized;
+    // 보유 자산 — 미실현분은 잔액에 남고, 실현분은 현금으로 빠져 다음 해 수입이 된다
+    let holdingRealized = 0;
+    for (const h of holdings) {
+      holdingRealized += h.balance * h.realizedRate;
+      h.balance = h.balance * (1 + h.unrealizedRate);
     }
 
-    realizedPrev = realizedThisYear;
+    bucketRealizedPrev = realizedThisYear;
+    holdingRealizedPrev = holdingRealized;
 
     const liquid =
       states
         .filter((st) => !st.bucket.isLocked)
-        .reduce((s, st) => s + st.balance, 0) +
-      staticInvestBal +
-      staticCash;
+        .reduce((s, st) => s + st.balance, 0) + holdingsTotal();
     const locked = states
       .filter((st) => st.bucket.isLocked)
       .reduce((s, st) => s + st.balance, 0);
@@ -164,8 +172,9 @@ export function projectEngine(input: ProjectionInput): ProjectionResult {
       totalNetWorth: liquid + locked - snapshot.liabilities,
       liquidAssets: liquid,
       lockedAssets: locked,
-      // passive = 기존 자본소득 + 버킷 실현분 (연금·IRP 실현분은 잠겨서 제외)
-      monthlyPassiveIncome: (capitalBaseAnnual + realizedThisYear) / 12,
+      // passive = 보유 자산 실현분 + 버킷 실현분 (연금·IRP 실현분은 잠겨서 제외)
+      monthlyPassiveIncome:
+        (holdingsCapital(holdingRealized) + realizedThisYear) / 12,
       annualIncome,
       laborAnnual: laborLikeAnnual,
       capitalAnnual,

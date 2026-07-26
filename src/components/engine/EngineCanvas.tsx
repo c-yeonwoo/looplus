@@ -25,7 +25,6 @@ import {
   type GraphNode,
 } from "@/lib/engine/layout";
 import {
-  ASSET_CASHFLOW_SOURCE_ID,
   incomeSourceLabel,
   normalizeIncomeSources,
   sumMonthlyIncome,
@@ -200,6 +199,7 @@ export function EngineCanvas({
   onShowIncomeSourcesChange,
   spendSuggestionPending = false,
   cashflowMonthly = 0,
+  holdingsTotal = 0,
 }: {
   buckets: Bucket[];
   engine: EngineConfig;
@@ -228,6 +228,8 @@ export function EngineCanvas({
   spendSuggestionPending?: boolean;
   /** 자산→월수입 현금흐름 추정(만원/월) */
   cashflowMonthly?: number;
+  /** 보유 자산 합계(만원) */
+  holdingsTotal?: number;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -885,7 +887,6 @@ export function EngineCanvas({
             if (n.kind === "source") {
               const src = n.incomeSource!;
               const selected = selectedIds.includes(n.id);
-              const fromAssets = src.id === ASSET_CASHFLOW_SOURCE_ID;
               const dragging =
                 drag?.id === n.id || (drag != null && drag.group.some((g) => g.id === n.id));
               const p = posOf(n);
@@ -895,26 +896,14 @@ export function EngineCanvas({
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => beginNodeDrag(e, n.id, n)}
-                    className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-lg border px-2 text-left ${
-                      fromAssets
-                        ? "border-gold-400 bg-gold-50"
-                        : "border-brand-200 bg-white"
-                    } ${
+                    className={`flex h-full w-full cursor-grab select-none flex-col justify-center rounded-lg border border-brand-200 bg-white px-2 text-left ${
                       selected ? "ring-2 ring-brand-500" : "hover:shadow-sm"
                     } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
                   >
-                    <div
-                      className={`truncate text-[11px] font-bold ${
-                        fromAssets ? "text-gold-700" : "text-brand-800"
-                      }`}
-                    >
+                    <div className="truncate text-[11px] font-bold text-brand-800">
                       {incomeSourceLabel(src)}
                     </div>
-                    <div
-                      className={`tnum text-sm font-extrabold ${
-                        fromAssets ? "text-gold-800" : "text-brand-700"
-                      }`}
-                    >
+                    <div className="tnum text-sm font-extrabold text-brand-700">
                       월 {src.monthly}만
                     </div>
                   </div>
@@ -963,10 +952,17 @@ export function EngineCanvas({
                       selected ? "ring-2 ring-sage-500" : "hover:shadow-sm"
                     } ${dragging ? "cursor-grabbing opacity-90" : ""}`}
                   >
-                    <div className="text-sm font-bold text-sage-700">자산</div>
+                    <div className="text-sm font-bold text-sage-700">
+                      자산
+                      {holdingsTotal > 0 ? (
+                        <span className="tnum ml-1 font-extrabold">
+                          {Math.round(holdingsTotal)}만
+                        </span>
+                      ) : null}
+                    </div>
                     {cashflowMonthly > 0 ? (
                       <div className="tnum mt-1 text-[11px] font-semibold text-sage-600">
-                        흐름 월 {Math.round(cashflowMonthly)}만
+                        현금 월 {Math.round(cashflowMonthly)}만
                       </div>
                     ) : null}
                   </div>

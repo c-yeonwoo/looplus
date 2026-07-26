@@ -474,9 +474,9 @@ export const useProfile = create<ProfileState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (st) => ({ profile: st.profile }),
       onRehydrateStorage: () => (state) => {
-        if (state && !state.profile.spending) {
-          state.profile = migrateProfile(state.profile);
-        }
+        // 멱등이므로 항상 통과시킨다. 조건부로 돌리면 이미 spending 이 있는
+        // 프로필은 이후에 추가된 마이그레이션을 영영 못 받는다.
+        if (state) state.profile = migrateProfile(state.profile);
         state?.setHasHydrated(true);
       },
     },
