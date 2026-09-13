@@ -16,22 +16,22 @@ type NavItem = {
   core?: boolean;
 };
 
-/** 1차: 홈·설계·실천 / 2차: 목표·지출 (진단은 엔진「내 현황」모달) */
+/** 1차: 홈·설계·작은 루프 / 2차: 큰 루프·지출 (진단은 엔진「내 현황」모달) */
 const NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
   { href: "/engine", label: "자산 설계", icon: "engine", core: true },
-  { href: "/tracking", label: "실천", icon: "check-circle" },
-  { href: "/goals", label: "목표", icon: "target" },
+  { href: "/tracking", label: "작은 루프", icon: "loop" },
+  { href: "/goals", label: "큰 루프", icon: "target" },
   { href: "/spending", label: "지출", icon: "wallet" },
 ];
-/** NAV 배열에서 1차(홈·설계·실천) 개수 — 이후는 구분선 아래 2차 */
+/** NAV 배열에서 1차(홈·설계·작은 루프) 개수 — 이후는 구분선 아래 2차 */
 const PRIMARY_NAV_COUNT = 3;
 
 const MOBILE_NAV: NavItem[] = [
   { href: "/home", label: "홈", icon: "home" },
   { href: "/engine", label: "설계", icon: "engine", core: true },
-  { href: "/tracking", label: "실천", icon: "check-circle" },
-  { href: "/goals", label: "목표", icon: "target" },
+  { href: "/tracking", label: "실행", icon: "loop" },
+  { href: "/goals", label: "큰 루프", icon: "target" },
   { href: "/spending", label: "지출", icon: "wallet" },
 ];
 

@@ -5,9 +5,9 @@ export default function TrackingPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        icon="check-circle"
-        title="실천"
-        desc="원데이 루틴을 만들고, 잔디·주간 뷰로 얼마나 지켰는지 확인하세요."
+        icon="loop"
+        title="작은 루프"
+        desc="큰 목표를 밀어 주는 실행을 반복하고, 이번 주 얼마나 굴렸는지 확인하세요."
       />
       <TrackingPanel />
     </div>

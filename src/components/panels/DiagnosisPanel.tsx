@@ -42,7 +42,14 @@ function QuietSection({
   );
 }
 
-export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) {
+export function DiagnosisPanel({
+  showResult = true,
+  compact = false,
+}: {
+  showResult?: boolean;
+  /** 온보딩에서는 첫 곡선에 필요한 숫자만 받고, 나머지는 나중에 정확도를 높인다. */
+  compact?: boolean;
+}) {
   const stored = useProfile((s) => s.profile.snapshot);
   const vision = useProfile((s) => s.profile.vision);
   const setSnapshot = useProfile((s) => s.setSnapshot);
@@ -68,7 +75,7 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
   return (
     <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
       <div className="space-y-12">
-        <QuietSection title="자산 · 부채">
+        <QuietSection title={compact ? "첫 곡선에 필요한 자산" : "자산 · 부채"}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-5">
             <Field label="현금·예적금">
               <NumberInput value={s.cash} onChange={(v) => patch({ cash: v })} suffix="만원" />
@@ -80,26 +87,28 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
                 suffix="만원"
               />
             </Field>
-            <Field label="부동산">
-              <NumberInput
-                value={s.realEstate}
-                onChange={(v) => patch({ realEstate: v })}
-                suffix="만원"
-              />
-            </Field>
-            <Field label="부채">
-              <NumberInput
-                value={s.liabilities}
-                onChange={(v) => patch({ liabilities: v })}
-                suffix="만원"
-              />
-            </Field>
+            {!compact && <>
+              <Field label="부동산">
+                <NumberInput
+                  value={s.realEstate}
+                  onChange={(v) => patch({ realEstate: v })}
+                  suffix="만원"
+                />
+              </Field>
+              <Field label="부채">
+                <NumberInput
+                  value={s.liabilities}
+                  onChange={(v) => patch({ liabilities: v })}
+                  suffix="만원"
+                />
+              </Field>
+            </>}
           </div>
         </QuietSection>
 
-        <QuietSection title="월 소득">
+        <QuietSection title={compact ? "매달 들어오는 돈" : "월 소득"}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-5">
-            {INCOME_ORDER.map((type) => (
+            {(compact ? (["labor"] as IncomeSourceType[]) : INCOME_ORDER).map((type) => (
               <Field key={type} label={INCOME_SOURCE_META[type].label}>
                 <NumberInput
                   value={getIncome(s, type)}
@@ -111,7 +120,7 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
           </div>
         </QuietSection>
 
-        <QuietSection title="지출 · 비상금">
+        <QuietSection title={compact ? "매달 나가는 돈" : "지출 · 비상금"}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-5">
             <Field label="월 지출 (진단 기준)">
               <NumberInput
@@ -120,17 +129,17 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
                 suffix="만원"
               />
             </Field>
-            <Field label="비상금">
+            {!compact && <Field label="비상금">
               <NumberInput
                 value={s.emergencyMonths}
                 onChange={(v) => patch({ emergencyMonths: v })}
                 suffix="개월"
               />
-            </Field>
+            </Field>}
           </div>
-          <div className="pt-2">
+          {!compact && <div className="pt-2">
             <ApplySpendingToEngine source="diagnosis" compact />
-          </div>
+          </div>}
           {(m.monthlySavable !== 0 || m.savingsRatePct !== 0) && (
             <p className="text-sm text-ink-500">
               저축 가능 약{" "}
@@ -201,7 +210,11 @@ export function DiagnosisPanel({ showResult = true }: { showResult?: boolean }) 
             </QuietSection>
           )}
 
-          <AssumptionNote>단계 기준은 예시·가정입니다.</AssumptionNote>
+          <AssumptionNote>
+            {compact
+              ? "부채·비상금·추가 소득은 홈에 들어간 뒤 더하면 결과가 더 정확해져요."
+              : "단계 기준은 예시·가정입니다."}
+          </AssumptionNote>
         </div>
       )}
     </div>

@@ -12,7 +12,7 @@ import { track } from "@/lib/analytics";
  */
 export function SpendDiagnosisSync() {
   const autoSync = useProfile(
-    (s) => s.profile.uiPrefs?.autoSyncSpendToDiagnosis ?? false,
+    (s) => s.profile.uiPrefs?.autoSyncSpendToDiagnosis ?? true,
   );
   const profile = useProfile((s) => s.profile);
   const setSnapshot = useProfile((s) => s.setSnapshot);

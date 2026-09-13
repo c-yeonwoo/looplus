@@ -114,8 +114,8 @@ function OnboardingInner() {
 
       <div className="mb-6">
         <StepHeader n={step + 1} title={current.title} desc={current.desc} />
-        {current.key === "goals" && <GoalsPanel />}
-        {current.key === "diagnosis" && <DiagnosisPanel />}
+        {current.key === "goals" && <GoalsPanel compact />}
+        {current.key === "diagnosis" && <DiagnosisPanel compact />}
         {current.key === "engine" && <EngineBuilder />}
       </div>
 

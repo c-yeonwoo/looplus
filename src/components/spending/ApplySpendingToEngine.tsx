@@ -28,7 +28,7 @@ export function ApplySpendingToEngine({
   const profile = useProfile((s) => s.profile);
   const setSnapshot = useProfile((s) => s.setSnapshot);
   const setAutoSync = useProfile((s) => s.setAutoSyncSpendToDiagnosis);
-  const autoSync = profile.uiPrefs?.autoSyncSpendToDiagnosis ?? false;
+  const autoSync = profile.uiPrefs?.autoSyncSpendToDiagnosis ?? true;
   const spending = selectSpending(profile);
   const snapshot = profile.snapshot ?? DEFAULT_SNAPSHOT;
 

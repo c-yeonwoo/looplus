@@ -6,6 +6,7 @@ import type {
   Bucket,
   EngineConfig,
   FinancialSnapshot,
+  GoalLoop,
   Profile,
   Scenario,
   Tracking,
@@ -77,6 +78,14 @@ function migrateProfile(p: Profile): Profile {
       },
     };
   }
+  if (!next.uiPrefs) {
+    next = { ...next, uiPrefs: { hiddenHomeMetrics: [], autoSyncSpendToDiagnosis: true } };
+  } else if (next.uiPrefs.autoSyncSpendToDiagnosis == null) {
+    next = {
+      ...next,
+      uiPrefs: { ...next.uiPrefs, autoSyncSpendToDiagnosis: true },
+    };
+  }
   next = { ...next, tracking: ensureTracking(next) };
   return next;
 }
@@ -104,12 +113,18 @@ interface ProfileState {
   addRoutine: (
     title: string,
     schedule?: RoutineItem["schedule"],
+    loopId?: string,
+    source?: RoutineItem["source"],
   ) => void;
   removeRoutine: (id: string) => void;
   updateRoutine: (id: string, patch: Partial<Pick<RoutineItem, "title" | "schedule">>) => void;
   reorderRoutinesInDay: (date: string, orderedIds: string[]) => void;
   toggleRoutineDay: (date: string, routineId: string) => void;
   dismissNextStepNudge: (stage: number) => void;
+  addGoalLoop: (input: Omit<GoalLoop, "id" | "createdAt" | "completedAt">) => void;
+  updateGoalLoop: (id: string, patch: Partial<Omit<GoalLoop, "id" | "createdAt">>) => void;
+  completeGoalLoop: (id: string) => void;
+  removeGoalLoop: (id: string) => void;
   toggleHomeMetricHidden: (metricId: string) => void;
   setAutoSyncSpendToDiagnosis: (on: boolean) => void;
 
@@ -247,7 +262,7 @@ export const useProfile = create<ProfileState>()(
           };
         }),
 
-      addRoutine: (title, schedule = "daily") =>
+      addRoutine: (title, schedule = "daily", loopId, source = "manual") =>
         set((st) => {
           const t = ensureTracking(st.profile);
           const trimmed = title.trim();
@@ -258,6 +273,8 @@ export const useProfile = create<ProfileState>()(
             schedule: normalizeSchedule(schedule),
             position: t.routines.length,
             createdAt: new Date().toISOString(),
+            ...(loopId ? { loopId } : {}),
+            source,
           };
           return {
             profile: touch({
@@ -352,9 +369,104 @@ export const useProfile = create<ProfileState>()(
           };
         }),
 
+      addGoalLoop: (input) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          const title = input.title.trim();
+          if (!title || !Number.isFinite(input.targetValue) || input.targetValue <= 0) return {};
+          const loop: GoalLoop = {
+            ...input,
+            id: sid(),
+            title,
+            targetValue: Math.max(0, input.targetValue),
+            targetYears: input.targetYears && input.targetYears > 0 ? input.targetYears : undefined,
+            note: input.note?.trim() || undefined,
+            manualProgressPct: input.metric === "custom" ? Math.max(0, Math.min(100, input.manualProgressPct ?? 0)) : undefined,
+            createdAt: new Date().toISOString(),
+          };
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: { ...t, goalLoops: [...t.goalLoops, loop] },
+            }),
+          };
+        }),
+
+      updateGoalLoop: (id, patch) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: {
+                ...t,
+                goalLoops: t.goalLoops.map((loop) => {
+                  if (loop.id !== id) return loop;
+                  const targetValue =
+                    patch.targetValue == null
+                      ? loop.targetValue
+                      : Math.max(0, patch.targetValue);
+                  return {
+                    ...loop,
+                    ...patch,
+                    title: patch.title == null ? loop.title : patch.title.trim() || loop.title,
+                    targetValue,
+                    targetYears:
+                      patch.targetYears == null
+                        ? loop.targetYears
+                        : patch.targetYears > 0
+                          ? patch.targetYears
+                          : undefined,
+                    manualProgressPct:
+                      patch.manualProgressPct == null
+                        ? loop.manualProgressPct
+                        : Math.max(0, Math.min(100, patch.manualProgressPct)),
+                  };
+                }),
+              },
+            }),
+          };
+        }),
+
+      completeGoalLoop: (id) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: {
+                ...t,
+                goalLoops: t.goalLoops.map((loop) =>
+                  loop.id === id
+                    ? { ...loop, completedAt: loop.completedAt ?? new Date().toISOString() }
+                    : loop,
+                ),
+              },
+            }),
+          };
+        }),
+
+      removeGoalLoop: (id) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: {
+                ...t,
+                goalLoops: t.goalLoops.filter((loop) => loop.id !== id),
+                // 실행 기록은 남기되, 없어진 큰 루프와의 연결만 끊는다.
+                routines: t.routines.map((routine) =>
+                  routine.loopId === id ? { ...routine, loopId: undefined } : routine,
+                ),
+              },
+            }),
+          };
+        }),
+
       toggleHomeMetricHidden: (metricId) =>
         set((st) => {
-          const prefs = st.profile.uiPrefs ?? { hiddenHomeMetrics: [] };
+          const prefs = st.profile.uiPrefs ?? { hiddenHomeMetrics: [], autoSyncSpendToDiagnosis: true };
           const hidden = new Set(prefs.hiddenHomeMetrics ?? []);
           if (hidden.has(metricId)) hidden.delete(metricId);
           else hidden.add(metricId);
@@ -368,7 +480,7 @@ export const useProfile = create<ProfileState>()(
 
       setAutoSyncSpendToDiagnosis: (on) =>
         set((st) => {
-          const prefs = st.profile.uiPrefs ?? { hiddenHomeMetrics: [] };
+          const prefs = st.profile.uiPrefs ?? { hiddenHomeMetrics: [], autoSyncSpendToDiagnosis: true };
           return {
             profile: touch({
               ...st.profile,

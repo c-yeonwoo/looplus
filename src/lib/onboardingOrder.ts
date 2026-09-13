@@ -29,26 +29,26 @@ const STEP_COPY: Record<
 > = {
   diagnosis: {
     key: "diagnosis",
-    label: "현재 진단",
+    label: "첫 숫자",
     icon: "diagnosis",
     title: "지금 내 위치를 확인해요",
-    desc: "최소만 입력해도 됩니다. 자산 설계와 같은 숫자를 씁니다.",
+    desc: "현금·투자·월수입·월지출 네 가지만 넣으면 첫 곡선을 만들 수 있어요.",
     nextLabel: "다음",
   },
   goals: {
     key: "goals",
-    label: "목표·비전",
+    label: "첫 큰 루프",
     icon: "target",
-    title: "미래의 나를 그려요",
-    desc: "왜 경제적 자유를 원하는지, 얼마를 언제까지. 목표는 언제든 수정할 수 있어요.",
+    title: "첫 큰 루프를 열어요",
+    desc: "어디까지 갈지 대략 잡고, 나중에 작은 루프로 쪼개 반복할 수 있어요.",
     nextLabel: "다음",
   },
   engine: {
     key: "engine",
     label: "자산 설계",
     icon: "engine",
-    title: "돈을 어디에 나눌까요",
-    desc: "항목을 추가하고 비율만 맞추면, 몇 년 뒤 자산이 바로 보입니다.",
+    title: "돈이 도는 구조를 만들어요",
+    desc: "추천 배분으로 첫 결과를 보고, 필요한 부분만 나중에 고치면 됩니다.",
     nextLabel: "완료 · 홈으로",
   },
 };

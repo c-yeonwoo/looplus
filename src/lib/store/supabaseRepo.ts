@@ -5,6 +5,7 @@ import type {
   BucketCategory,
   DayLog,
   EngineConfig,
+  GoalLoop,
   IncomeSource,
   Profile,
   RoutineItem,
@@ -20,14 +21,20 @@ import { emptyProfile } from "./defaults";
 import { resolveHoldingReturns } from "../engine/holdings";
 import { normalizeTracking } from "../tracking";
 
-/** action_items jsonb: 레거시 ActionItem[] 또는 v2 { routines, logs, actions } */
+/** action_items jsonb: 레거시 ActionItem[] 또는 v2+ { routines, logs, actions, goalLoops } */
 function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
-  if (raw && typeof raw === "object" && !Array.isArray(raw) && (raw as { v?: number }).v === 2) {
+  if (
+    raw &&
+    typeof raw === "object" &&
+    !Array.isArray(raw) &&
+    Number((raw as { v?: number }).v ?? 0) >= 2
+  ) {
     const o = raw as {
       routines?: RoutineItem[];
       logs?: DayLog[];
       actions?: ActionItem[];
       dismissedNextStepStage?: number | null;
+      goalLoops?: GoalLoop[];
     };
     return normalizeTracking({
       routines: o.routines ?? [],
@@ -35,6 +42,7 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       actions: o.actions ?? [],
       checkIns,
       dismissedNextStepStage: o.dismissedNextStepStage ?? null,
+      goalLoops: o.goalLoops ?? [],
     });
   }
   return normalizeTracking({
@@ -48,11 +56,12 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
 function trackingToDb(t: Tracking | undefined) {
   const n = normalizeTracking(t);
   return {
-    v: 2 as const,
+    v: 3 as const,
     routines: n.routines,
     logs: n.logs,
     actions: n.actions,
     dismissedNextStepStage: n.dismissedNextStepStage ?? null,
+    goalLoops: n.goalLoops,
   };
 }
 
@@ -173,7 +182,7 @@ function uiPrefsFromDb(raw: unknown): UiPrefs | undefined {
   const o = raw as UiPrefs;
   return {
     hiddenHomeMetrics: o.hiddenHomeMetrics ?? [],
-    autoSyncSpendToDiagnosis: o.autoSyncSpendToDiagnosis ?? false,
+    autoSyncSpendToDiagnosis: o.autoSyncSpendToDiagnosis ?? true,
   };
 }
 
@@ -375,7 +384,9 @@ export function profileHasData(p: Profile): boolean {
     s && (s.logs.length > 0 || s.fixed.length > 0 || s.monthlyVariableBudgetWon > 0),
   );
   const t = p.tracking;
-  const hasTracking = Boolean(t && (t.routines?.length > 0 || t.logs?.length > 0));
+  const hasTracking = Boolean(
+    t && (t.routines?.length > 0 || t.logs?.length > 0 || t.goalLoops?.length > 0),
+  );
   return Boolean(
     p.snapshot || p.vision || p.engine.buckets.length > 0 || hasSpending || hasTracking,
   );

@@ -774,7 +774,7 @@ export function EngineBuilder() {
             </div>
             <Link href="/goals" className="shrink-0">
               <Button className="!py-1.5 !text-xs">
-                목표 정하기 <Icon name="arrow-right" size={14} />
+                대표 큰 루프 정하기 <Icon name="arrow-right" size={14} />
               </Button>
             </Link>
           </div>
@@ -817,15 +817,22 @@ export function EngineBuilder() {
         {sumOk && (
           <div className="mt-4 space-y-3 rounded-xl border border-ink-200 bg-ink-50/50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div className="text-sm font-bold text-ink-800">배분이 맞춰졌어요</div>
-                <p className="text-xs text-ink-500">
-                  결과를 공유한 뒤, 실행 가이드로 이어가 보세요.
-                </p>
+                <div>
+                  <div className="text-sm font-bold text-ink-800">배분이 맞춰졌어요</div>
+                  <p className="text-xs text-ink-500">
+                  결과를 저장하고, 이번 주 이 배분을 밀어 줄 작은 루프를 하나 등록해 보세요.
+                  </p>
+                </div>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/tracking">
+                  <Button variant="outline">
+                    <Icon name="loop" size={15} /> 작은 루프 등록
+                  </Button>
+                </Link>
+                <Button onClick={handleShare} disabled={sharing}>
+                  <Icon name="image" size={15} /> {sharing ? "생성 중…" : "결과 공유"}
+                </Button>
               </div>
-              <Button onClick={handleShare} disabled={sharing}>
-                <Icon name="image" size={15} /> {sharing ? "생성 중…" : "결과 공유"}
-              </Button>
             </div>
             <LeadCta
               placement={justShared ? "engine_after_share" : "engine_result"}

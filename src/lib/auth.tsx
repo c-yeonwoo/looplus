@@ -9,6 +9,9 @@ interface AuthState {
   configured: boolean;
   loading: boolean;
   user: User | null;
+  /** 첫 결과를 보기 전 가입을 강제하지 않는 로컬 체험 모드 */
+  isGuest: boolean;
+  continueAsGuest: () => void;
   /** 이메일 + 비밀번호 로그인 */
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   /**
@@ -27,10 +30,23 @@ interface AuthState {
 }
 
 const Ctx = createContext<AuthState | null>(null);
+const GUEST_KEY = "looplus_guest_mode";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [guestLoading, setGuestLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
+
+  useEffect(() => {
+    try {
+      setIsGuest(sessionStorage.getItem(GUEST_KEY) === "1");
+    } catch {
+      /* local 체험은 sessionStorage 가 없어도 현재 화면에서 동작한다 */
+    } finally {
+      setGuestLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const sb = getSupabase();
@@ -39,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sb.auth.getSession().then(({ data }) => {
       if (active) {
         setUser(data.session?.user ?? null);
-        setLoading(false);
+        setAuthLoading(false);
       }
     });
     const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
@@ -57,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sb = getSupabase();
     if (!sb) return { error: "Supabase 미설정" };
     const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (!error) clearGuest(setIsGuest);
     return error ? { error: mapAuthError(error.message) } : {};
   };
 
@@ -67,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: mapAuthError(error.message) };
     // 확인 메일 대기(세션 없음) vs 즉시 로그인
     if (!data.session) return { needsEmailConfirm: true };
+    clearGuest(setIsGuest);
     return {};
   };
 
@@ -84,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sb = getSupabase();
     if (!sb) return { error: "Supabase 미설정" };
     const { error } = await sb.auth.verifyOtp({ email, token: code, type: "email" });
+    if (!error) clearGuest(setIsGuest);
     return error ? { error: mapAuthError(error.message) } : {};
   };
 
@@ -91,14 +110,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sb = getSupabase();
     await sb?.auth.signOut();
     setUser(null);
+    clearGuest(setIsGuest);
+  };
+
+  const continueAsGuest = () => {
+    try {
+      sessionStorage.setItem(GUEST_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setIsGuest(true);
   };
 
   return (
     <Ctx.Provider
       value={{
         configured: isSupabaseConfigured,
-        loading,
+        loading: authLoading || guestLoading,
         user,
+        isGuest,
+        continueAsGuest,
         signIn,
         signUp,
         sendCode,
@@ -109,6 +140,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </Ctx.Provider>
   );
+}
+
+function clearGuest(setGuest: (value: boolean) => void) {
+  try {
+    sessionStorage.removeItem(GUEST_KEY);
+  } catch {
+    /* ignore */
+  }
+  setGuest(false);
 }
 
 /** Supabase 영문 메시지를 짧은 한국어로 */
@@ -132,6 +172,8 @@ export function useAuth(): AuthState {
       configured: false,
       loading: false,
       user: null,
+      isGuest: false,
+      continueAsGuest: () => {},
       signIn: async () => ({ error: "미설정" }),
       signUp: async () => ({ error: "미설정" }),
       sendCode: async () => ({ error: "미설정" }),

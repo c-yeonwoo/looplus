@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useProfile } from "@/lib/store/useProfile";
 import { useDerived } from "@/lib/useDerived";
 import { emptyTracking, type RoutineItem } from "@/lib/types";
@@ -40,14 +41,22 @@ export function TrackingPanel() {
     stage?.stage,
     tracking.dismissedNextStepStage,
   );
+  const goalLoops = tracking.goalLoops.filter((loop) => !loop.completedAt);
 
   const today = dateKey();
   const [selectedDate, setSelectedDate] = useState(today);
   const [weekMonday, setWeekMonday] = useState(() => mondayOf(today));
   const [newTitle, setNewTitle] = useState("");
   const [newSchedule, setNewSchedule] = useState<RoutineSchedule>("daily");
+  const [newLoopId, setNewLoopId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const dragId = useRef<string | null>(null);
+
+  // 큰 루프 카드에서 온 경우, 새 작은 실행을 그 루프에 바로 연결한다.
+  useEffect(() => {
+    const loopId = new URLSearchParams(window.location.search).get("loop");
+    if (loopId && tracking.goalLoops.some((loop) => loop.id === loopId)) setNewLoopId(loopId);
+  }, [tracking.goalLoops]);
 
   const streak = computeDailyStreak(tracking.routines, tracking.logs);
   const todayComp = dayCompletion(tracking.routines, tracking.logs, today);
@@ -81,8 +90,9 @@ export function TrackingPanel() {
   const add = (source: "manual" | "next_step" = "manual") => {
     const v = newTitle.trim();
     if (!v) return;
-    addRoutine(v, newSchedule);
+    addRoutine(v, newSchedule, newLoopId || undefined, source === "next_step" ? "stage" : "manual");
     track("action_added", { source });
+    if (newLoopId) track("small_loop_linked", { source });
     setNewTitle("");
     setNewSchedule("daily");
   };
@@ -91,15 +101,13 @@ export function TrackingPanel() {
     if (stage) dismissNextStepNudge(stage.stage);
   };
 
-  /** 엔진 조언 → 습관 초안만 폼에 넣고 넛지 닫기 (1회용) */
+  /** 엔진 조언을 실제 월요일 작은 루프로 바로 연결한다. */
   const draftFromNextStep = () => {
     if (!stage?.nextStep) return;
-    setNewTitle("재무 점검하기");
-    setNewSchedule({ weekdays: [1] });
+    addRoutine(stage.nextStep, { weekdays: [1] }, newLoopId || goalLoops[0]?.id, "stage");
+    track("action_added", { source: "next_step" });
+    if (newLoopId || goalLoops[0]?.id) track("small_loop_linked", { source: "stage" });
     dismissNextStepNudge(stage.stage);
-    requestAnimationFrame(() => {
-      document.getElementById("routine-title-input")?.focus();
-    });
   };
 
   const onDropReorder = (targetId: string) => {
@@ -135,7 +143,7 @@ export function TrackingPanel() {
             </div>
             <p className="mt-1.5 text-sm font-medium text-invest-800">{stage.nextStep}</p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-invest-600/80">
-              스테이지가 바뀔 때까지만 보여요. 습관으로 다듬거나 닫아 두세요.
+              월요일에 반복할 작은 루프로 바로 등록할 수 있어요. 큰 루프를 골랐다면 그 목표에 연결됩니다.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -143,7 +151,7 @@ export function TrackingPanel() {
                 className="border-invest-500/40 text-invest-700"
                 onClick={draftFromNextStep}
               >
-                <Icon name="plus" size={14} /> 습관 초안 만들기
+                <Icon name="plus" size={14} /> 작은 루프로 등록
               </Button>
               <button
                 type="button"
@@ -315,6 +323,25 @@ export function TrackingPanel() {
         <div className="mb-3">
           <SchedulePicker value={newSchedule} onChange={setNewSchedule} />
         </div>
+        <div className="mb-3">
+          <label className="mb-1 block text-sm font-medium text-ink-600">연결할 큰 루프</label>
+          <select
+            value={newLoopId}
+            onChange={(e) => setNewLoopId(e.target.value)}
+            className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm text-ink-700 outline-none focus:border-brand-500"
+          >
+            <option value="">공통 실행 (어느 루프에도 연결 안 함)</option>
+            {goalLoops.map((loop) => (
+              <option key={loop.id} value={loop.id}>{loop.title}</option>
+            ))}
+          </select>
+          {goalLoops.length === 0 && (
+            <p className="mt-1.5 text-xs text-ink-400">
+              <Link href="/goals" className="font-semibold text-gold-600 hover:underline">큰 루프를 먼저 만들면</Link>{" "}
+              실행과 목표를 연결할 수 있어요.
+            </p>
+          )}
+        </div>
         <Button
           className="mb-4 min-h-11 w-full text-sm"
           onClick={() => add("manual")}
@@ -340,6 +367,7 @@ export function TrackingPanel() {
                   }
                   onUpdateSchedule={(schedule) => updateRoutine(r.id, { schedule })}
                   onRemove={() => removeRoutine(r.id)}
+                  loopTitle={tracking.goalLoops.find((loop) => loop.id === r.loopId)?.title}
                 />
               ))}
           </ul>
@@ -355,12 +383,14 @@ function RoutineListItem({
   onToggleEdit,
   onUpdateSchedule,
   onRemove,
+  loopTitle,
 }: {
   routine: RoutineItem;
   editing: boolean;
   onToggleEdit: () => void;
   onUpdateSchedule: (s: RoutineSchedule) => void;
   onRemove: () => void;
+  loopTitle?: string;
 }) {
   return (
     <li className="rounded-xl border border-ink-100 px-3 py-2.5">
@@ -383,6 +413,11 @@ function RoutineListItem({
           <Icon name="x" size={15} />
         </button>
       </div>
+      {loopTitle && (
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-gold-600">
+          <Icon name="loop" size={11} /> {loopTitle}
+        </div>
+      )}
       {editing && (
         <div className="mt-2 border-t border-ink-50 pt-2">
           <SchedulePicker value={routine.schedule} onChange={onUpdateSchedule} />

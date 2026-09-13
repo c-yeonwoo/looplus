@@ -187,6 +187,37 @@ export interface RoutineItem {
   schedule: "daily" | { weekdays: number[] };
   position: number;
   createdAt: string;
+  /** 이 작은 실행이 밀어 주는 큰 루프. 없으면 공통 실행 항목. */
+  loopId?: string;
+  /** 추천된 실행인지, 사용자가 직접 만든 실행인지 구분해 맥락을 보존한다. */
+  source?: "manual" | "stage" | "goal_loop";
+}
+
+/**
+ * 큰 루프: 숫자로 확인할 수 있는 장기 목표 하나.
+ * Vision 이 "왜"와 미래 장면을 담는다면, GoalLoop 는 그 비전을 실제 반복 실행으로
+ * 쪼개기 위한 측정 가능한 단위다. 여러 개를 동시에 둘 수 있다.
+ */
+export type GoalLoopMetric =
+  | "networth"
+  | "emergency_months"
+  | "savings_rate"
+  | "passive_income"
+  | "custom";
+
+export interface GoalLoop {
+  id: string;
+  title: string;
+  metric: GoalLoopMetric;
+  /** metric 의 목표값. 순자산·패시브는 만원, 비상금은 개월, 저축률은 %. */
+  targetValue: number;
+  /** 목표 기한. 없으면 속도 대신 현재 진행만 보여 준다. */
+  targetYears?: number;
+  note?: string;
+  /** custom 목표의 진행률(0~100). 다른 metric 은 실제 현황에서 계산한다. */
+  manualProgressPct?: number;
+  createdAt: string;
+  completedAt?: string;
 }
 
 /** 하루 체크 로그 (YYYY-MM-DD) */
@@ -208,6 +239,8 @@ export interface Tracking {
    * 같은 stage면 다시 안 보이고, stage가 바뀌면 새 넛지.
    */
   dismissedNextStepStage?: number | null;
+  /** 큰 목표와 그 목표를 밀어 주는 작은 실행의 묶음 */
+  goalLoops: GoalLoop[];
 }
 
 export function emptyTracking(): Tracking {
@@ -217,6 +250,7 @@ export function emptyTracking(): Tracking {
     routines: [],
     logs: [],
     dismissedNextStepStage: null,
+    goalLoops: [],
   };
 }
 

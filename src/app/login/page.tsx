@@ -12,7 +12,7 @@ import { useProfile } from "@/lib/store/useProfile";
 import { BRAND } from "@/lib/brand";
 
 function LoginInner() {
-  const { user, configured, loading } = useAuth();
+  const { user, configured, loading, continueAsGuest } = useAuth();
   const router = useRouter();
   const onboardedAt = useProfile((s) => s.profile.onboardedAt);
 
@@ -78,6 +78,25 @@ function LoginInner() {
               onSuccess={() => router.replace(onboardedAt ? "/home" : "/onboarding")}
             />
           </div>
+          {configured && (
+            <div className="mt-3 rounded-xl border border-ink-200 bg-ink-50/70 p-3">
+              <div className="text-xs font-bold text-ink-700">먼저 내 루프를 그려보고 싶다면</div>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+                계정 없이 첫 곡선과 큰 루프를 만들어 볼 수 있어요. 내용은 이 기기에만 저장되며,
+                나중에 가입하면 백업할 수 있습니다.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  continueAsGuest();
+                  router.replace(onboardedAt ? "/home" : "/onboarding");
+                }}
+                className="mt-2 text-xs font-bold text-gold-600 hover:underline"
+              >
+                계정 없이 첫 곡선 보기 →
+              </button>
+            </div>
+          )}
           <p className="mt-4 flex items-center gap-1.5 text-xs text-ink-400 md:hidden">
             <Icon name="info" size={13} />
             모든 수치는 예시·가정이며 수익을 보장하지 않습니다.

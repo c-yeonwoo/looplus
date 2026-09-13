@@ -36,7 +36,9 @@ export function emptyProfile(): Profile {
     scenarios: [],
     tracking: emptyTracking(),
     spending: emptySpending(),
-    uiPrefs: { hiddenHomeMetrics: [] },
+    // 지출을 기록하면 진단·저축률·엔진에 바로 반영한다. 계획과 실측이 다른 채로
+    // 방치되는 것보다, 사용자가 명시적으로 끄는 편이 신뢰에 낫다.
+    uiPrefs: { hiddenHomeMetrics: [], autoSyncSpendToDiagnosis: true },
     onboardedAt: null,
     updatedAt: new Date(0).toISOString(),
   };
