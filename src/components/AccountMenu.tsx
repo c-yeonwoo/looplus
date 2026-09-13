@@ -8,7 +8,7 @@ import { Button } from "./ui";
 import { AuthForm } from "./AuthForm";
 
 export function AccountMenu({ compact = false }: { compact?: boolean }) {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isGuest } = useAuth();
   const [open, setOpen] = useState(false);
 
   if (loading) {
@@ -58,7 +58,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="로그인"
+        title={isGuest ? "계정 만들고 백업" : "로그인"}
         className={
           compact
             ? "flex w-full items-center justify-center rounded-lg py-2 text-brand-700 hover:bg-brand-50"
@@ -66,7 +66,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
         }
       >
         <Icon name="users" size={16} />
-        {!compact && "로그인"}
+        {!compact && (isGuest ? "계정 만들고 백업" : "로그인")}
       </button>
       {open && (
         <div
@@ -77,7 +77,14 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-1 text-lg font-extrabold text-ink-800">이메일 로그인</div>
+            <div className="mb-1 text-lg font-extrabold text-ink-800">
+              {isGuest ? "내 루프를 백업할까요?" : "이메일 로그인"}
+            </div>
+            {isGuest && (
+              <p className="mt-1 text-xs leading-relaxed text-ink-500">
+                로그인하거나 가입하면 이 기기에 만든 루프와 실행 기록을 계정에 저장합니다.
+              </p>
+            )}
             <div className="mt-4">
               <AuthForm onSuccess={() => setOpen(false)} />
             </div>

@@ -13,6 +13,7 @@ import { Icon } from "@/components/Icon";
 import { LogoMark } from "@/components/Logo";
 import { AssetChart } from "@/components/AssetChart";
 import { VisionBoard } from "@/components/home/VisionBoard";
+import { LoopDashboard } from "@/components/home/LoopDashboard";
 import {
   HomeMetricGrid,
   buildHomeMetrics,
@@ -236,7 +237,7 @@ export default function HomePage() {
               </div>
               <Link href="/goals" className="shrink-0">
                 <Button>
-                  목표 정하기 <Icon name="arrow-right" size={14} />
+                  대표 큰 루프 정하기 <Icon name="arrow-right" size={14} />
                 </Button>
               </Link>
             </div>
@@ -306,6 +307,8 @@ export default function HomePage() {
         )}
       </section>
 
+      <LoopDashboard />
+
       {/* 비전보드 — 미리보기(히어로) 다음의 secondary */}
       {vision && <VisionBoard vision={vision} />}
 
@@ -323,7 +326,7 @@ export default function HomePage() {
               variant="outline"
               className="shrink-0 border-sage-500/35 text-sage-700 hover:border-sage-500 hover:bg-sage-50"
             >
-              {streak > 0 ? `실천 · ${streak}일` : "실천하기"}
+              {streak > 0 ? `작은 루프 · ${streak}일` : "작은 루프 시작"}
             </Button>
           </Link>
         </div>

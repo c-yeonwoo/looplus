@@ -10,18 +10,18 @@ import { useProfile } from "@/lib/store/useProfile";
 /** 진입점: 로그인 → 온보딩/홈 */
 function LandingInner() {
   const router = useRouter();
-  const { configured, loading, user } = useAuth();
+  const { configured, loading, user, isGuest } = useAuth();
   const hydrated = useProfile((s) => s.hasHydrated);
   const onboardedAt = useProfile((s) => s.profile.onboardedAt);
 
   useEffect(() => {
     if (!hydrated || loading) return;
-    if (configured && !user) {
+    if (configured && !user && !isGuest) {
       router.replace("/login");
       return;
     }
     router.replace(onboardedAt ? "/home" : "/onboarding");
-  }, [hydrated, loading, configured, user, onboardedAt, router]);
+  }, [hydrated, loading, configured, user, isGuest, onboardedAt, router]);
 
   return (
     <div className="flex h-screen items-center justify-center text-sm text-ink-400">

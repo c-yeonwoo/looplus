@@ -160,6 +160,21 @@ describe("profileHasData", () => {
     );
   });
 
+  it("큰 루프만 만든 체험 사용자도 가입 시 백업 대상이다", () => {
+    const p = local((x) => {
+      x.tracking.goalLoops = [
+        {
+          id: "loop-1",
+          title: "비상금 3개월",
+          metric: "emergency_months",
+          targetValue: 3,
+          createdAt: "2026-09-13T00:00:00.000Z",
+        },
+      ];
+    });
+    expect(profileHasData(p)).toBe(true);
+  });
+
   it("완전히 빈 프로필은 이관하지 않는다", () => {
     expect(profileHasData(emptyProfile())).toBe(false);
   });

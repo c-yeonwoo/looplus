@@ -51,7 +51,10 @@ export type AnalyticsEvent =
   | "spend_auto_synced"
   | "spend_ratio_suggestion_applied"
   | "engine_budget_to_variable_applied"
-  | "budget_overpace_engine_link";
+  | "budget_overpace_engine_link"
+  | "goal_loop_created"
+  | "goal_loop_completed"
+  | "small_loop_linked";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
@@ -250,4 +253,7 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "spend_ratio_suggestion_applied",
   "engine_budget_to_variable_applied",
   "budget_overpace_engine_link",
+  "goal_loop_created",
+  "goal_loop_completed",
+  "small_loop_linked",
 ];

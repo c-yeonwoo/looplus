@@ -37,7 +37,8 @@ const COPY: Record<string, { title: string; body: string; cta: string }> = {
 
 /**
  * 리드젠 CTA (BM 1차).
- * URL 없으면 자리 유지 + 클릭 계측만.
+ * 실제 목적지가 없으면 노출하지 않는다. "곧 연결" 버튼은 사용자에게 막힌 다음 행동으로
+ * 읽히므로, 전환 측정용 자리보다 신뢰를 우선한다.
  */
 export function LeadCta({
   placement,
@@ -55,10 +56,11 @@ export function LeadCta({
   compact?: boolean;
 }) {
   const url = resolveLeadUrl(toolId);
+  if (!url) return null;
   const copy = COPY[placement] ?? COPY.engine_result;
   const t = title ?? copy.title;
   const b = body ?? copy.body;
-  const cta = url ? copy.cta : "곧 연결";
+  const cta = copy.cta;
 
   const onClick = () => {
     track("lead_cta_clicked", {
@@ -66,7 +68,7 @@ export function LeadCta({
       has_url: Boolean(url),
       tool: toolId ?? null,
     });
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   if (compact) {
@@ -97,13 +99,9 @@ export function LeadCta({
           <p className="mt-0.5 text-xs text-ink-500">{b}</p>
         </div>
         <Button onClick={onClick} className="shrink-0">
-          {url ? (
-            <>
-              {cta} <Icon name="arrow-right" size={14} />
-            </>
-          ) : (
-            <>곧 연결</>
-          )}
+          <>
+            {cta} <Icon name="arrow-right" size={14} />
+          </>
         </Button>
       </div>
     </div>

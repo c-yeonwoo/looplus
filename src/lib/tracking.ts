@@ -2,7 +2,7 @@
  * 실천·루틴 트래킹 (일 완료율 · 잔디 · 스트릭).
  */
 
-import type { DayLog, RoutineItem, Tracking } from "./types";
+import type { DayLog, GoalLoop, RoutineItem, Tracking } from "./types";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -254,12 +254,22 @@ export function rateLevel(rate: number, total: number, future: boolean): 0 | 1 |
   return 4;
 }
 
-export function normalizeTracking(raw: Tracking | null | undefined): Tracking {
-  const t = raw ?? { actions: [], checkIns: [], routines: [], logs: [] };
+export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tracking {
+  const t = raw ?? { actions: [], checkIns: [], routines: [], logs: [], goalLoops: [] };
   let routines = Array.isArray(t.routines) ? [...t.routines] : [];
   const logs = Array.isArray(t.logs) ? [...t.logs] : [];
   const actions = Array.isArray(t.actions) ? t.actions : [];
   const checkIns = Array.isArray(t.checkIns) ? t.checkIns : [];
+  const goalLoops = Array.isArray(t.goalLoops)
+    ? t.goalLoops.filter(
+        (loop): loop is GoalLoop =>
+          Boolean(loop) &&
+          typeof loop.id === "string" &&
+          typeof loop.title === "string" &&
+          typeof loop.metric === "string" &&
+          Number.isFinite(loop.targetValue),
+      )
+    : [];
 
   if (routines.length === 0 && actions.length > 0) {
     routines = actions.map((a, i) => ({
@@ -277,6 +287,7 @@ export function normalizeTracking(raw: Tracking | null | undefined): Tracking {
     routines,
     logs,
     dismissedNextStepStage: t.dismissedNextStepStage ?? null,
+    goalLoops,
   };
 }
 
