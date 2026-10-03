@@ -10,6 +10,7 @@ import type {
   Profile,
   Scenario,
   Tracking,
+  WeeklyReview,
   Vision,
 } from "../types";
 import { emptyTracking } from "../types";
@@ -125,6 +126,7 @@ interface ProfileState {
   updateGoalLoop: (id: string, patch: Partial<Omit<GoalLoop, "id" | "createdAt">>) => void;
   completeGoalLoop: (id: string) => void;
   removeGoalLoop: (id: string) => void;
+  saveWeeklyReview: (review: WeeklyReview) => void;
   toggleHomeMetricHidden: (metricId: string) => void;
   setAutoSyncSpendToDiagnosis: (on: boolean) => void;
 
@@ -459,6 +461,23 @@ export const useProfile = create<ProfileState>()(
                 routines: t.routines.map((routine) =>
                   routine.loopId === id ? { ...routine, loopId: undefined } : routine,
                 ),
+              },
+            }),
+          };
+        }),
+
+      saveWeeklyReview: (review) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: {
+                ...t,
+                weeklyReviews: [
+                  ...t.weeklyReviews.filter((item) => item.weekStart !== review.weekStart),
+                  review,
+                ].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-104),
               },
             }),
           };

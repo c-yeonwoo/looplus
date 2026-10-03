@@ -94,7 +94,7 @@ export function DiagnosisModal({
                 내 현황
               </h2>
               <p className="mt-0.5 text-xs text-ink-400">
-                아는 숫자만 넣어도 됩니다 · 엔진 초안의 기준
+                아는 숫자만 넣어도 됩니다 · 입력하면 바로 저장돼요
               </p>
             </div>
             <button
@@ -228,7 +228,7 @@ export function DiagnosisModal({
 
           <div className="flex flex-col gap-2 border-t border-ink-100 px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
             <Button variant="outline" onClick={onClose}>
-              닫기
+              현황 입력 마치기
             </Button>
             <Button
               onClick={() => {

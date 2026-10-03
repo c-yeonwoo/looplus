@@ -13,6 +13,7 @@ import type {
   Scene,
   Tracking,
   UiPrefs,
+  WeeklyReview,
 } from "../types";
 import type { SpendingState } from "../spending/types";
 import { emptySpending } from "../spending/types";
@@ -35,6 +36,7 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       actions?: ActionItem[];
       dismissedNextStepStage?: number | null;
       goalLoops?: GoalLoop[];
+      weeklyReviews?: WeeklyReview[];
     };
     return normalizeTracking({
       routines: o.routines ?? [],
@@ -43,6 +45,7 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       checkIns,
       dismissedNextStepStage: o.dismissedNextStepStage ?? null,
       goalLoops: o.goalLoops ?? [],
+      weeklyReviews: o.weeklyReviews ?? [],
     });
   }
   return normalizeTracking({
@@ -56,12 +59,13 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
 function trackingToDb(t: Tracking | undefined) {
   const n = normalizeTracking(t);
   return {
-    v: 3 as const,
+    v: 4 as const,
     routines: n.routines,
     logs: n.logs,
     actions: n.actions,
     dismissedNextStepStage: n.dismissedNextStepStage ?? null,
     goalLoops: n.goalLoops,
+    weeklyReviews: n.weeklyReviews,
   };
 }
 
@@ -385,7 +389,7 @@ export function profileHasData(p: Profile): boolean {
   );
   const t = p.tracking;
   const hasTracking = Boolean(
-    t && (t.routines?.length > 0 || t.logs?.length > 0 || t.goalLoops?.length > 0),
+    t && (t.routines?.length > 0 || t.logs?.length > 0 || t.goalLoops?.length > 0 || t.weeklyReviews?.length > 0),
   );
   return Boolean(
     p.snapshot || p.vision || p.engine.buckets.length > 0 || hasSpending || hasTracking,

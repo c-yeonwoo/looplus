@@ -45,6 +45,7 @@ export interface LoopProgress {
   currentLabel: string;
   targetLabel: string;
   isComplete: boolean;
+  hasReachedTarget: boolean;
   smallLoopCount: number;
 }
 
@@ -64,7 +65,8 @@ export function getLoopProgress(
     pct,
     currentLabel: formatLoopValue(loop.metric, current),
     targetLabel: formatLoopValue(loop.metric, target),
-    isComplete: Boolean(loop.completedAt) || (target > 0 && current >= target),
+    isComplete: Boolean(loop.completedAt),
+    hasReachedTarget: target > 0 && current >= target,
     smallLoopCount: routines.filter((routine) => routine.loopId === loop.id).length,
   };
 }
@@ -96,6 +98,7 @@ export function formatLoopValue(metric: GoalLoopMetric, value: number): string {
 
 export function remainingLoopCopy(loop: GoalLoop, progress: LoopProgress): string {
   if (progress.isComplete) return "이 큰 루프를 완성했어요. 다음 루프를 열어보세요.";
+  if (progress.hasReachedTarget) return "목표 수치에 도달했어요. 현황을 확인하고 완성을 기록하세요.";
   if (loop.metric === "custom") return `완성까지 ${formatPct(100 - progress.pct)} 남았어요.`;
   const remaining = Math.max(0, progress.target - progress.current);
   return `${LOOP_METRICS[loop.metric].shortLabel} ${formatLoopValue(loop.metric, remaining)} 남았어요.`;

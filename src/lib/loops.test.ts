@@ -55,8 +55,10 @@ describe("getLoopProgress", () => {
     expect(remainingLoopCopy({ ...base, metric: "custom", targetValue: 100, manualProgressPct: 72 }, p)).toContain("28%");
   });
 
-  it("목표를 넘으면 별도 완료 처리 전에도 완성으로 보여 준다", () => {
+  it("수치 도달과 사용자가 확인한 완료를 구분한다", () => {
     const p = getLoopProgress({ ...base, targetValue: 1 }, snapshot, metrics);
-    expect(p.isComplete).toBe(true);
+    expect(p.hasReachedTarget).toBe(true);
+    expect(p.isComplete).toBe(false);
+    expect(getLoopProgress({ ...base, targetValue: 1, completedAt: "2026-09-30T00:00:00Z" }, snapshot, metrics).isComplete).toBe(true);
   });
 });

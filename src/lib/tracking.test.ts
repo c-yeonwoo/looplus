@@ -9,6 +9,7 @@ import {
   formatSchedule,
   hasCheckedInThisWeek,
   mondayOf,
+  normalizeTracking,
   rateLevel,
   reorderRoutinesInDay,
   shouldShowNextStepNudge,
@@ -52,6 +53,12 @@ describe("tracking streak (legacy weekly)", () => {
 
   it("weekIndex는 같은 주 내에서 동일", () => {
     expect(weekIndex("2026-07-13")).toBe(weekIndex("2026-07-19"));
+  });
+});
+
+describe("tracking migration", () => {
+  it("이전 버전 데이터에는 비어 있는 주간 점검 이력을 채운다", () => {
+    expect(normalizeTracking({ routines: [], logs: [], goalLoops: [] }).weeklyReviews).toEqual([]);
   });
 });
 

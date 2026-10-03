@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
-import { identify } from "./analytics";
+import { identify, track } from "./analytics";
 import { getSupabase, isSupabaseConfigured } from "./supabase";
 
 interface AuthState {
@@ -31,6 +31,7 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null);
 const GUEST_KEY = "looplus_guest_mode";
+const GUEST_SESSION_KEY = "looplus_guest_active_session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -39,13 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
+    let savedGuest = false;
+    let previousSessionGuest = false;
     try {
-      setIsGuest(sessionStorage.getItem(GUEST_KEY) === "1");
+      savedGuest = localStorage.getItem(GUEST_KEY) === "1";
     } catch {
-      /* local 체험은 sessionStorage 가 없어도 현재 화면에서 동작한다 */
-    } finally {
-      setGuestLoading(false);
+      /* localStorage 접근 불가 시 sessionStorage 로 복원 */
     }
+    try {
+      previousSessionGuest = sessionStorage.getItem(GUEST_KEY) === "1";
+      if (previousSessionGuest) {
+        try {
+          localStorage.setItem(GUEST_KEY, "1");
+          sessionStorage.removeItem(GUEST_KEY);
+        } catch {
+          /* 이 탭의 sessionStorage 를 유지한다 */
+        }
+      }
+    } catch {
+      /* 저장소 접근이 막혀도 현재 화면에서 로컬 체험은 가능하다 */
+    }
+    setIsGuest(savedGuest || previousSessionGuest);
+    setGuestLoading(false);
   }, []);
 
   useEffect(() => {
@@ -61,13 +77,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      if (u) identify(u.id, { email_domain: u.email?.split("@")[1] });
+      if (u) {
+        clearGuest(setIsGuest);
+        identify(u.id, { email_domain: u.email?.split("@")[1] });
+      }
     });
     return () => {
       active = false;
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (guestLoading || authLoading || !isGuest || user) return;
+    try {
+      if (sessionStorage.getItem(GUEST_SESSION_KEY)) return;
+      sessionStorage.setItem(GUEST_SESSION_KEY, "1");
+    } catch {
+      /* sessionStorage 접근 불가 시에도 체험은 계속한다 */
+    }
+    track("guest_resumed");
+  }, [guestLoading, authLoading, isGuest, user]);
 
   const signIn: AuthState["signIn"] = async (email, password) => {
     const sb = getSupabase();
@@ -115,11 +145,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const continueAsGuest = () => {
     try {
-      sessionStorage.setItem(GUEST_KEY, "1");
+      localStorage.setItem(GUEST_KEY, "1");
+    } catch {
+      try {
+        sessionStorage.setItem(GUEST_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      sessionStorage.setItem(GUEST_SESSION_KEY, "1");
     } catch {
       /* ignore */
     }
     setIsGuest(true);
+    track("guest_started");
   };
 
   return (
@@ -144,7 +184,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 function clearGuest(setGuest: (value: boolean) => void) {
   try {
+    localStorage.removeItem(GUEST_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
     sessionStorage.removeItem(GUEST_KEY);
+    sessionStorage.removeItem(GUEST_SESSION_KEY);
   } catch {
     /* ignore */
   }

@@ -2,7 +2,7 @@
  * 실천·루틴 트래킹 (일 완료율 · 잔디 · 스트릭).
  */
 
-import type { DayLog, GoalLoop, RoutineItem, Tracking } from "./types";
+import type { DayLog, GoalLoop, RoutineItem, Tracking, WeeklyReview } from "./types";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -270,6 +270,30 @@ export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tr
           Number.isFinite(loop.targetValue),
       )
     : [];
+  const weeklyReviews = Array.isArray(t.weeklyReviews)
+    ? t.weeklyReviews.filter(
+        (review): review is WeeklyReview =>
+          Boolean(review) &&
+          /^\d{4}-\d{2}-\d{2}$/.test(review.weekStart) &&
+          typeof review.checkedAt === "string" &&
+          Number.isFinite(review.netWorth) &&
+          Number.isFinite(review.savingsRatePct) &&
+          Number.isFinite(review.emergencyMonths) &&
+          Number.isFinite(review.capitalMonthly) &&
+          Array.isArray(review.loops),
+      ).map((review) => ({
+        ...review,
+        loops: review.loops.filter(
+          (loop) =>
+            Boolean(loop) &&
+            typeof loop.loopId === "string" &&
+            Number.isFinite(loop.current) &&
+            Number.isFinite(loop.target) &&
+            Number.isFinite(loop.scheduled) &&
+            Number.isFinite(loop.done),
+        ),
+      }))
+    : [];
 
   if (routines.length === 0 && actions.length > 0) {
     routines = actions.map((a, i) => ({
@@ -288,6 +312,7 @@ export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tr
     logs,
     dismissedNextStepStage: t.dismissedNextStepStage ?? null,
     goalLoops,
+    weeklyReviews,
   };
 }
 

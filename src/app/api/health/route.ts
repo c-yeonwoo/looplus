@@ -7,7 +7,8 @@ export function GET() {
     service: "looplus",
     ts: new Date().toISOString(),
     supabase: Boolean(
-      process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     ),
     analytics: Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY),
   });

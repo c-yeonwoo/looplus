@@ -190,7 +190,7 @@ export interface RoutineItem {
   /** 이 작은 실행이 밀어 주는 큰 루프. 없으면 공통 실행 항목. */
   loopId?: string;
   /** 추천된 실행인지, 사용자가 직접 만든 실행인지 구분해 맥락을 보존한다. */
-  source?: "manual" | "stage" | "goal_loop";
+  source?: "manual" | "stage" | "goal_loop" | "weekly_review";
 }
 
 /**
@@ -220,6 +220,24 @@ export interface GoalLoop {
   completedAt?: string;
 }
 
+/** 사용자가 현황을 확인하고 남긴 주간 기록. 예측값이 아니라 당시 입력값의 사본이다. */
+export interface WeeklyReview {
+  weekStart: string; // 로컬 월요일 YYYY-MM-DD
+  checkedAt: string;
+  netWorth: number;
+  savingsRatePct: number;
+  emergencyMonths: number;
+  capitalMonthly: number;
+  loops: {
+    loopId: string;
+    current: number;
+    target: number;
+    scheduled: number;
+    done: number;
+  }[];
+  nextStep?: string;
+}
+
 /** 하루 체크 로그 (YYYY-MM-DD) */
 export interface DayLog {
   date: string;
@@ -241,6 +259,7 @@ export interface Tracking {
   dismissedNextStepStage?: number | null;
   /** 큰 목표와 그 목표를 밀어 주는 작은 실행의 묶음 */
   goalLoops: GoalLoop[];
+  weeklyReviews: WeeklyReview[];
 }
 
 export function emptyTracking(): Tracking {
@@ -251,6 +270,7 @@ export function emptyTracking(): Tracking {
     logs: [],
     dismissedNextStepStage: null,
     goalLoops: [],
+    weeklyReviews: [],
   };
 }
 

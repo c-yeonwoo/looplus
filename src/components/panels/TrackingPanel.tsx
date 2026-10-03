@@ -47,16 +47,27 @@ export function TrackingPanel() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [weekMonday, setWeekMonday] = useState(() => mondayOf(today));
   const [newTitle, setNewTitle] = useState("");
+  const [fromReviewDraft, setFromReviewDraft] = useState(false);
   const [newSchedule, setNewSchedule] = useState<RoutineSchedule>("daily");
   const [newLoopId, setNewLoopId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const dragId = useRef<string | null>(null);
+  const draftApplied = useRef(false);
 
   // 큰 루프 카드에서 온 경우, 새 작은 실행을 그 루프에 바로 연결한다.
   useEffect(() => {
-    const loopId = new URLSearchParams(window.location.search).get("loop");
+    const params = new URLSearchParams(window.location.search);
+    const loopId = params.get("loop");
+    const reviewWeek = params.get("review");
+    const draft = tracking.weeklyReviews
+      .find((review) => review.weekStart === reviewWeek)?.nextStep?.trim().slice(0, 160);
     if (loopId && tracking.goalLoops.some((loop) => loop.id === loopId)) setNewLoopId(loopId);
-  }, [tracking.goalLoops]);
+    if (draft && !draftApplied.current) {
+      setNewTitle(draft);
+      setFromReviewDraft(true);
+      draftApplied.current = true;
+    }
+  }, [tracking.goalLoops, tracking.weeklyReviews]);
 
   const streak = computeDailyStreak(tracking.routines, tracking.logs);
   const todayComp = dayCompletion(tracking.routines, tracking.logs, today);
@@ -87,14 +98,15 @@ export function TrackingPanel() {
     if (!wasDone) track("action_completed");
   };
 
-  const add = (source: "manual" | "next_step" = "manual") => {
+  const add = (source: "manual" | "next_step" | "weekly_review" = "manual") => {
     const v = newTitle.trim();
     if (!v) return;
-    addRoutine(v, newSchedule, newLoopId || undefined, source === "next_step" ? "stage" : "manual");
+    addRoutine(v, newSchedule, newLoopId || undefined, source === "next_step" ? "stage" : source);
     track("action_added", { source });
     if (newLoopId) track("small_loop_linked", { source });
     setNewTitle("");
     setNewSchedule("daily");
+    setFromReviewDraft(false);
   };
 
   const dismissNudge = () => {
@@ -319,6 +331,11 @@ export function TrackingPanel() {
             onChange={setNewTitle}
             placeholder="예: 지출 기록하기"
           />
+          {fromReviewDraft && (
+            <p className="mt-1.5 text-xs text-sage-700">
+              주간 점검의 다음 한 걸음을 가져왔어요. 반복할 요일과 큰 루프를 정해 등록하세요.
+            </p>
+          )}
         </div>
         <div className="mb-3">
           <SchedulePicker value={newSchedule} onChange={setNewSchedule} />
@@ -344,7 +361,7 @@ export function TrackingPanel() {
         </div>
         <Button
           className="mb-4 min-h-11 w-full text-sm"
-          onClick={() => add("manual")}
+          onClick={() => add(fromReviewDraft ? "weekly_review" : "manual")}
           disabled={!newTitle.trim()}
         >
           루틴 추가
