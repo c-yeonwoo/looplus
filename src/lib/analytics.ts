@@ -23,6 +23,8 @@ export type AnalyticsEvent =
   | "onboarding_skipped"
   | "onboarding_completed"
   | "onboarding_order_assigned"
+  | "guest_started"
+  | "guest_resumed"
   | "page_viewed"
   | "engine_recommend_applied"
   | "aha_engine_allocated"
@@ -43,7 +45,6 @@ export type AnalyticsEvent =
   | "weekly_checkin"
   | "lead_cta_clicked"
   | "linked_tool_clicked"
-  | "home_week_delta_viewed"
   | "spend_logged"
   | "budget_pace_viewed"
   | "spend_applied_to_engine"
@@ -54,7 +55,8 @@ export type AnalyticsEvent =
   | "budget_overpace_engine_link"
   | "goal_loop_created"
   | "goal_loop_completed"
-  | "small_loop_linked";
+  | "small_loop_linked"
+  | "weekly_review_saved";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
@@ -230,6 +232,8 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "onboarding_skipped",
   "onboarding_completed",
   "onboarding_order_assigned",
+  "guest_started",
+  "guest_resumed",
   "page_viewed",
   "engine_recommend_applied",
   "aha_engine_allocated",
@@ -244,7 +248,6 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "weekly_checkin",
   "lead_cta_clicked",
   "linked_tool_clicked",
-  "home_week_delta_viewed",
   "spend_logged",
   "budget_pace_viewed",
   "spend_applied_to_engine",
@@ -256,4 +259,5 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "goal_loop_created",
   "goal_loop_completed",
   "small_loop_linked",
+  "weekly_review_saved",
 ];

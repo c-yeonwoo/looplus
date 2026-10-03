@@ -30,6 +30,19 @@ NEXT_PUBLIC_ANALYTICS_DEBUG=1 npm run dev
 
 PostHog Funnel 로 두 단계를 순서대로 놓으면 그대로 아하 도달률이 된다.
 
+## Loop OS 주간 활성화
+
+`guest_started`는 계정 없는 체험 시작, `guest_resumed`는 새 브라우저 세션에서 로컬
+체험으로 돌아온 경우다. 첫 결과 이후 `goal_loop_created → action_added →
+action_completed → weekly_checkin` 순서를
+보면 작은 실행이 첫 점검까지 이어지는지 확인할 수 있다. `weekly_checkin`은 해당 주의
+첫 저장에만 발생하고, `weekly_review_saved`는 갱신을 포함한 모든 저장에 발생한다.
+후자의 속성은 `is_update`, `has_previous`, `loop_count`, `scheduled_count`,
+`done_count`이다. 금융 금액이나 루프 제목은 이벤트로 보내지 않는다.
+
+주간 재방문은 이벤트 수만 보지 말고 사용자 기준 코호트로 측정한다. 운영 키가 없는
+환경에서는 이벤트가 전송되지 않으므로 배포 후 수집 여부를 별도로 확인해야 한다.
+
 ### `aha_engine_allocated` 를 분자로 쓰지 말 것
 
 이 이벤트는 루트 합이 정확히 100%(`sumOk`)일 때만 울린다. 합이 안 맞아도 곡선은 보이므로

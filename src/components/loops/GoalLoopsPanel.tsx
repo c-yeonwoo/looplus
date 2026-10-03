@@ -90,6 +90,7 @@ export function GoalLoopsPanel() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <h3 className="truncate text-sm font-bold text-ink-800">{loop.title}</h3>
                       {progress.isComplete && <Badge tone="emerald">완성</Badge>}
+                      {!progress.isComplete && progress.hasReachedTarget && <Badge tone="emerald">목표 도달</Badge>}
                     </div>
                     <p className="mt-1 text-xs text-ink-400">
                       {metric.shortLabel} {progress.currentLabel} / {progress.targetLabel}
@@ -135,7 +136,7 @@ export function GoalLoopsPanel() {
                       </Button>
                     </Link>
                   )}
-                  {!progress.isComplete && (
+                  {!progress.isComplete && progress.hasReachedTarget && (
                     <button
                       type="button"
                       onClick={() => {
@@ -144,7 +145,7 @@ export function GoalLoopsPanel() {
                       }}
                       className="text-xs font-semibold text-sage-700 hover:underline"
                     >
-                      완성 기록
+                      달성 확인
                     </button>
                   )}
                   <button

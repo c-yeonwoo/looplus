@@ -28,7 +28,7 @@ export function LoopDashboard() {
             <Icon name="loop" size={16} className="text-gold-600" />
             지금 돌리는 루프
           </div>
-          <p className="mt-0.5 text-xs text-ink-400">작은 실행이 큰 목표를 얼마나 밀고 있는지 확인하세요.</p>
+          <p className="mt-0.5 text-xs text-ink-400">목표 현황과 연결된 작은 실행을 함께 확인하세요.</p>
         </div>
         <Link href="/goals" className="text-xs font-semibold text-gold-600 hover:underline">
           큰 루프 관리
@@ -84,7 +84,10 @@ export function LoopDashboard() {
                       {LOOP_METRICS[loop.metric].shortLabel} {progress.currentLabel} / {progress.targetLabel}
                     </p>
                   </div>
-                  <Badge tone="slate">작은 루프 {progress.smallLoopCount}</Badge>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {progress.hasReachedTarget && <Badge tone="emerald">달성 확인 필요</Badge>}
+                    <Badge tone="slate">작은 루프 {progress.smallLoopCount}</Badge>
+                  </div>
                 </div>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ink-100">
                   <div className="h-full rounded-full bg-gold-400" style={{ width: `${Math.max(2, progress.pct)}%` }} />

@@ -5,12 +5,14 @@ describe("analytics event catalog", () => {
   it("includes north-star funnel events", () => {
     for (const e of [
       "onboarding_started",
+      "guest_started",
+      "guest_resumed",
       "onboarding_completed",
       "aha_engine_allocated",
       "page_viewed",
       "lead_cta_clicked",
-      "home_week_delta_viewed",
       "weekly_checkin",
+      "weekly_review_saved",
     ] as const) {
       expect(ANALYTICS_EVENTS).toContain(e);
     }

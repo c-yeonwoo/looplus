@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useProfile } from "@/lib/store/useProfile";
 import { useDerived } from "@/lib/useDerived";
 import { STAGE_NAMES, ratioSum, selectGoalState } from "@/lib/engine";
@@ -14,14 +14,13 @@ import { LogoMark } from "@/components/Logo";
 import { AssetChart } from "@/components/AssetChart";
 import { VisionBoard } from "@/components/home/VisionBoard";
 import { LoopDashboard } from "@/components/home/LoopDashboard";
+import { WeeklyReviewPanel } from "@/components/home/WeeklyReviewPanel";
 import {
   HomeMetricGrid,
   buildHomeMetrics,
 } from "@/components/home/HomeMetricGrid";
 import { LeadCta } from "@/components/LeadCta";
-import { computeDailyStreak, normalizeTracking } from "@/lib/tracking";
-import { computeWeekDelta, type WeekDelta } from "@/lib/homeDelta";
-import { track } from "@/lib/analytics";
+import { computeDailyStreak, dateKey, normalizeTracking } from "@/lib/tracking";
 import { GoalGuardTracker } from "@/components/GoalGuardTracker";
 import { emptyTracking } from "@/lib/types";
 import { BRAND } from "@/lib/brand";
@@ -47,32 +46,8 @@ export default function HomePage() {
       Boolean(vision?.scenes.some((s) => s.text.trim())));
 
   const currentAchievePct = projection?.achievementPct ?? 0;
-
-  /*
-    훅은 아래 early return 보다 위에 있어야 한다. 스냅샷이 없다가 생기면 렌더 간 훅
-    개수가 달라져 React 가 던진다("Rendered more hooks than during the previous
-    render"). 대신 대시보드가 실제로 뜨는 조건은 이펙트 안에서 지킨다 — 스냅샷 없는
-    사용자에게 주간 델타를 기록하면 다음 주 기준선이 0으로 오염된다.
-    deps 는 원시값으로 둔다. stage 객체를 넣으면 리렌더마다 이펙트가 다시 돈다.
-  */
-  const [weekDelta, setWeekDelta] = useState<WeekDelta | null>(null);
-  const netWorth = stage?.metrics.netWorth ?? 0;
-  const stageKey = stage?.stage ?? null;
-
-  useEffect(() => {
-    if (stageKey == null) return;
-    const d = computeWeekDelta({
-      netWorth,
-      achievementPct: currentAchievePct,
-      stage: stageKey,
-    });
-    setWeekDelta(d);
-    track("home_week_delta_viewed", {
-      is_new_week: d.isNewWeek,
-      nw_delta: Math.round(d.netWorthDelta),
-      stage_delta: d.stageDelta,
-    });
-  }, [netWorth, currentAchievePct, stageKey]);
+  const latestReview = [...profile.tracking.weeklyReviews]
+    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
 
   // 현황(스냅샷) 없음
   if (!snapshot || !stage) {
@@ -179,34 +154,16 @@ export default function HomePage() {
         ) : (
           <p className="mt-2 text-sm text-white/55">{goal.guardCopy?.short}</p>
         )}
-        {weekDelta && !weekDelta.isNewWeek && (
+        {latestReview && (
           <p className="mt-3 text-xs text-white/50">
-            이번 주{" "}
+            최근 점검({dateKey(new Date(latestReview.checkedAt))}) 대비{" "}
             <span className="text-white/80">
-              순자산 {formatSignedMan(weekDelta.netWorthDelta)}
+              순자산 {formatSignedMan(m.netWorth - latestReview.netWorth)}
             </span>
-            {/* 목표 숫자가 없으면 달성 델타는 항상 0.0%p — 계산 결과로 오해된다 */}
-            {goal.hasNumericGoal && (
-              <>
-                {" · "}
-                <span className="text-white/80">
-                  달성 {formatSignedPp(weekDelta.achievementDeltaPp)}
-                </span>
-              </>
-            )}
-            {weekDelta.stageDelta !== 0 && (
-              <>
-                {" · "}
-                <span className="text-gold-300">
-                  단계 {weekDelta.stageDelta > 0 ? "+" : ""}
-                  {weekDelta.stageDelta}
-                </span>
-              </>
-            )}
           </p>
         )}
-        {weekDelta?.isNewWeek && (
-          <p className="mt-3 text-xs text-white/45">이번 주 기준점을 기록했어요</p>
+        {!latestReview && (
+          <p className="mt-3 text-xs text-white/45">첫 주간 점검을 저장하면 변화 기준선이 생겨요.</p>
         )}
       </section>
 
@@ -308,6 +265,7 @@ export default function HomePage() {
       </section>
 
       <LoopDashboard />
+      <WeeklyReviewPanel />
 
       {/* 비전보드 — 미리보기(히어로) 다음의 secondary */}
       {vision && <VisionBoard vision={vision} />}
@@ -349,12 +307,6 @@ function formatSignedMan(man: number): string {
   if (man === 0) return "변화 없음";
   const sign = man > 0 ? "+" : "";
   return `${sign}${formatKRW(man)}`;
-}
-
-function formatSignedPp(pp: number): string {
-  if (Math.abs(pp) < 0.05) return "변화 없음";
-  const sign = pp > 0 ? "+" : "";
-  return `${sign}${pp.toFixed(1)}%p`;
 }
 
 function formatAchievePct(pct: number): string {

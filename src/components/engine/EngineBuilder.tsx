@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useProfile, MAX_SCENARIOS_LIMIT } from "@/lib/store/useProfile";
 import { suggestEngineFromSnapshot, DEFAULT_SNAPSHOT } from "@/lib/store/defaults";
 import {
@@ -73,6 +74,7 @@ function useIsWide(): boolean | null {
 }
 
 export function EngineBuilder() {
+  const router = useRouter();
   const snapshot = useProfile((s) => s.profile.snapshot) ?? DEFAULT_SNAPSHOT;
   const vision = useProfile((s) => s.profile.vision);
   const engine = useProfile((s) => s.profile.engine);
@@ -130,6 +132,17 @@ export function EngineBuilder() {
   const [mobileTab, setMobileTab] = useState<"result" | "build">("build");
   const isWide = useIsWide();
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const closeDiagnosis = () => {
+    setDiagnosisOpen(false);
+    if (new URLSearchParams(window.location.search).get("edit") === "diagnosis") {
+      router.push("/home");
+    }
+  };
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("edit") === "diagnosis") {
+      setDiagnosisOpen(true);
+    }
+  }, []);
   const [pendingDraft, setPendingDraft] = useState(false);
   /**
    * 배분이 없으면 무조건 수정(조립). 있으면 보기가 기본.
@@ -544,7 +557,7 @@ export function EngineBuilder() {
         </Card>
       )}
 
-      <DiagnosisModal open={diagnosisOpen} onClose={() => setDiagnosisOpen(false)} />
+      <DiagnosisModal open={diagnosisOpen} onClose={closeDiagnosis} />
       <ConfirmModal
         open={pendingDraft}
         title="추천 배분으로 다시 그릴까요?"
