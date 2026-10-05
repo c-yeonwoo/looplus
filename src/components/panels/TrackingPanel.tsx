@@ -49,7 +49,7 @@ export function TrackingPanel() {
   const [newTitle, setNewTitle] = useState("");
   const [fromReviewDraft, setFromReviewDraft] = useState(false);
   const [newSchedule, setNewSchedule] = useState<RoutineSchedule>("daily");
-  const [newLoopId, setNewLoopId] = useState("");
+  const [newLoopId, setNewLoopId] = useState(() => tracking.focusLoopId ?? "");
   const selectedGoal = goalLoops.find((loop) => loop.id === newLoopId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const dragId = useRef<string | null>(null);
@@ -60,15 +60,22 @@ export function TrackingPanel() {
     const params = new URLSearchParams(window.location.search);
     const loopId = params.get("loop");
     const reviewWeek = params.get("review");
-    const draft = tracking.weeklyReviews
-      .find((review) => review.weekStart === reviewWeek)?.nextStep?.trim().slice(0, 160);
-    if (loopId && tracking.goalLoops.some((loop) => loop.id === loopId)) setNewLoopId(loopId);
+    const review = tracking.weeklyReviews.find((item) => item.weekStart === reviewWeek);
+    const draft = review?.nextStep?.trim().slice(0, 160);
+    const linkedLoopId = loopId ?? (review
+      ? review.planDecision === "pause" ? undefined : review.nextStepLoopId ?? review.focusLoopId
+      : tracking.focusLoopId);
+    if (linkedLoopId && tracking.goalLoops.some((loop) => loop.id === linkedLoopId && !loop.completedAt)) {
+      setNewLoopId(linkedLoopId);
+    } else if (reviewWeek && !loopId) {
+      setNewLoopId("");
+    }
     if (draft && !draftApplied.current) {
       setNewTitle(draft);
       setFromReviewDraft(true);
       draftApplied.current = true;
     }
-  }, [tracking.goalLoops, tracking.weeklyReviews]);
+  }, [tracking.focusLoopId, tracking.goalLoops, tracking.weeklyReviews]);
 
   const streak = computeDailyStreak(tracking.routines, tracking.logs);
   const todayComp = dayCompletion(tracking.routines, tracking.logs, today);
@@ -96,15 +103,27 @@ export function TrackingPanel() {
     if (isFuture) return;
     const wasDone = Boolean(dayLog?.done[routineId]);
     toggleRoutineDay(selectedDate, routineId);
-    if (!wasDone) track("action_completed");
+    if (!wasDone) {
+      const routine = tracking.routines.find((item) => item.id === routineId);
+      track("action_completed", {
+        linked_to_milestone: Boolean(routine?.loopId),
+        linked_to_focus: Boolean(routine?.loopId && routine.loopId === tracking.focusLoopId),
+        source: routine?.source ?? "manual",
+      });
+    }
   };
 
   const add = (source: "manual" | "next_step" | "weekly_review" = "manual") => {
     const v = newTitle.trim();
     if (!v) return;
-    addRoutine(v, newSchedule, newLoopId || undefined, source === "next_step" ? "stage" : source);
-    track("action_added", { source });
-    if (newLoopId) track("small_loop_linked", { source });
+    const linkedLoopId = newLoopId || undefined;
+    const linkedFocus = Boolean(linkedLoopId && linkedLoopId === tracking.focusLoopId);
+    addRoutine(v, newSchedule, linkedLoopId, source === "next_step" ? "stage" : source);
+    track("action_added", { source, linked_to_milestone: Boolean(linkedLoopId), linked_to_focus: linkedFocus });
+    if (linkedLoopId) track("small_loop_linked", { source });
+    if (source === "weekly_review") {
+      track("weekly_next_step_routine_added", { linked_to_focus: linkedFocus });
+    }
     setNewTitle("");
     setNewSchedule("daily");
     setFromReviewDraft(false);
@@ -117,9 +136,10 @@ export function TrackingPanel() {
   /** 엔진 조언을 실제 월요일 반복 루틴으로 바로 연결한다. */
   const draftFromNextStep = () => {
     if (!stage?.nextStep) return;
-    addRoutine(stage.nextStep, { weekdays: [1] }, newLoopId || goalLoops[0]?.id, "stage");
-    track("action_added", { source: "next_step" });
-    if (newLoopId || goalLoops[0]?.id) track("small_loop_linked", { source: "stage" });
+    const linkedLoopId = newLoopId || undefined;
+    addRoutine(stage.nextStep, { weekdays: [1] }, linkedLoopId, "stage");
+    track("action_added", { source: "next_step", linked_to_milestone: Boolean(linkedLoopId), linked_to_focus: Boolean(linkedLoopId && linkedLoopId === tracking.focusLoopId) });
+    if (linkedLoopId) track("small_loop_linked", { source: "stage" });
     dismissNextStepNudge(stage.stage);
   };
 

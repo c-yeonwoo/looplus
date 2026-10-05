@@ -36,6 +36,7 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       actions?: ActionItem[];
       dismissedNextStepStage?: number | null;
       goalLoops?: GoalLoop[];
+      focusLoopId?: string;
       weeklyReviews?: WeeklyReview[];
     };
     return normalizeTracking({
@@ -45,6 +46,7 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       checkIns,
       dismissedNextStepStage: o.dismissedNextStepStage ?? null,
       goalLoops: o.goalLoops ?? [],
+      focusLoopId: o.focusLoopId,
       weeklyReviews: o.weeklyReviews ?? [],
     });
   }
@@ -65,6 +67,7 @@ function trackingToDb(t: Tracking | undefined) {
     actions: n.actions,
     dismissedNextStepStage: n.dismissedNextStepStage ?? null,
     goalLoops: n.goalLoops,
+    focusLoopId: n.focusLoopId,
     weeklyReviews: n.weeklyReviews,
   };
 }

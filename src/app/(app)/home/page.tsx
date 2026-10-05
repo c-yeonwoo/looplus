@@ -97,6 +97,9 @@ export default function HomePage() {
   const m = stage.metrics;
   const tracking = normalizeTracking(profile.tracking ?? emptyTracking());
   const streak = computeDailyStreak(tracking.routines, tracking.logs);
+  const focusLoopId = tracking.goalLoops.some((loop) => loop.id === tracking.focusLoopId && !loop.completedAt)
+    ? tracking.focusLoopId
+    : undefined;
   const atYear = projection
     ? projection.curve[Math.min(targetYears, projection.curve.length - 1)]
     : null;
@@ -279,7 +282,7 @@ export default function HomePage() {
             </div>
             <p className="mt-2 text-sm text-sage-700">{stage.nextStep}</p>
           </div>
-          <Link href="/tracking">
+          <Link href={focusLoopId ? `/tracking?loop=${encodeURIComponent(focusLoopId)}` : "/tracking"}>
             <Button
               variant="outline"
               className="shrink-0 border-sage-500/35 text-sage-700 hover:border-sage-500 hover:bg-sage-50"

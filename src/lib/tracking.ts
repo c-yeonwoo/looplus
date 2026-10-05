@@ -283,6 +283,11 @@ export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tr
           Array.isArray(review.loops),
       ).map((review) => ({
         ...review,
+        focusLoopId: typeof review.focusLoopId === "string" ? review.focusLoopId : undefined,
+        nextStepLoopId: typeof review.nextStepLoopId === "string" ? review.nextStepLoopId : undefined,
+        planDecision: ["continue", "adjust", "pause"].includes(String(review.planDecision))
+          ? review.planDecision
+          : undefined,
         loops: review.loops.filter(
           (loop) =>
             Boolean(loop) &&
@@ -312,6 +317,10 @@ export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tr
     logs,
     dismissedNextStepStage: t.dismissedNextStepStage ?? null,
     goalLoops,
+    focusLoopId:
+      typeof t.focusLoopId === "string" && goalLoops.some((loop) => loop.id === t.focusLoopId && !loop.completedAt)
+        ? t.focusLoopId
+        : undefined,
     weeklyReviews,
   };
 }

@@ -56,7 +56,11 @@ export type AnalyticsEvent =
   | "goal_loop_created"
   | "goal_loop_completed"
   | "small_loop_linked"
-  | "weekly_review_saved";
+  | "weekly_review_saved"
+  | "milestone_detail_viewed"
+  | "focus_milestone_selected"
+  | "weekly_plan_decided"
+  | "weekly_next_step_routine_added";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
@@ -260,4 +264,8 @@ export const ANALYTICS_EVENTS: AnalyticsEvent[] = [
   "goal_loop_completed",
   "small_loop_linked",
   "weekly_review_saved",
+  "milestone_detail_viewed",
+  "focus_milestone_selected",
+  "weekly_plan_decided",
+  "weekly_next_step_routine_added",
 ];
