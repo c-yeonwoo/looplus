@@ -56,10 +56,10 @@ export function GoalLoopsPanel() {
         <div>
           <div className="flex items-center gap-2 text-[15px] font-bold text-ink-800">
             <Icon name="loop" size={18} className="text-gold-600" />
-            여러 개의 큰 루프
+            여러 개의 마일스톤
           </div>
           <p className="mt-1 text-xs leading-relaxed text-ink-400">
-            큰 목표를 숫자로 잡고, 아래 작은 실행을 반복해 하나씩 완성하세요.
+            완성하고 싶은 목표를 숫자로 잡고, 연결된 루틴으로 하나씩 도달하세요.
           </p>
         </div>
         <Badge tone="brand">진행 중 {loops.filter((loop) => !loop.completedAt).length}개</Badge>
@@ -68,7 +68,7 @@ export function GoalLoopsPanel() {
       {loops.length === 0 ? (
         <Card className="border-dashed border-ink-300 bg-ink-50/50 text-center">
           <Icon name="loop" size={24} className="mx-auto text-ink-300" />
-          <p className="mt-2 text-sm font-bold text-ink-700">첫 큰 루프를 열어보세요</p>
+          <p className="mt-2 text-sm font-bold text-ink-700">첫 마일스톤을 정해보세요</p>
           <p className="mt-1 text-xs text-ink-400">
             비상금, 저축률, 월 현금흐름처럼 다음 3~12개월에 완성할 목표가 좋아요.
           </p>
@@ -108,7 +108,7 @@ export function GoalLoopsPanel() {
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2 text-xs">
                   <span className="font-semibold text-ink-700">{progress.pct.toFixed(0)}%</span>
-                  <span className="text-ink-400">작은 루프 {progress.smallLoopCount}개</span>
+                  <span className="text-ink-400">연결된 루틴 {progress.smallLoopCount}개</span>
                 </div>
                 {loop.note && <p className="mt-3 text-xs leading-relaxed text-ink-500">{loop.note}</p>}
                 <p className="mt-3 text-xs leading-relaxed text-ink-500">
@@ -132,7 +132,7 @@ export function GoalLoopsPanel() {
                   {!progress.isComplete && (
                     <Link href={`/tracking?loop=${encodeURIComponent(loop.id)}`}>
                       <Button variant="outline" className="!py-1.5 !text-xs">
-                        <Icon name="plus" size={13} /> 작은 루프 만들기
+                        <Icon name="plus" size={13} /> 루틴 연결하기
                       </Button>
                     </Link>
                   )}
@@ -164,7 +164,7 @@ export function GoalLoopsPanel() {
 
       <Card className="border-brand-200 bg-brand-50/35">
         <div className="mb-4 flex items-center gap-2 text-sm font-bold text-brand-800">
-          <Icon name="plus" size={16} /> 큰 루프 추가
+          <Icon name="plus" size={16} /> 마일스톤 추가
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <Field label="이 루프의 이름">
@@ -197,12 +197,12 @@ export function GoalLoopsPanel() {
         </div>
         <div className="mt-3">
           <Field label="이 루프가 중요한 이유" hint="선택">
-            <TextInput value={note} onChange={setNote} placeholder="예: 갑작스러운 지출에도 투자 루프를 끊지 않기 위해" />
+            <TextInput value={note} onChange={setNote} placeholder="예: 갑작스러운 지출에도 저축 흐름을 이어가기 위해" />
           </Field>
         </div>
         <div className="mt-4 flex justify-end">
           <Button onClick={add} disabled={!title.trim() || targetValue <= 0}>
-            큰 루프 열기 <Icon name="arrow-right" size={14} />
+            마일스톤 시작 <Icon name="arrow-right" size={14} />
           </Button>
         </div>
       </Card>

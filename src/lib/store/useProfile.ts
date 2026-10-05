@@ -457,7 +457,7 @@ export const useProfile = create<ProfileState>()(
               tracking: {
                 ...t,
                 goalLoops: t.goalLoops.filter((loop) => loop.id !== id),
-                // 실행 기록은 남기되, 없어진 큰 루프와의 연결만 끊는다.
+                // 실행 기록은 남기되, 없어진 마일스톤과의 연결만 끊는다.
                 routines: t.routines.map((routine) =>
                   routine.loopId === id ? { ...routine, loopId: undefined } : routine,
                 ),

@@ -194,7 +194,7 @@ export default function HomePage() {
               </div>
               <Link href="/goals" className="shrink-0">
                 <Button>
-                  대표 큰 루프 정하기 <Icon name="arrow-right" size={14} />
+                  대표 마일스톤 정하기 <Icon name="arrow-right" size={14} />
                 </Button>
               </Link>
             </div>
@@ -284,7 +284,7 @@ export default function HomePage() {
               variant="outline"
               className="shrink-0 border-sage-500/35 text-sage-700 hover:border-sage-500 hover:bg-sage-50"
             >
-              {streak > 0 ? `작은 루프 · ${streak}일` : "작은 루프 시작"}
+              {streak > 0 ? `루틴 · ${streak}일` : "루틴 시작"}
             </Button>
           </Link>
         </div>

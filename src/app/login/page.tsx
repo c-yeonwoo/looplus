@@ -80,9 +80,9 @@ function LoginInner() {
           </div>
           {configured && (
             <div className="mt-3 rounded-xl border border-ink-200 bg-ink-50/70 p-3">
-              <div className="text-xs font-bold text-ink-700">먼저 내 루프를 그려보고 싶다면</div>
+              <div className="text-xs font-bold text-ink-700">먼저 내 계획을 그려보고 싶다면</div>
               <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
-                계정 없이 첫 곡선과 큰 루프를 만들어 볼 수 있어요. 내용은 이 기기에만 저장되며,
+                계정 없이 첫 곡선과 마일스톤을 만들어 볼 수 있어요. 내용은 이 기기에만 저장되며,
                 나중에 가입하면 백업할 수 있습니다.
               </p>
               <button

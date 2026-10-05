@@ -33,7 +33,7 @@ const metrics = {
 };
 
 describe("getLoopProgress", () => {
-  it("큰 루프를 실제 금융 현황과 연결해 진행률을 계산한다", () => {
+  it("마일스톤을 실제 금융 현황과 연결해 진행률을 계산한다", () => {
     const p = getLoopProgress(base, snapshot, metrics, [
       { id: "r1", title: "월 점검", schedule: "daily", position: 0, createdAt: "x", loopId: "loop-1" },
     ]);

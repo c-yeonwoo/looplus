@@ -31,7 +31,7 @@ export const LOOP_METRICS: Record<
     defaultTarget: 100,
   },
   custom: {
-    label: "나만의 큰 루프",
+    label: "나만의 마일스톤",
     shortLabel: "진행",
     unit: "%",
     defaultTarget: 100,
@@ -49,7 +49,7 @@ export interface LoopProgress {
   smallLoopCount: number;
 }
 
-/** 숫자 현황과 실행 루틴을 하나의 큰 루프 상태로 합친다. */
+/** 숫자 현황과 연결된 루틴을 하나의 마일스톤 상태로 합친다. */
 export function getLoopProgress(
   loop: GoalLoop,
   snapshot: FinancialSnapshot | null | undefined,
@@ -97,7 +97,7 @@ export function formatLoopValue(metric: GoalLoopMetric, value: number): string {
 }
 
 export function remainingLoopCopy(loop: GoalLoop, progress: LoopProgress): string {
-  if (progress.isComplete) return "이 큰 루프를 완성했어요. 다음 루프를 열어보세요.";
+  if (progress.isComplete) return "마일스톤을 달성했어요. 다음 여정을 열어보세요.";
   if (progress.hasReachedTarget) return "목표 수치에 도달했어요. 현황을 확인하고 완성을 기록하세요.";
   if (loop.metric === "custom") return `완성까지 ${formatPct(100 - progress.pct)} 남았어요.`;
   const remaining = Math.max(0, progress.target - progress.current);

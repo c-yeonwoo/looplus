@@ -137,10 +137,10 @@ export function GoalsPanel({ compact = false }: { compact?: boolean }) {
   return (
     <div className={compact ? "space-y-8" : "grid gap-12 lg:grid-cols-2 lg:gap-16"}>
       <div className={compact ? "space-y-8" : "space-y-12"}>
-        <QuietSection title={compact ? "첫 큰 루프의 이유" : "동기"}>
+        <QuietSection title={compact ? "첫 마일스톤의 이유" : "동기"}>
           <textarea
             className="h-28 w-full resize-none rounded-2xl border border-ink-100 bg-ink-50/50 px-4 py-3 text-sm leading-relaxed text-ink-800 outline-none placeholder:text-ink-300 focus:border-gold-300 focus:bg-white"
-            placeholder={compact ? "이 큰 루프를 완성하면 무엇이 달라지나요? (선택)" : "왜 경제적 자유를 원하나요? (선택)"}
+            placeholder={compact ? "이 목표에 도달하면 무엇이 달라지나요? (선택)" : "왜 경제적 자유를 원하나요? (선택)"}
             value={v.why}
             onChange={(e) => patch({ why: e.target.value })}
           />
@@ -177,7 +177,7 @@ export function GoalsPanel({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className={compact ? "space-y-5" : "space-y-12"}>
-        <QuietSection title={compact ? "첫 큰 루프의 숫자" : "목표 수치"}>
+        <QuietSection title={compact ? "첫 마일스톤의 숫자" : "목표 수치"}>
           <Card className="!p-6 space-y-5">
             <Field label="목표 순자산">
               <NumberInput
@@ -236,7 +236,7 @@ export function GoalsPanel({ compact = false }: { compact?: boolean }) {
 
         <AssumptionNote>
           {compact
-            ? "지금은 첫 큰 루프만 잡아요. 패시브 목표·미래 장면·추가 루프는 홈에 들어간 뒤 더할 수 있어요."
+            ? "지금은 첫 마일스톤만 정해요. 패시브 목표·미래 장면·추가 목표는 홈에 들어간 뒤 더할 수 있어요."
             : "목표는 참고선이에요. 언제든 바꿀 수 있습니다."}
         </AssumptionNote>
       </div>
