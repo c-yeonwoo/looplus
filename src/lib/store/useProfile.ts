@@ -123,6 +123,7 @@ interface ProfileState {
   toggleRoutineDay: (date: string, routineId: string) => void;
   dismissNextStepNudge: (stage: number) => void;
   addGoalLoop: (input: Omit<GoalLoop, "id" | "createdAt" | "completedAt">) => void;
+  setFocusLoop: (id: string | null) => void;
   updateGoalLoop: (id: string, patch: Partial<Omit<GoalLoop, "id" | "createdAt">>) => void;
   completeGoalLoop: (id: string) => void;
   removeGoalLoop: (id: string) => void;
@@ -389,7 +390,26 @@ export const useProfile = create<ProfileState>()(
           return {
             profile: touch({
               ...st.profile,
-              tracking: { ...t, goalLoops: [...t.goalLoops, loop] },
+              tracking: {
+                ...t,
+                goalLoops: [...t.goalLoops, loop],
+                focusLoopId:
+                  t.focusLoopId && t.goalLoops.some((item) => item.id === t.focusLoopId && !item.completedAt)
+                    ? t.focusLoopId
+                    : loop.id,
+              },
+            }),
+          };
+        }),
+
+      setFocusLoop: (id) =>
+        set((st) => {
+          const t = ensureTracking(st.profile);
+          const valid = id && t.goalLoops.some((loop) => loop.id === id && !loop.completedAt);
+          return {
+            profile: touch({
+              ...st.profile,
+              tracking: { ...t, focusLoopId: valid ? id : undefined },
             }),
           };
         }),
@@ -438,6 +458,7 @@ export const useProfile = create<ProfileState>()(
               ...st.profile,
               tracking: {
                 ...t,
+                focusLoopId: t.focusLoopId === id ? undefined : t.focusLoopId,
                 goalLoops: t.goalLoops.map((loop) =>
                   loop.id === id
                     ? { ...loop, completedAt: loop.completedAt ?? new Date().toISOString() }
@@ -457,6 +478,7 @@ export const useProfile = create<ProfileState>()(
               tracking: {
                 ...t,
                 goalLoops: t.goalLoops.filter((loop) => loop.id !== id),
+                focusLoopId: t.focusLoopId === id ? undefined : t.focusLoopId,
                 // 실행 기록은 남기되, 없어진 마일스톤과의 연결만 끊는다.
                 routines: t.routines.map((routine) =>
                   routine.loopId === id ? { ...routine, loopId: undefined } : routine,

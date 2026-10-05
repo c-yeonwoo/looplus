@@ -1,7 +1,13 @@
 import type { SnapshotMetrics } from "./engine/stage";
 import { currentFor } from "./loops";
 import { addDays, dateKey, isRoutineScheduled, mondayOf } from "./tracking";
-import type { Profile, WeeklyReview } from "./types";
+import type { Profile, WeeklyPlanDecision, WeeklyReview } from "./types";
+
+type WeeklyPlan = {
+  focusLoopId?: string;
+  planDecision?: WeeklyPlanDecision;
+  nextStepLoopId?: string;
+};
 
 /** 이번 주 월요일부터 점검 당일까지의 실행과 사용자가 확인한 현황을 고정한다. */
 export function buildWeeklyReview(
@@ -9,6 +15,7 @@ export function buildWeeklyReview(
   metrics: SnapshotMetrics,
   now: Date = new Date(),
   nextStep = "",
+  plan: WeeklyPlan = {},
 ): WeeklyReview {
   const today = dateKey(now);
   const weekStart = mondayOf(today);
@@ -40,12 +47,15 @@ export function buildWeeklyReview(
   return {
     weekStart,
     checkedAt: now.toISOString(),
+    focusLoopId: plan.focusLoopId,
+    planDecision: plan.planDecision,
     netWorth: metrics.netWorth,
     savingsRatePct: metrics.savingsRatePct,
     emergencyMonths: profile.snapshot?.emergencyMonths ?? 0,
     capitalMonthly: metrics.capitalMonthly,
     loops,
     nextStep: nextStep.trim().slice(0, 160) || undefined,
+    nextStepLoopId: nextStep.trim() ? plan.nextStepLoopId : undefined,
   };
 }
 
@@ -66,6 +76,10 @@ export function matchesWeeklyReview(saved: WeeklyReview, live: WeeklyReview): bo
     saved.savingsRatePct !== live.savingsRatePct ||
     saved.emergencyMonths !== live.emergencyMonths ||
     saved.capitalMonthly !== live.capitalMonthly ||
+    saved.focusLoopId !== live.focusLoopId ||
+    saved.planDecision !== live.planDecision ||
+    saved.nextStep !== live.nextStep ||
+    saved.nextStepLoopId !== live.nextStepLoopId ||
     saved.loops.length !== live.loops.length
   ) return false;
   return saved.loops.every((item) => {

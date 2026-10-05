@@ -1,19 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useDerived } from "@/lib/useDerived";
 import { formatLoopValue, getLoopProgress, LOOP_METRICS } from "@/lib/loops";
 import { useProfile } from "@/lib/store/useProfile";
 import { dateKey, formatSchedule, isRoutineScheduled, mondayOf } from "@/lib/tracking";
-import { track } from "@/lib/analytics";
+import { track, trackOncePerSession } from "@/lib/analytics";
 import { Badge, Button, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
 export function GoalLoopDetail({ goalId }: { goalId: string }) {
   const profile = useProfile((state) => state.profile);
   const completeGoalLoop = useProfile((state) => state.completeGoalLoop);
+  const setFocusLoop = useProfile((state) => state.setFocusLoop);
   const { stage } = useDerived();
   const loop = profile.tracking.goalLoops.find((item) => item.id === goalId);
+  const isFocused = profile.tracking.focusLoopId === loop?.id;
+
+  useEffect(() => {
+    if (loop) {
+      trackOncePerSession(`milestone_detail_${loop.id}`, "milestone_detail_viewed", {
+        metric: loop.metric,
+        is_focused: isFocused,
+      });
+    }
+  }, [isFocused, loop]);
 
   if (!loop) {
     return (
@@ -78,6 +90,18 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
           <div className="h-full rounded-full bg-brand-500 transition-[width]" style={{ width: `${Math.max(2, progress.pct)}%` }} />
         </div>
         <div className="flex flex-wrap gap-2 border-t border-brand-100 pt-4">
+          {!loop.completedAt && (
+            <Button
+              variant={isFocused ? "outline" : "ghost"}
+              onClick={() => {
+                setFocusLoop(loop.id);
+                track("focus_milestone_selected", { metric: loop.metric, source: "detail" });
+              }}
+              disabled={isFocused}
+            >
+              {isFocused ? "이번 주 집중 목표" : "이번 주 집중 목표로 지정"}
+            </Button>
+          )}
           <Link href={`/engine?goal=${encodeURIComponent(loop.id)}`}>
             <Button><Icon name="engine" size={14} /> 이 목표의 자산 설계 보기</Button>
           </Link>
@@ -154,6 +178,12 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
                 <div className="mt-2 text-xs text-ink-500">
                   이번 주 루틴 {reviewedLoop.done}/{reviewedLoop.scheduled}회 완료
                 </div>
+                {review.planDecision && (
+                  <div className="mt-2 text-xs font-semibold text-brand-700">
+                    이번 주 계획 · {reviewDecisionLabel(review.planDecision)}
+                  </div>
+                )}
+                {review.nextStep && <p className="mt-1 text-xs leading-relaxed text-ink-500">{review.nextStep}</p>}
               </div>
             </>
           ) : (
@@ -168,4 +198,10 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
       </div>
     </div>
   );
+}
+
+function reviewDecisionLabel(decision: "continue" | "adjust" | "pause"): string {
+  if (decision === "continue") return "유지";
+  if (decision === "adjust") return "조정";
+  return "잠시 멈춤";
 }

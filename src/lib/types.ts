@@ -220,10 +220,14 @@ export interface GoalLoop {
   completedAt?: string;
 }
 
+export type WeeklyPlanDecision = "continue" | "adjust" | "pause";
+
 /** 사용자가 현황을 확인하고 남긴 주간 기록. 예측값이 아니라 당시 입력값의 사본이다. */
 export interface WeeklyReview {
   weekStart: string; // 로컬 월요일 YYYY-MM-DD
   checkedAt: string;
+  focusLoopId?: string;
+  planDecision?: WeeklyPlanDecision;
   netWorth: number;
   savingsRatePct: number;
   emergencyMonths: number;
@@ -236,6 +240,7 @@ export interface WeeklyReview {
     done: number;
   }[];
   nextStep?: string;
+  nextStepLoopId?: string;
 }
 
 /** 하루 체크 로그 (YYYY-MM-DD) */
@@ -259,6 +264,8 @@ export interface Tracking {
   dismissedNextStepStage?: number | null;
   /** 사용자가 정한 목표와 이를 향해 반복하는 루틴 */
   goalLoops: GoalLoop[];
+  /** 홈과 새 실행의 기본 맥락으로 사용할 이번 주 집중 마일스톤 */
+  focusLoopId?: string;
   weeklyReviews: WeeklyReview[];
 }
 
@@ -270,6 +277,7 @@ export function emptyTracking(): Tracking {
     logs: [],
     dismissedNextStepStage: null,
     goalLoops: [],
+    focusLoopId: undefined,
     weeklyReviews: [],
   };
 }

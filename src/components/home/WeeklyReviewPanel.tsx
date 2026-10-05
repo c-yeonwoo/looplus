@@ -6,20 +6,39 @@ import { track } from "@/lib/analytics";
 import { formatKRW, formatPct } from "@/lib/format";
 import { formatLoopValue } from "@/lib/loops";
 import { useProfile } from "@/lib/store/useProfile";
+import type { WeeklyPlanDecision } from "@/lib/types";
 import { dateKey } from "@/lib/tracking";
 import { useDerived } from "@/lib/useDerived";
 import { buildWeeklyReview, matchesWeeklyReview, previousWeeklyReview } from "@/lib/weeklyReview";
 import { Badge, Button, Card, TextInput } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
+const PLAN_OPTIONS: { value: WeeklyPlanDecision; label: string; hint: string }[] = [
+  { value: "continue", label: "유지", hint: "현재 계획을 이어가요" },
+  { value: "adjust", label: "조정", hint: "다음 행동이나 계획을 바꿔요" },
+  { value: "pause", label: "잠시 멈춤", hint: "다시 시작할 시점을 정해요" },
+];
+
 /** 입력값을 확인한 시점만 기준선으로 남기는 주간 점검. */
 export function WeeklyReviewPanel() {
   const profile = useProfile((s) => s.profile);
   const saveWeeklyReview = useProfile((s) => s.saveWeeklyReview);
+  const setFocusLoop = useProfile((s) => s.setFocusLoop);
   const { stage } = useDerived();
   const [nextStep, setNextStep] = useState("");
+  const [planDecision, setPlanDecision] = useState<WeeklyPlanDecision>("continue");
   const reviews = profile.tracking.weeklyReviews;
-  const preview = stage ? buildWeeklyReview(profile, stage.metrics) : null;
+  const focusLoop = profile.tracking.goalLoops.find(
+    (loop) => loop.id === profile.tracking.focusLoopId && !loop.completedAt,
+  );
+  const activeGoals = profile.tracking.goalLoops.filter((loop) => !loop.completedAt);
+  const preview = stage
+    ? buildWeeklyReview(profile, stage.metrics, new Date(), nextStep, {
+        focusLoopId: focusLoop?.id,
+        planDecision,
+        nextStepLoopId: planDecision === "pause" ? undefined : focusLoop?.id,
+      })
+    : null;
   const current = preview ? reviews.find((review) => review.weekStart === preview.weekStart) : undefined;
   const previous = preview ? previousWeeklyReview(reviews, preview.weekStart) : undefined;
   const needsRefresh = Boolean(current && preview && !matchesWeeklyReview(current, preview));
@@ -27,17 +46,32 @@ export function WeeklyReviewPanel() {
 
   useEffect(() => {
     setNextStep(current?.nextStep ?? "");
-  }, [current?.checkedAt, current?.nextStep]);
+    setPlanDecision(current?.planDecision ?? "continue");
+  }, [current?.checkedAt, current?.nextStep, current?.planDecision]);
 
   if (!preview || !stage) return null;
 
   const save = () => {
-    const review = buildWeeklyReview(profile, stage.metrics, new Date(), nextStep);
+    const review = buildWeeklyReview(profile, stage.metrics, new Date(), nextStep, {
+      focusLoopId: focusLoop?.id,
+      planDecision,
+      nextStepLoopId: planDecision === "pause" ? undefined : focusLoop?.id,
+    });
     saveWeeklyReview(review);
     if (!current) track("weekly_checkin", { loop_count: review.loops.length });
+    track("weekly_plan_decided", {
+      decision: planDecision,
+      has_focus: Boolean(focusLoop),
+      has_next_step: Boolean(review.nextStep),
+      next_step_linked_to_focus: Boolean(review.nextStep && focusLoop),
+      is_update: Boolean(current),
+    });
     track("weekly_review_saved", {
       is_update: Boolean(current),
       has_previous: Boolean(previous),
+      has_focus: Boolean(focusLoop),
+      plan_decision: planDecision,
+      has_next_step: Boolean(review.nextStep),
       loop_count: review.loops.length,
       scheduled_count: review.loops.reduce((sum, loop) => sum + loop.scheduled, 0),
       done_count: review.loops.reduce((sum, loop) => sum + loop.done, 0),
@@ -67,14 +101,15 @@ export function WeeklyReviewPanel() {
       <Card className="space-y-4">
         {previous?.nextStep && !current && (
           <div className="rounded-lg border border-gold-200 bg-gold-50/50 px-3 py-2.5 text-xs">
-            <span className="font-bold text-gold-700">지난 점검에서 정한 한 걸음</span>
+            <span className="font-bold text-gold-700">
+              {previous.planDecision === "pause" ? "지난 점검에서 남긴 메모" : "지난 점검에서 정한 한 걸음"}
+            </span>
             <span className="ml-2 text-ink-700">{previous.nextStep}</span>
-            <Link
-              href={`/tracking?review=${encodeURIComponent(previous.weekStart)}`}
-              className="ml-2 font-semibold text-gold-700 hover:underline"
-            >
-              루틴으로 등록 →
-            </Link>
+            {previous.planDecision !== "pause" && (
+              <Link href={trackingReviewHref(previous)} className="ml-2 font-semibold text-gold-700 hover:underline">
+                루틴으로 등록 →
+              </Link>
+            )}
           </div>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -120,18 +155,69 @@ export function WeeklyReviewPanel() {
         )}
 
         <div className="border-t border-ink-100 pt-4">
-          <label htmlFor="weekly-next-step" className="mb-2 block text-xs font-bold text-ink-600">
-            다음에 이어갈 한 걸음 <span className="font-normal text-ink-400">(선택)</span>
+          <div className="mb-2 text-xs font-bold text-ink-600">이번 주 계획</div>
+          {activeGoals.length ? (
+            <label className="mb-2 block max-w-sm">
+              <span className="mb-1 block text-xs text-ink-500">이번 주 집중 목표</span>
+              <select
+                value={focusLoop?.id ?? ""}
+                onChange={(event) => {
+                  const id = event.target.value || null;
+                  setFocusLoop(id);
+                  const selected = activeGoals.find((loop) => loop.id === id);
+                  if (selected) track("focus_milestone_selected", { metric: selected.metric, source: "weekly_review" });
+                }}
+                className="w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700 outline-none focus:border-brand-500"
+              >
+                <option value="">선택 안 함</option>
+                {activeGoals.map((loop) => <option key={loop.id} value={loop.id}>{loop.title}</option>)}
+              </select>
+            </label>
+          ) : (
+            <p className="mb-2 text-xs text-ink-500">
+              집중 목표를 정하면 다음 행동을 연결할 수 있어요. <Link href="/goals" className="font-semibold text-gold-700 hover:underline">로드맵에서 선택 →</Link>
+            </p>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            {PLAN_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={planDecision === option.value}
+                onClick={() => {
+                  if (planDecision === "pause" || option.value === "pause") setNextStep("");
+                  setPlanDecision(option.value);
+                }}
+                className={planDecision === option.value
+                  ? "rounded-lg border border-brand-400 bg-brand-50 px-2 py-2 text-left text-xs text-brand-800"
+                  : "rounded-lg border border-ink-200 bg-white px-2 py-2 text-left text-xs text-ink-600 hover:border-brand-300"}
+              >
+                <span className="block font-bold">{option.label}</span>
+                <span className="mt-0.5 block leading-snug opacity-75">{option.hint}</span>
+              </button>
+            ))}
+          </div>
+          <label htmlFor="weekly-next-step" className="mb-2 mt-4 block text-xs font-bold text-ink-600">
+            {planDecision === "pause" ? "다시 시작할 시점 또는 메모" : planDecision === "adjust" ? "바꿀 계획 또는 다음 행동" : "다음에 이어갈 한 걸음"}
+            <span className="font-normal text-ink-400"> (선택)</span>
           </label>
           <TextInput
             id="weekly-next-step"
             value={nextStep}
             onChange={(value) => setNextStep(value.slice(0, 160))}
-            placeholder={stage.nextStep || "예: 이번 주 지출 확인하기"}
+            placeholder={planDecision === "pause" ? "예: 다음 달부터 다시 적립 시작" : stage.nextStep || "예: 이번 주 지출 확인하기"}
           />
-          {current?.nextStep && (
+          {planDecision === "pause" && (
+            <p className="mt-2 text-xs text-ink-400">
+              연결된 루틴 일정도 쉬려면 <Link
+                href={focusLoop ? `/tracking?loop=${encodeURIComponent(focusLoop.id)}` : "/tracking"}
+                className="font-semibold text-gold-700 hover:underline"
+              >루틴 화면에서 조정해 주세요</Link>.
+            </p>
+          )}
+          {current?.nextStep && current.planDecision !== "pause" && (
             <Link
-              href={`/tracking?review=${encodeURIComponent(current.weekStart)}`}
+              href={trackingReviewHref(current)}
               className="mt-2 inline-block text-xs font-semibold text-sage-700 hover:underline"
             >
               저장한 한 걸음을 루틴으로 등록 →
@@ -167,8 +253,13 @@ export function WeeklyReviewPanel() {
               return (
                 <div key={review.weekStart} className="flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-2 text-ink-500">
                   <span className="font-semibold text-ink-700">{review.weekStart} 주간</span>
-                  <span>순자산 {formatKRW(review.netWorth)} · 저축률 {formatPct(review.savingsRatePct)} · 실행 {done}/{scheduled}회</span>
-                  {review.nextStep && <span className="w-full text-ink-400">다음 한 걸음: {review.nextStep}</span>}
+                  <span>순자산 {formatKRW(review.netWorth)} · 저축률 {formatPct(review.savingsRatePct)} · 루틴 {done}/{scheduled}회</span>
+                  {review.planDecision && <span className="font-semibold text-brand-700">계획 {PLAN_OPTIONS.find((item) => item.value === review.planDecision)?.label}</span>}
+                  {review.nextStep && (
+                    <span className="w-full text-ink-400">
+                      {review.planDecision === "pause" ? "다음 계획 메모" : "다음 한 걸음"}: {review.nextStep}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -177,6 +268,13 @@ export function WeeklyReviewPanel() {
       )}
     </section>
   );
+}
+
+function trackingReviewHref(review: { weekStart: string; nextStepLoopId?: string; focusLoopId?: string }): string {
+  const params = new URLSearchParams({ review: review.weekStart });
+  const loopId = review.nextStepLoopId ?? review.focusLoopId;
+  if (loopId) params.set("loop", loopId);
+  return `/tracking?${params.toString()}`;
 }
 
 function ReviewMetric({ label, value, previous }: { label: string; value: string; previous?: string }) {

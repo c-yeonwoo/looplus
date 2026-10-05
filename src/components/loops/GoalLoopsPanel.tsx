@@ -34,6 +34,9 @@ export function GoalLoopsPanel() {
 
   const add = () => {
     if (!title.trim() || targetValue <= 0) return;
+    const hadFocus = profile.tracking.goalLoops.some(
+      (loop) => loop.id === profile.tracking.focusLoopId && !loop.completedAt,
+    );
     addGoalLoop({
       title,
       metric,
@@ -43,6 +46,7 @@ export function GoalLoopsPanel() {
       ...(metric === "custom" ? { manualProgressPct: 0 } : {}),
     });
     track("goal_loop_created", { metric });
+    if (!hadFocus) track("focus_milestone_selected", { metric, source: "first_milestone_created" });
     setTitle("");
     setNote("");
     setMetric("emergency_months");

@@ -38,7 +38,28 @@ action_completed → weekly_checkin` 순서를
 보면 루틴 실행이 첫 점검까지 이어지는지 확인할 수 있다. `weekly_checkin`은 해당 주의
 첫 저장에만 발생하고, `weekly_review_saved`는 갱신을 포함한 모든 저장에 발생한다.
 후자의 속성은 `is_update`, `has_previous`, `loop_count`, `scheduled_count`,
-`done_count`이다. 금융 금액이나 루프 제목은 이벤트로 보내지 않는다.
+`done_count`, `has_focus`, `plan_decision`, `has_next_step`이다. 금융 금액·마일스톤 제목·ID는 이벤트로 보내지 않는다.
+
+## 집중 마일스톤 → 주간 실행
+
+다음 이벤트로 한 주의 목표 선택과 실행 연결을 확인한다.
+
+| 단계 | 이벤트 | 주요 속성 |
+|---|---|---|
+| 상세 진입 | `milestone_detail_viewed` | `metric`, `is_focused` (세션·마일스톤당 1회) |
+| 집중 목표 선택 | `focus_milestone_selected` | `metric`, `source` |
+| 주간 계획 저장 | `weekly_plan_decided` | `decision`, `has_focus`, `has_next_step`, `next_step_linked_to_focus`, `is_update` |
+| 다음 행동을 루틴으로 등록 | `weekly_next_step_routine_added` | `linked_to_focus` |
+| 루틴 실행 | `action_completed` | `linked_to_milestone`, `linked_to_focus`, `source` |
+
+제안 지표:
+
+- **목표 집중률:** 주간 활성 사용자 중 집중 마일스톤을 선택한 비율.
+- **목표 연결 실행률:** 신규 루틴 중 마일스톤에 연결된 비율.
+- **점검 후 실행 전환율:** `weekly_plan_decided` 저장 후 7일 안에 `weekly_next_step_routine_added`가 발생한 비율.
+- **집중 목표 주간 재방문:** 집중 목표 선택 사용자 중 다음 7일에 홈/루틴/점검 이벤트가 다시 발생한 비율.
+
+결정값은 `continue`(유지), `adjust`(조정), `pause`(잠시 멈춤)으로 보낸다. 금액이나 제목, ID는 속성에 포함하지 않는다. 실제 2주 baseline은 배포 환경에 `NEXT_PUBLIC_POSTHOG_KEY`를 설정한 뒤 수집한다.
 
 주간 재방문은 이벤트 수만 보지 말고 사용자 기준 코호트로 측정한다. 운영 키가 없는
 환경에서는 이벤트가 전송되지 않으므로 배포 후 수집 여부를 별도로 확인해야 한다.
