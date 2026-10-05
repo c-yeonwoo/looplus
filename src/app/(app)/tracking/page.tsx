@@ -6,8 +6,8 @@ export default function TrackingPage() {
     <div className="space-y-5">
       <PageHeader
         icon="loop"
-        title="작은 루프"
-        desc="큰 목표를 밀어 주는 실행을 반복하고, 이번 주 얼마나 굴렸는지 확인하세요."
+        title="루틴"
+        desc="마일스톤을 향해 반복할 행동을 정하고, 이번 주 실천을 돌아보세요."
       />
       <TrackingPanel />
     </div>

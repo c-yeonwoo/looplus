@@ -54,7 +54,7 @@ export function TrackingPanel() {
   const dragId = useRef<string | null>(null);
   const draftApplied = useRef(false);
 
-  // 큰 루프 카드에서 온 경우, 새 작은 실행을 그 루프에 바로 연결한다.
+  // 마일스톤 카드에서 온 경우 새 루틴을 그 목표에 바로 연결한다.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const loopId = params.get("loop");
@@ -113,7 +113,7 @@ export function TrackingPanel() {
     if (stage) dismissNextStepNudge(stage.stage);
   };
 
-  /** 엔진 조언을 실제 월요일 작은 루프로 바로 연결한다. */
+  /** 엔진 조언을 실제 월요일 반복 루틴으로 바로 연결한다. */
   const draftFromNextStep = () => {
     if (!stage?.nextStep) return;
     addRoutine(stage.nextStep, { weekdays: [1] }, newLoopId || goalLoops[0]?.id, "stage");
@@ -155,7 +155,7 @@ export function TrackingPanel() {
             </div>
             <p className="mt-1.5 text-sm font-medium text-invest-800">{stage.nextStep}</p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-invest-600/80">
-              월요일에 반복할 작은 루프로 바로 등록할 수 있어요. 큰 루프를 골랐다면 그 목표에 연결됩니다.
+              월요일에 반복할 루틴으로 등록할 수 있어요. 마일스톤을 골랐다면 그 목표에 연결됩니다.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -163,7 +163,7 @@ export function TrackingPanel() {
                 className="border-invest-500/40 text-invest-700"
                 onClick={draftFromNextStep}
               >
-                <Icon name="plus" size={14} /> 작은 루프로 등록
+                <Icon name="plus" size={14} /> 루틴으로 등록
               </Button>
               <button
                 type="button"
@@ -333,7 +333,7 @@ export function TrackingPanel() {
           />
           {fromReviewDraft && (
             <p className="mt-1.5 text-xs text-sage-700">
-              주간 점검의 다음 한 걸음을 가져왔어요. 반복할 요일과 큰 루프를 정해 등록하세요.
+              주간 점검의 다음 한 걸음을 가져왔어요. 반복할 요일과 마일스톤을 정해 등록하세요.
             </p>
           )}
         </div>
@@ -341,7 +341,7 @@ export function TrackingPanel() {
           <SchedulePicker value={newSchedule} onChange={setNewSchedule} />
         </div>
         <div className="mb-3">
-          <label className="mb-1 block text-sm font-medium text-ink-600">연결할 큰 루프</label>
+          <label className="mb-1 block text-sm font-medium text-ink-600">연결할 마일스톤</label>
           <select
             value={newLoopId}
             onChange={(e) => setNewLoopId(e.target.value)}
@@ -354,7 +354,7 @@ export function TrackingPanel() {
           </select>
           {goalLoops.length === 0 && (
             <p className="mt-1.5 text-xs text-ink-400">
-              <Link href="/goals" className="font-semibold text-gold-600 hover:underline">큰 루프를 먼저 만들면</Link>{" "}
+              <Link href="/goals" className="font-semibold text-gold-600 hover:underline">마일스톤을 먼저 정하면</Link>{" "}
               실행과 목표를 연결할 수 있어요.
             </p>
           )}

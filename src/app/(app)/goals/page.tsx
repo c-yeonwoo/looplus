@@ -7,8 +7,8 @@ export default function GoalsPage() {
     <div className="space-y-10">
       <PageHeader
         icon="loop"
-        title="큰 루프"
-        desc="큰 목표를 숫자로 보고, 작은 실행을 반복해 하나씩 완성하세요."
+        title="마일스톤"
+        desc="완성하고 싶은 목표를 정하고, 루틴을 쌓아 하나씩 도달하세요."
       />
       <GoalsPanel />
       <GoalLoopsPanel />

@@ -787,7 +787,7 @@ export function EngineBuilder() {
             </div>
             <Link href="/goals" className="shrink-0">
               <Button className="!py-1.5 !text-xs">
-                대표 큰 루프 정하기 <Icon name="arrow-right" size={14} />
+                대표 마일스톤 정하기 <Icon name="arrow-right" size={14} />
               </Button>
             </Link>
           </div>
@@ -833,13 +833,13 @@ export function EngineBuilder() {
                 <div>
                   <div className="text-sm font-bold text-ink-800">배분이 맞춰졌어요</div>
                   <p className="text-xs text-ink-500">
-                  결과를 저장하고, 이번 주 이 배분을 밀어 줄 작은 루프를 하나 등록해 보세요.
+                  결과를 저장하고, 이번 주 이 배분을 뒷받침할 루틴을 하나 등록해 보세요.
                   </p>
                 </div>
               <div className="flex flex-wrap gap-2">
                 <Link href="/tracking">
                   <Button variant="outline">
-                    <Icon name="loop" size={15} /> 작은 루프 등록
+                    <Icon name="loop" size={15} /> 루틴 등록
                   </Button>
                 </Link>
                 <Button onClick={handleShare} disabled={sharing}>

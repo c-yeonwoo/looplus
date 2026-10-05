@@ -187,14 +187,14 @@ export interface RoutineItem {
   schedule: "daily" | { weekdays: number[] };
   position: number;
   createdAt: string;
-  /** 이 작은 실행이 밀어 주는 큰 루프. 없으면 공통 실행 항목. */
+  /** 이 루틴이 진척시키는 마일스톤. 없으면 공통 실행 항목. */
   loopId?: string;
   /** 추천된 실행인지, 사용자가 직접 만든 실행인지 구분해 맥락을 보존한다. */
   source?: "manual" | "stage" | "goal_loop" | "weekly_review";
 }
 
 /**
- * 큰 루프: 숫자로 확인할 수 있는 장기 목표 하나.
+ * 마일스톤: 숫자로 진척을 확인할 수 있는 목표 지점. 내부 타입명은 기존 호환성을 위해 유지한다.
  * Vision 이 "왜"와 미래 장면을 담는다면, GoalLoop 는 그 비전을 실제 반복 실행으로
  * 쪼개기 위한 측정 가능한 단위다. 여러 개를 동시에 둘 수 있다.
  */

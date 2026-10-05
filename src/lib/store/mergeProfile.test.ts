@@ -160,7 +160,7 @@ describe("profileHasData", () => {
     );
   });
 
-  it("큰 루프만 만든 체험 사용자도 가입 시 백업 대상이다", () => {
+  it("마일스톤만 만든 체험 사용자도 가입 시 백업 대상이다", () => {
     const p = local((x) => {
       x.tracking.goalLoops = [
         {

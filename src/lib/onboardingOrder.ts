@@ -37,10 +37,10 @@ const STEP_COPY: Record<
   },
   goals: {
     key: "goals",
-    label: "첫 큰 루프",
+    label: "첫 마일스톤",
     icon: "target",
-    title: "첫 큰 루프를 열어요",
-    desc: "어디까지 갈지 대략 잡고, 나중에 작은 루프로 쪼개 반복할 수 있어요.",
+    title: "첫 마일스톤을 정해요",
+    desc: "도달하고 싶은 목표를 잡고, 루틴으로 나눠 이어갈 수 있어요.",
     nextLabel: "다음",
   },
   engine: {

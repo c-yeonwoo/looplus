@@ -26,12 +26,12 @@ export function LoopDashboard() {
         <div>
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
             <Icon name="loop" size={16} className="text-gold-600" />
-            지금 돌리는 루프
+            지금 이어가는 여정
           </div>
-          <p className="mt-0.5 text-xs text-ink-400">목표 현황과 연결된 작은 실행을 함께 확인하세요.</p>
+          <p className="mt-0.5 text-xs text-ink-400">목표의 진척과 연결된 루틴을 함께 확인하세요.</p>
         </div>
         <Link href="/goals" className="text-xs font-semibold text-gold-600 hover:underline">
-          큰 루프 관리
+          마일스톤 관리
         </Link>
       </div>
 
@@ -40,8 +40,8 @@ export function LoopDashboard() {
           <Card className="border-brand-200 bg-brand-50/35">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-brand-700">대표 큰 루프</div>
-                <div className="mt-1 text-sm font-bold text-ink-900">자산 자유 루프</div>
+                <div className="text-xs font-semibold text-brand-700">대표 마일스톤</div>
+                <div className="mt-1 text-sm font-bold text-ink-900">자산 자유</div>
               </div>
               <Icon name="target" size={18} className="text-gold-600" />
             </div>
@@ -86,7 +86,7 @@ export function LoopDashboard() {
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
                     {progress.hasReachedTarget && <Badge tone="emerald">달성 확인 필요</Badge>}
-                    <Badge tone="slate">작은 루프 {progress.smallLoopCount}</Badge>
+                    <Badge tone="slate">루틴 {progress.smallLoopCount}</Badge>
                   </div>
                 </div>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-ink-100">
@@ -106,7 +106,7 @@ export function LoopDashboard() {
             <Card className="flex h-full items-center gap-3 border-dashed border-ink-300 bg-ink-50/50 hover:border-gold-300">
               <Icon name="plus" size={20} className="text-gold-600" />
               <div>
-                <div className="text-sm font-bold text-ink-700">다음 큰 루프 열기</div>
+                <div className="text-sm font-bold text-ink-700">다음 마일스톤 정하기</div>
                 <p className="mt-1 text-xs text-ink-400">비상금·저축률·현금흐름처럼 가까운 목표부터 시작하세요.</p>
               </div>
             </Card>

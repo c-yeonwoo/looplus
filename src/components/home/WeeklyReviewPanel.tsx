@@ -73,7 +73,7 @@ export function WeeklyReviewPanel() {
               href={`/tracking?review=${encodeURIComponent(previous.weekStart)}`}
               className="ml-2 font-semibold text-gold-700 hover:underline"
             >
-              작은 루프로 등록 →
+              루틴으로 등록 →
             </Link>
           </div>
         )}
@@ -92,7 +92,7 @@ export function WeeklyReviewPanel() {
 
         {preview.loops.length > 0 && (
           <div className="space-y-2 border-t border-ink-100 pt-4">
-            <div className="text-xs font-bold text-ink-600">큰 루프별 현황</div>
+            <div className="text-xs font-bold text-ink-600">마일스톤별 현황</div>
             {preview.loops.map((item) => {
               const loop = profile.tracking.goalLoops.find((candidate) => candidate.id === item.loopId);
               if (!loop) return null;
@@ -134,7 +134,7 @@ export function WeeklyReviewPanel() {
               href={`/tracking?review=${encodeURIComponent(current.weekStart)}`}
               className="mt-2 inline-block text-xs font-semibold text-sage-700 hover:underline"
             >
-              저장한 한 걸음을 작은 루프로 등록 →
+              저장한 한 걸음을 루틴으로 등록 →
             </Link>
           )}
         </div>
