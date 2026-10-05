@@ -27,6 +27,7 @@ import {
 import { normalizeIncomeSources, sumMonthlyIncome } from "@/lib/income";
 import { GROUP_PRESETS, bucketFromPreset } from "@/lib/catalog";
 import { formatKRW } from "@/lib/format";
+import { formatLoopValue } from "@/lib/loops";
 import { renderShareCard, shareOrDownload } from "@/lib/shareCard";
 import { track, trackAhaAllocatedOnce, trackOncePerSession } from "@/lib/analytics";
 import { GoalGuardTracker } from "@/components/GoalGuardTracker";
@@ -77,6 +78,7 @@ export function EngineBuilder() {
   const router = useRouter();
   const snapshot = useProfile((s) => s.profile.snapshot) ?? DEFAULT_SNAPSHOT;
   const vision = useProfile((s) => s.profile.vision);
+  const goalLoops = useProfile((s) => s.profile.tracking.goalLoops);
   const engine = useProfile((s) => s.profile.engine);
   const buckets = engine.buckets;
   const scenarios = useProfile((s) => s.profile.scenarios);
@@ -127,7 +129,13 @@ export function EngineBuilder() {
   const [sens, setSens] = useState<SensitivityKey>("base");
   const [sharing, setSharing] = useState(false);
   const [justShared, setJustShared] = useState(false);
+  const [contextGoalId, setContextGoalId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(true);
+  const contextGoal = goalLoops.find((loop) => loop.id === contextGoalId && !loop.completedAt);
+
+  useEffect(() => {
+    setContextGoalId(new URLSearchParams(window.location.search).get("goal"));
+  }, []);
   /** 보드가 메인 — 모바일도 흐름 탭부터 */
   const [mobileTab, setMobileTab] = useState<"result" | "build">("build");
   const isWide = useIsWide();
@@ -436,6 +444,23 @@ export function EngineBuilder() {
 
   return (
     <div className="space-y-5">
+      {contextGoal && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-brand-200 bg-brand-50/50">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-brand-700">마일스톤을 염두에 둔 자산 설계</div>
+            <div className="mt-1 font-bold text-ink-800">{contextGoal.title}</div>
+            <p className="mt-1 text-xs text-ink-500">
+              목표 {formatLoopValue(contextGoal.metric, contextGoal.targetValue)}
+              {contextGoal.targetYears ? ` · ${contextGoal.targetYears}년 안` : " · 기한 없음"}
+              {" · 이 목표를 참고해 현재 배분을 살펴보세요."}
+            </p>
+            <p className="mt-1 text-[11px] text-ink-400">자산 전망 곡선은 장기 비전과 현재 배분 기준으로 표시돼요.</p>
+          </div>
+          <Link href={`/goals/${encodeURIComponent(contextGoal.id)}`} className="text-xs font-semibold text-brand-700 hover:underline">
+            마일스톤 보기
+          </Link>
+        </Card>
+      )}
       {/* 상단바 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-sm text-ink-600">
@@ -787,7 +812,7 @@ export function EngineBuilder() {
             </div>
             <Link href="/goals" className="shrink-0">
               <Button className="!py-1.5 !text-xs">
-                대표 마일스톤 정하기 <Icon name="arrow-right" size={14} />
+                목표 로드맵 만들기 <Icon name="arrow-right" size={14} />
               </Button>
             </Link>
           </div>
@@ -837,7 +862,7 @@ export function EngineBuilder() {
                   </p>
                 </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/tracking">
+                <Link href={contextGoal ? `/tracking?loop=${encodeURIComponent(contextGoal.id)}` : "/tracking"}>
                   <Button variant="outline">
                     <Icon name="loop" size={15} /> 루틴 등록
                   </Button>

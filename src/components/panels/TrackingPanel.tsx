@@ -50,6 +50,7 @@ export function TrackingPanel() {
   const [fromReviewDraft, setFromReviewDraft] = useState(false);
   const [newSchedule, setNewSchedule] = useState<RoutineSchedule>("daily");
   const [newLoopId, setNewLoopId] = useState("");
+  const selectedGoal = goalLoops.find((loop) => loop.id === newLoopId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const dragId = useRef<string | null>(null);
   const draftApplied = useRef(false);
@@ -323,7 +324,16 @@ export function TrackingPanel() {
       </Card>
 
       <Card>
-        <div className="mb-3 text-sm font-bold text-ink-800">내 루틴</div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-bold text-ink-800">
+            {selectedGoal ? `${selectedGoal.title}에 연결할 루틴` : "내 루틴"}
+          </div>
+          {selectedGoal && (
+            <Link href={`/goals/${encodeURIComponent(selectedGoal.id)}`} className="text-xs font-semibold text-gold-700 hover:underline">
+              마일스톤으로 돌아가기
+            </Link>
+          )}
+        </div>
         <div className="mb-2">
           <TextInput
             id="routine-title-input"

@@ -129,6 +129,11 @@ export function GoalLoopsPanel() {
                 )}
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Link href={`/goals/${encodeURIComponent(loop.id)}`}>
+                    <Button variant="outline" className="!py-1.5 !text-xs">
+                      마일스톤 상세 <Icon name="arrow-right" size={13} />
+                    </Button>
+                  </Link>
                   {!progress.isComplete && (
                     <Link href={`/tracking?loop=${encodeURIComponent(loop.id)}`}>
                       <Button variant="outline" className="!py-1.5 !text-xs">
@@ -167,7 +172,7 @@ export function GoalLoopsPanel() {
           <Icon name="plus" size={16} /> 마일스톤 추가
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          <Field label="이 루프의 이름">
+          <Field label="마일스톤 이름">
             <TextInput value={title} onChange={setTitle} placeholder="예: 비상금 3개월 만들기" />
           </Field>
           <Field label="측정 기준">
@@ -196,7 +201,7 @@ export function GoalLoopsPanel() {
           </Field>
         </div>
         <div className="mt-3">
-          <Field label="이 루프가 중요한 이유" hint="선택">
+          <Field label="이 마일스톤이 중요한 이유" hint="선택">
             <TextInput value={note} onChange={setNote} placeholder="예: 갑작스러운 지출에도 저축 흐름을 이어가기 위해" />
           </Field>
         </div>

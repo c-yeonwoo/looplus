@@ -8,7 +8,7 @@ import { formatKRW } from "@/lib/format";
 import { Badge, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 
-/** 홈에서 "지금 무엇을 반복하고, 어떤 큰 목표를 밀고 있는지"만 압축해 보여 준다. */
+/** 홈에서 지금 무엇을 반복하고, 어떤 목표를 밀고 있는지 압축해 보여 준다. */
 export function LoopDashboard() {
   const profile = useProfile((s) => s.profile);
   const { stage } = useDerived();
@@ -40,8 +40,8 @@ export function LoopDashboard() {
           <Card className="border-brand-200 bg-brand-50/35">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-brand-700">대표 마일스톤</div>
-                <div className="mt-1 text-sm font-bold text-ink-900">자산 자유</div>
+                <div className="text-xs font-semibold text-brand-700">장기 비전</div>
+                <div className="mt-1 text-sm font-bold text-ink-900">내가 원하는 미래</div>
               </div>
               <Icon name="target" size={18} className="text-gold-600" />
             </div>
@@ -63,7 +63,9 @@ export function LoopDashboard() {
                 targetLabel={formatKRW(vision.goalPassiveIncome)}
               />
             )}
-            <p className="mt-3 text-xs text-ink-500">{vision.targetYears}년 안에 도달하는 장기 루프예요.</p>
+            <Link href="/goals" className="mt-3 inline-block text-xs font-semibold text-brand-700 hover:underline">
+              비전과 로드맵 정리하기 →
+            </Link>
           </Card>
         )}
 
@@ -75,7 +77,7 @@ export function LoopDashboard() {
             profile.tracking.routines,
           );
           return (
-            <Link key={loop.id} href="/goals" className="block">
+            <Link key={loop.id} href={`/goals/${encodeURIComponent(loop.id)}`} className="block">
               <Card className="h-full transition-colors hover:border-gold-300 hover:bg-gold-50/30">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">

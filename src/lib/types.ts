@@ -257,7 +257,7 @@ export interface Tracking {
    * 같은 stage면 다시 안 보이고, stage가 바뀌면 새 넛지.
    */
   dismissedNextStepStage?: number | null;
-  /** 큰 목표와 그 목표를 밀어 주는 작은 실행의 묶음 */
+  /** 사용자가 정한 목표와 이를 향해 반복하는 루틴 */
   goalLoops: GoalLoop[];
   weeklyReviews: WeeklyReview[];
 }
