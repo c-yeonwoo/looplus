@@ -194,7 +194,7 @@ export default function HomePage() {
               </div>
               <Link href="/goals" className="shrink-0">
                 <Button>
-                  대표 마일스톤 정하기 <Icon name="arrow-right" size={14} />
+                  목표 로드맵 만들기 <Icon name="arrow-right" size={14} />
                 </Button>
               </Link>
             </div>

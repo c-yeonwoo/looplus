@@ -45,14 +45,14 @@ export function WeeklyReviewPanel() {
   };
 
   return (
-    <section className="space-y-3">
+    <section id="weekly-review" className="space-y-3 scroll-mt-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5 text-sm font-bold text-ink-700">
             <Icon name="check-circle" size={16} className="text-sage-600" /> 이번 주 점검
           </div>
           <p className="mt-1 text-xs leading-relaxed text-ink-400">
-            현재 수치를 확인하고 기록하세요. 작은 실행과 목표 수치의 변화는 따로 보여 줍니다.
+            현재 수치를 확인하고 기록하세요. 루틴 실행과 목표 수치의 변화는 따로 보여 줍니다.
           </p>
         </div>
         <Badge tone={current && !needsRefresh ? "emerald" : "slate"}>
@@ -111,7 +111,7 @@ export function WeeklyReviewPanel() {
                         ? `직전 점검 대비 ${signedChange(item.current - before.current, loop.metric)}`
                         : "첫 점검 기준선"}
                     </span>
-                    <span>이번 주 작은 실행 {item.done}/{item.scheduled}회</span>
+                    <span>이번 주 루틴 {item.done}/{item.scheduled}회</span>
                   </div>
                 </div>
               );
