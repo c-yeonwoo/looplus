@@ -5,6 +5,10 @@ import type { SVGProps } from "react";
  * 24 그리드 · stroke 기반 · currentColor. 외부 의존성 없음.
  */
 export type IconName =
+  | "book"
+  | "activity"
+  | "search"
+  | "calendar"
   | "home"
   | "engine"
   | "diagnosis"
@@ -40,6 +44,10 @@ export type IconName =
   | "sparkle";
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  book: <><path d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 1 4-2 7-2 10-1V4c-2-1-6-2-10 1ZM12 5v15" /></>,
+  activity: <><circle cx="14" cy="4" r="2" /><path d="m7 9 4-2 4 4 4 1M11 7l-2 7-5 5M9 14l6 2 1 5" /></>,
+  search: <><circle cx="10" cy="10" r="6" /><path d="m15 15 6 6" /></>,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4M17 3v4M3 10h18M7 14h2M12 14h2M7 17h2" /></>,
   home: <path d="M4 11.5 12 4l8 7.5M6 10v9h12v-9" />,
   engine: (
     <>

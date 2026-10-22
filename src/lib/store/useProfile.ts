@@ -28,6 +28,12 @@ import {
 import { collectDescendantIds } from "../engine/tree";
 import { normalizeIncomeSources } from "../income";
 import type { RoutineItem } from "../types";
+import { recordHabit, routineFromDraft, type HabitDraft } from "../habits";
+
+/** 새 실천 흐름은 저장소 쓰기 성공 후에만 화면에 성공 상태를 발행한다. */
+function persistHabitProfile(profile: Profile) {
+  localStorage.setItem("looplus-profile-v2", JSON.stringify({ state: { profile }, version: 0 }));
+}
 
 const MAX_SCENARIOS = 5;
 
@@ -121,6 +127,8 @@ interface ProfileState {
   updateRoutine: (id: string, patch: Partial<Pick<RoutineItem, "title" | "schedule">>) => void;
   reorderRoutinesInDay: (date: string, orderedIds: string[]) => void;
   toggleRoutineDay: (date: string, routineId: string) => void;
+  addHabit: (draft: HabitDraft) => string;
+  setHabitValue: (date: string, routineId: string, value: number) => void;
   dismissNextStepNudge: (stage: number) => void;
   addGoalLoop: (input: Omit<GoalLoop, "id" | "createdAt" | "completedAt">) => void;
   setFocusLoop: (id: string | null) => void;
@@ -287,25 +295,35 @@ export const useProfile = create<ProfileState>()(
           };
         }),
 
-      removeRoutine: (id) =>
-        set((st) => {
-          const t = ensureTracking(st.profile);
-          return {
-            profile: touch({
-              ...st.profile,
-              tracking: {
-                ...t,
-                routines: t.routines.filter((r) => r.id !== id),
-                logs: t.logs.map((l) => {
-                  if (!(id in l.done)) return l;
-                  const done = { ...l.done };
-                  delete done[id];
-                  return { ...l, done };
-                }),
-              },
-            }),
-          };
-        }),
+      addHabit: (draft) => {
+        const profile = get().profile;
+        const t = ensureTracking(profile);
+        if (t.routines.some((r) => r.id === draft.id)) return draft.id;
+        const routine = routineFromDraft(draft, t.routines.length);
+        if (routine.loopId && !t.goalLoops.some((g) => g.id === routine.loopId && !g.completedAt)) {
+          throw new Error("연결할 목표를 다시 선택해 주세요.");
+        }
+        const next = touch({ ...profile, tracking: { ...t, routines: [...t.routines, routine] } });
+        persistHabitProfile(next);
+        // persist 미들웨어가 같은 값을 다시 쓰더라도 첫 쓰기로 내구성이 확보되어 있다.
+        try { set({ profile: next }); } catch { /* 첫 쓰기는 성공했고 현재 상태도 발행되었다. */ }
+        return routine.id;
+      },
+
+      setHabitValue: (date, id, value) => {
+        const profile = get().profile;
+        const next = touch({ ...profile, tracking: recordHabit(ensureTracking(profile), id, date, value) });
+        persistHabitProfile(next);
+        try { set({ profile: next }); } catch { /* 위 선행 쓰기가 같은 프로필을 보관한다. */ }
+      },
+
+      removeRoutine: (id) => {
+        const profile = get().profile;
+        const t = ensureTracking(profile);
+        const next = touch({ ...profile, tracking: { ...t, routines: t.routines.map((r) => r.id === id ? { ...r, archivedAt: dateKey() } : r) } });
+        persistHabitProfile(next);
+        try { set({ profile: next }); } catch { /* 선행 쓰기 성공 후 상태 발행 */ }
+      },
 
       updateRoutine: (id, patch) =>
         set((st) => {
@@ -316,7 +334,8 @@ export const useProfile = create<ProfileState>()(
               tracking: {
                 ...t,
                 routines: t.routines.map((r) => {
-                  if (r.id !== id) return r;
+                  // 새 루틴은 계획 버전 관리 전까지 레거시 일정 편집에서 보호한다.
+                  if (r.id !== id || r.habit) return r;
                   return {
                     ...r,
                     ...(patch.title != null ? { title: patch.title.trim() || r.title } : {}),
@@ -344,7 +363,12 @@ export const useProfile = create<ProfileState>()(
           };
         }),
 
-      toggleRoutineDay: (date, routineId) =>
+      toggleRoutineDay: (date, routineId) => {
+        const r = get().profile.tracking.routines.find((item) => item.id === routineId);
+        if (r?.habit) {
+          // 실제 총량을 확인하는 새 기록 화면에서만 변경한다.
+          return;
+        }
         set((st) => {
           const t = ensureTracking(st.profile);
           const existing = t.logs.find((l) => l.date === date);
@@ -359,7 +383,8 @@ export const useProfile = create<ProfileState>()(
               tracking: { ...t, logs },
             }),
           };
-        }),
+        });
+      },
 
       dismissNextStepNudge: (stage) =>
         set((st) => {

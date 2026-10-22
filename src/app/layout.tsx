@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Loop+ — 돌수록 더해지는 자산 루프",
+  title: "Loop+ — 일상의 실천을 이어가요",
   description:
-    "돈을 어디에 나눌지 정하고, 몇 년 뒤 자산을 미리 봅니다. 모든 수치는 예시·가정.",
+    "나에게 맞는 루틴을 고르고, 오늘의 작은 실천을 기록하며 목표를 향해 나아가요.",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -13,6 +13,13 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({

@@ -43,6 +43,8 @@ export function mondayOf(key: string): string {
 }
 
 export function isRoutineScheduled(r: RoutineItem, key: string): boolean {
+  if (r.archivedAt && key >= r.archivedAt) return false;
+  if (r.habit && key < r.habit.startDate) return false;
   if (r.schedule === "daily") return true;
   const dow = parseDateKey(key).getDay();
   return r.schedule.weekdays.includes(dow);

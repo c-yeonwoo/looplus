@@ -23,7 +23,7 @@ import { resolveHoldingReturns } from "../engine/holdings";
 import { normalizeTracking } from "../tracking";
 
 /** action_items jsonb: 레거시 ActionItem[] 또는 v2+ { routines, logs, actions, goalLoops } */
-function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
+export function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
   if (
     raw &&
     typeof raw === "object" &&
@@ -58,10 +58,10 @@ function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
   });
 }
 
-function trackingToDb(t: Tracking | undefined) {
+export function trackingToDb(t: Tracking | undefined) {
   const n = normalizeTracking(t);
   return {
-    v: 4 as const,
+    v: 5 as const,
     routines: n.routines,
     logs: n.logs,
     actions: n.actions,

@@ -12,9 +12,9 @@ export const BRAND = {
   /** 한글 서비스명 */
   ko: "루플러스",
   /** 짧은 디스크립터 */
-  descriptor: "돌수록 더해지는 자산 루프",
+  descriptor: "일상의 실천을 이어가요",
   /** <title> 등 */
-  title: "Loop+ — 돌수록 더해지는 자산 루프",
+  title: "Loop+ — 일상의 실천을 이어가요",
   /** 공유 카드 파일명 */
   shareFilename: "looplus-result.png",
 } as const;

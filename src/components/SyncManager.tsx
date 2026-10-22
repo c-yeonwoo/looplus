@@ -4,10 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/store/useProfile";
-import { loadProfile, saveProfile, profileHasData } from "@/lib/store/supabaseRepo";
-import { mergeRemoteIntoLocal, type LoadedProfile } from "@/lib/store/mergeProfile";
+import { loadProfile, saveProfile } from "@/lib/store/supabaseRepo";
+import {
+  mergeRemoteIntoLocal,
+  mergeTrackingByChoice,
+  type LoadedProfile,
+} from "@/lib/store/mergeProfile";
 import { useSaveStatus } from "@/lib/store/saveStatus";
 import { Icon } from "@/components/Icon";
+import { planInitialSync } from "@/lib/store/syncPlan";
 
 /** 동일 유저 짧은 재마운트·StrictMode 이중 호출 시 중복 GET 방지 */
 const loadCache: {
@@ -24,7 +29,11 @@ async function loadProfileCached(
   userId: string,
 ): Promise<LoadedProfile | null> {
   const now = Date.now();
-  if (loadCache.userId === userId && loadCache.loaded && now - loadCache.at < LOAD_TTL_MS) {
+  if (
+    loadCache.userId === userId &&
+    loadCache.loaded &&
+    now - loadCache.at < LOAD_TTL_MS
+  ) {
     return loadCache.loaded;
   }
   if (loadCache.userId === userId && loadCache.inflight) {
@@ -66,6 +75,9 @@ export function SyncManager() {
   const readyRef = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [conflict, setConflict] = useState<LoadedProfile | null>(null);
+  const resolveRef = useRef<((merge: boolean) => void) | null>(null);
 
   /*
     id 만 본다. user 객체는 세션이 갱신될 때마다 새 객체가 되므로, 그대로 의존하면
@@ -76,11 +88,17 @@ export function SyncManager() {
   const retry = useCallback(async () => {
     const sb = getSupabase();
     if (!sb || !userId) return;
+    if (!readyRef.current) {
+      invalidate(userId);
+      setReload((n) => n + 1);
+      return;
+    }
     setRetrying(true);
     try {
       await saveProfile(sb, userId, useProfile.getState().profile);
       invalidate(userId);
       setSaveError(null);
+      useSaveStatus.getState().markSaved();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "알 수 없는 오류");
     } finally {
@@ -90,6 +108,9 @@ export function SyncManager() {
 
   useEffect(() => {
     if (!configured || !userId) {
+      setConflict(null);
+      setSaveError(null);
+      readyRef.current = false;
       useSaveStatus.getState().setCloud(false);
       return;
     }
@@ -100,6 +121,9 @@ export function SyncManager() {
     }
 
     useSaveStatus.getState().setCloud(true);
+    setConflict(null);
+    setSaveError(null);
+    useSaveStatus.getState().markPending();
     let cancelled = false;
     readyRef.current = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -139,22 +163,45 @@ export function SyncManager() {
         const remote = await loadProfileCached(sb, userId);
         if (cancelled) return;
         const local = useProfile.getState().profile;
-        if (remote && profileHasData(remote.profile)) {
-          replaceProfile(mergeRemoteIntoLocal(remote, local));
-        } else if (profileHasData(local)) {
-          await saveProfile(sb, userId, local);
-          invalidate(userId);
-        } else if (remote) {
-          replaceProfile(mergeRemoteIntoLocal(remote, local));
+        const plan = planInitialSync(remote, local);
+        if (plan.kind === "choice") {
+          const remote = plan.remote;
+          setConflict(remote);
+          useSaveStatus.getState().markPending();
+          resolveRef.current = (merge) => {
+            if (cancelled) return;
+            const current = useProfile.getState().profile;
+            const next = mergeRemoteIntoLocal(remote, current);
+            if (merge)
+              next.tracking = mergeTrackingByChoice(
+                remote.profile.tracking,
+                current.tracking,
+              );
+            try {
+              replaceProfile(next);
+              readyRef.current = true;
+              setConflict(null);
+              resolveRef.current = null;
+              scheduleSave();
+            } catch {
+              setSaveError(
+                "기기에 저장하지 못했어요. 저장 공간을 확인해 주세요.",
+              );
+            }
+          };
+          return;
+        }
+        replaceProfile(plan.profile);
+        if (!cancelled) {
+          readyRef.current = true;
+          scheduleSave();
         }
       } catch (e) {
         console.error("[sync] load failed", e);
         if (!cancelled) {
           setSaveError(e instanceof Error ? e.message : "알 수 없는 오류");
+          useSaveStatus.getState().markError("계정 기록 불러오기 실패");
         }
-      } finally {
-        readyRef.current = true;
-        if (!cancelled) useSaveStatus.getState().markSaved();
       }
     })();
 
@@ -162,11 +209,54 @@ export function SyncManager() {
       cancelled = true;
       clearTimeout(timer);
       unsub();
+      resolveRef.current = null;
+      readyRef.current = false;
       useSaveStatus.getState().setCloud(false);
     };
-  }, [configured, userId, replaceProfile]);
+  }, [configured, userId, replaceProfile, reload]);
 
-  if (!saveError) return null;
+  if (conflict && userId)
+    return (
+      <div
+        className="fixed inset-x-0 bottom-20 z-40 mx-auto max-w-xl rounded-xl border border-ink-300 bg-white p-5 shadow-lg"
+        role="region"
+        aria-label="계정 기록 확인"
+      >
+        <h2 className="font-semibold">기기와 계정의 루틴 기록이 달라요.</h2>
+        <p className="mt-2 text-sm text-ink-600">
+          선택 전에는 자동 저장을 잠시 멈춰요. 합치면 양쪽 루틴을 남기고, 같은
+          루틴·날짜의 기록은 이 기기 값을 사용해요.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            className="habit-primary"
+            onClick={() => resolveRef.current?.(true)}
+          >
+            두 기록 합치기
+          </button>
+          <button
+            className="habit-secondary"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "이 기기의 루틴·목표·기록을 계정 기록으로 바꿀까요? 아직 백업하지 않은 기기 기록은 사라져요.",
+                )
+              )
+                resolveRef.current?.(false);
+            }}
+          >
+            계정 기록만 사용
+          </button>
+        </div>
+        {saveError && (
+          <p role="alert" className="mt-3 text-red-700">
+            {saveError}
+          </p>
+        )}
+      </div>
+    );
+
+  if (!saveError || !userId) return null;
 
   return (
     <div
@@ -177,8 +267,11 @@ export function SyncManager() {
       <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-lg">
         <Icon name="info" size={16} className="shrink-0 text-red-600" />
         <div className="min-w-0 flex-1 text-sm text-red-800">
-          <span className="font-bold">클라우드 저장 실패</span> — 이 기기에는 남아 있어요.
-          <span className="mt-0.5 block text-xs text-red-700/80">{saveError}</span>
+          <span className="font-bold">클라우드 저장 실패</span> — 이 기기에는
+          남아 있어요.
+          <span className="mt-0.5 block text-xs text-red-700/80">
+            {saveError}
+          </span>
         </div>
         <button
           type="button"
