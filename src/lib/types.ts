@@ -191,6 +191,31 @@ export interface RoutineItem {
   loopId?: string;
   /** 추천된 실행인지, 사용자가 직접 만든 실행인지 구분해 맥락을 보존한다. */
   source?: "manual" | "stage" | "goal_loop" | "weekly_review";
+  /** 일상 루틴 v1. 없는 기존 루틴은 체크형으로 그대로 읽는다. */
+  habit?: HabitConfig;
+  archivedAt?: string;
+}
+
+export interface HabitConfig {
+  kind: "check" | "time" | "count";
+  target: number;
+  unit: string;
+  minimum?: number;
+  smallAction?: string;
+  weeklyTarget?: number;
+  startDate: string;
+  cue?: string;
+  templateId?: string;
+  templateVersion?: number;
+}
+
+export interface HabitEntry {
+  value: number;
+  /** 기록 당시 기준을 보관해 이후 설정과 독립적으로 표시한다. */
+  kind: HabitConfig["kind"];
+  unit: string;
+  target: number;
+  minimum?: number;
 }
 
 /**
@@ -248,6 +273,7 @@ export interface DayLog {
   date: string;
   /** routineId → 완료 여부 */
   done: Record<string, boolean>;
+  values?: Record<string, HabitEntry>;
 }
 
 export interface Tracking {

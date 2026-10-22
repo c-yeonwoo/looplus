@@ -60,7 +60,7 @@ export function Logo({
           {BRAND.mark}
         </span>
         {withDescriptor && (
-          <span className="mt-1 text-[10px] font-semibold tracking-wide text-ink-400">
+          <span className="mt-1 text-[11px] font-medium text-ink-600">
             {BRAND.descriptor}
           </span>
         )}

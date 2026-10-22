@@ -16,30 +16,24 @@ type NavItem = {
   core?: boolean;
 };
 
-/** 1차: 홈·설계·루틴 / 2차: 로드맵·지출 (진단은 엔진「내 현황」모달) */
+/** 일상 실천을 위한 세 탭. 금융은 프로필의 선택형 도구로 이동한다. */
 const NAV: NavItem[] = [
-  { href: "/home", label: "홈", icon: "home" },
-  { href: "/engine", label: "자산 설계", icon: "engine", core: true },
-  { href: "/tracking", label: "루틴", icon: "loop" },
-  { href: "/goals", label: "로드맵", icon: "target" },
-  { href: "/spending", label: "지출", icon: "wallet" },
+  { href: "/home", label: "오늘", icon: "home" },
+  { href: "/goals", label: "목표", icon: "target" },
+  { href: "/records", label: "기록", icon: "calendar" },
 ];
 /** NAV 배열에서 1차(홈·설계·루틴) 개수 — 이후는 구분선 아래 2차 */
 const PRIMARY_NAV_COUNT = 3;
 
-const MOBILE_NAV: NavItem[] = [
-  { href: "/home", label: "홈", icon: "home" },
-  { href: "/engine", label: "설계", icon: "engine", core: true },
-  { href: "/tracking", label: "실행", icon: "loop" },
-  { href: "/goals", label: "로드맵", icon: "target" },
-  { href: "/spending", label: "지출", icon: "wallet" },
-];
+const MOBILE_NAV = NAV;
 
 const NAV_COLLAPSE_KEY = "looplus-nav-collapsed";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const isActive = (href: string) => path === href || path.startsWith(href + "/");
+  const focused = path.startsWith("/routines/");
+  const isActive = (href: string) =>
+    path === href || path.startsWith(href + "/");
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -63,14 +57,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-dvh w-full bg-white">
       <aside
         className={clsx(
-          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-ink-200 bg-white py-5 transition-[width] duration-200 md:flex",
+          "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-ink-200 bg-white py-5 transition-[width] duration-200 md:flex",
           collapsed ? "w-[68px] px-2" : "w-56 px-3 lg:w-60",
         )}
       >
-        <div className={clsx("mb-5 flex items-center", collapsed ? "justify-center" : "justify-between px-2")}>
+        <div
+          className={clsx(
+            "mb-5 flex items-center",
+            collapsed ? "justify-center" : "justify-between px-2",
+          )}
+        >
           <Link href="/home" className={collapsed ? "" : "min-w-0"}>
             {collapsed ? <LogoMark size={28} /> : <Logo />}
           </Link>
@@ -99,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         )}
 
-        <nav className="flex flex-col gap-0.5">
+        <nav aria-label="주 메뉴" className="flex flex-col gap-0.5">
           {NAV.map((n, i) => (
             <div key={n.href}>
               {i === PRIMARY_NAV_COUNT && (
@@ -116,7 +115,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-current={isActive(n.href) ? "page" : undefined}
                 className={clsx(
                   "flex items-center rounded-lg text-[14px] transition-colors",
-                  collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2",
+                  collapsed
+                    ? "justify-center px-0 py-2.5"
+                    : "gap-2.5 px-3 py-2",
                   isActive(n.href)
                     ? "bg-gold-50 font-semibold text-gold-600"
                     : i < PRIMARY_NAV_COUNT
@@ -130,6 +131,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
+        <Link
+          href="/profile"
+          className="mt-6 flex min-h-12 items-center gap-2 rounded-xl px-3 text-sm text-ink-600 hover:bg-ink-100"
+          title="프로필·도구"
+        >
+          <Icon name="users" size={20} />
+          {!collapsed && "프로필·도구"}
+        </Link>
         <div className="mt-auto space-y-2 border-t border-ink-100 pt-3">
           {!collapsed && (
             <>
@@ -153,32 +162,45 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-5 pb-24 pt-5 md:px-6 md:pb-10 lg:px-8 xl:px-10">
-        <div className="mb-3 flex items-center justify-between gap-2 md:hidden">
-          <SaveStatusChip />
-          <div className="rounded-xl border border-ink-200 bg-white px-1">
-            <AccountMenu />
+      <main className="app-main min-w-0 flex-1 px-5 pt-5 md:px-6 lg:px-8 xl:px-10">
+        {!focused && (
+          <div className="mb-5 flex items-center justify-between gap-2 md:hidden">
+            <SaveStatusChip />
+            <Link
+              href="/profile"
+              className="habit-icon-button ml-auto"
+              aria-label="프로필과 도구"
+            >
+              <Icon name="users" size={22} />
+            </Link>
           </div>
-        </div>
+        )}
         <div className="mx-auto w-full max-w-[1680px]">{children}</div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-ink-200 bg-white/95 backdrop-blur md:hidden">
-        {MOBILE_NAV.map((n) => (
-          <Link
-            key={n.href}
-            href={n.href}
-            aria-current={isActive(n.href) ? "page" : undefined}
-            className={clsx(
-              "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]",
-              isActive(n.href) ? "font-semibold text-gold-600" : "text-ink-500",
-            )}
-          >
-            <Icon name={n.icon} size={20} />
-            {n.label}
-          </Link>
-        ))}
-      </nav>
+      {!focused && (
+        <nav
+          aria-label="하단 메뉴"
+          className="app-tabs fixed inset-x-0 bottom-0 z-20 flex border-t border-ink-200 bg-white md:hidden"
+        >
+          {MOBILE_NAV.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              aria-current={isActive(n.href) ? "page" : undefined}
+              className={clsx(
+                "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 py-2 text-[13px] active:bg-ink-100",
+                isActive(n.href)
+                  ? "font-semibold text-gold-600"
+                  : "text-ink-500",
+              )}
+            >
+              <Icon name={n.icon} size={20} />
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }

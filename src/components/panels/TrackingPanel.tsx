@@ -29,7 +29,10 @@ import { SchedulePicker } from "@/components/tracking/SchedulePicker";
 
 export function TrackingPanel() {
   const raw = useProfile((s) => s.profile.tracking) ?? emptyTracking();
-  const tracking = useMemo(() => normalizeTracking(raw), [raw]);
+  const tracking = useMemo(() => {
+    const normalized = normalizeTracking(raw);
+    return { ...normalized, routines: normalized.routines.filter((r) => !r.habit) };
+  }, [raw]);
   const addRoutine = useProfile((s) => s.addRoutine);
   const removeRoutine = useProfile((s) => s.removeRoutine);
   const updateRoutine = useProfile((s) => s.updateRoutine);
@@ -401,7 +404,7 @@ export function TrackingPanel() {
           <p className="text-sm text-ink-400">아직 루틴이 없어요.</p>
         ) : (
           <ul className="space-y-2">
-            {tracking.routines
+            {tracking.routines.filter((r) => !r.archivedAt)
               .slice()
               .sort((a, b) => a.position - b.position)
               .map((r) => (

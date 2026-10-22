@@ -90,11 +90,12 @@
   --radius-card: 0.75rem;
   --radius-field: 0.75rem;
 
-  --font-sans: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
-    -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-display: "SUIT Variable", "Pretendard Variable", Pretendard,
-    ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo",
-    "Malgun Gothic", sans-serif;
+  --font-sans:
+    "Pretendard Variable", Pretendard, ui-sans-serif, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-display:
+    "SUIT Variable", "Pretendard Variable", Pretendard, ui-sans-serif,
+    system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 :root {
@@ -164,5 +165,324 @@ input[type="range"]::-webkit-slider-thumb {
 @media (prefers-reduced-motion: reduce) {
   .flow-link {
     animation: none;
+  }
+}
+
+/* Daily practice surfaces. NeoRound is intentionally not bundled before licensing. */
+.app-main {
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+.app-tabs {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.habit-page {
+  max-width: 680px;
+  margin: 12px auto 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.habit-flow {
+  max-width: 560px;
+}
+.habit-title,
+.habit-heading {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.habit-title {
+  font-size: clamp(28px, 4vw, 34px);
+}
+.habit-heading {
+  font-size: 22px;
+}
+.habit-section-title {
+  margin-bottom: 12px;
+  font-size: 17px;
+  font-weight: 650;
+}
+.habit-flow-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  font-size: 14px;
+  color: var(--color-ink-600);
+}
+.habit-primary,
+.habit-secondary,
+.habit-text-button,
+.habit-icon-button,
+.habit-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.habit-primary {
+  background: var(--color-gold-600);
+  color: white;
+  padding: 12px 20px;
+}
+.habit-secondary {
+  border: 1px solid var(--color-ink-300);
+  background: white;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.habit-text-button {
+  color: var(--color-gold-600);
+  padding: 8px;
+  font-size: 14px;
+}
+.habit-icon-button {
+  width: 48px;
+  flex-shrink: 0;
+  color: var(--color-ink-600);
+}
+.habit-primary:active {
+  background: #095b46;
+}
+.habit-secondary:active,
+.habit-text-button:active,
+.habit-icon-button:active {
+  background: var(--color-ink-100);
+}
+.habit-page :disabled,
+.habit-dialog :disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.habit-page :focus-visible,
+.habit-dialog :focus-visible,
+.app-tabs :focus-visible,
+aside :focus-visible {
+  outline: 3px solid var(--color-gold-600);
+  outline-offset: 3px;
+}
+.habit-list {
+  border-top: 1px solid var(--color-ink-200);
+}
+.habit-list > li {
+  border-bottom: 1px solid var(--color-ink-200);
+}
+.habit-choice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 88px;
+  padding: 16px 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.habit-choice:active {
+  background: var(--color-ink-50);
+}
+.habit-routine {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 4px;
+}
+.habit-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-ink-300);
+  border-radius: 12px;
+  margin: 24px 0;
+  padding: 0 14px;
+  color: var(--color-ink-600);
+}
+.habit-search input {
+  min-width: 0;
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--color-ink-900);
+  font-size: 16px;
+}
+.habit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 550;
+}
+.habit-field input,
+.habit-field select,
+.habit-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  border: 1px solid var(--color-ink-300);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: white;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+}
+.habit-field input[type="date"] {
+  appearance: none;
+}
+.habit-field input::placeholder,
+.habit-search input::placeholder {
+  color: var(--color-ink-500);
+  opacity: 1;
+}
+.habit-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.habit-segments > button,
+.habit-day {
+  min-height: 48px;
+  border: 1px solid var(--color-ink-300);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.habit-segments > button {
+  flex: 1;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.habit-day {
+  min-width: 44px;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px;
+}
+.habit-segments > [aria-pressed="true"],
+.habit-day[aria-pressed="true"] {
+  background: var(--color-gold-50);
+  border-color: var(--color-gold-600);
+  color: var(--color-gold-600);
+  font-weight: 700;
+}
+.habit-category {
+  border: 1px solid var(--color-ink-200);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.habit-category > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+.habit-category > summary::-webkit-details-marker {
+  display: none;
+}
+.habit-category > summary::after {
+  content: "+";
+  flex-shrink: 0;
+  color: var(--color-ink-600);
+}
+.habit-category[open] > summary::after {
+  content: "−";
+}
+.habit-category .habit-list {
+  margin: 0 16px;
+}
+.habit-category .habit-list > li:last-child {
+  border-bottom: 0;
+}
+.habit-notice,
+.habit-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  background: var(--color-sage-50);
+  color: var(--color-sage-700);
+  padding: 14px 16px;
+  font-size: 14px;
+}
+.habit-notice > span:first-child {
+  flex: 1;
+}
+.habit-preview {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+}
+.habit-preview > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.habit-dialog {
+  position: fixed;
+  inset: auto 0 0;
+  width: min(100%, 560px);
+  max-height: 90dvh;
+  margin: auto auto 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-ink-200);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+  background: white;
+  color: var(--color-ink-900);
+}
+.habit-dialog::backdrop {
+  background: rgb(11 18 32 / 0.4);
+}
+@media (hover: hover) and (pointer: fine) {
+  .habit-choice:hover {
+    background: var(--color-ink-50);
+  }
+  .habit-primary:hover {
+    background: #095b46;
+  }
+  .habit-secondary:hover,
+  .habit-icon-button:hover {
+    background: var(--color-ink-50);
+  }
+}
+@media (min-width: 768px) {
+  .app-main {
+    padding-top: 48px;
+    padding-bottom: 64px;
+  }
+  .habit-dialog {
+    inset: 0;
+    margin: auto;
+    border-radius: 20px;
+    padding: 32px;
+  }
+}
+@media (max-width: 359px) {
+  .habit-routine {
+    gap: 10px;
+  }
+  .habit-secondary {
+    padding: 10px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  aside {
+    transition: none !important;
   }
 }

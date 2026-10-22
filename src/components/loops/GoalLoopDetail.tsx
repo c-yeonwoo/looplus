@@ -9,6 +9,7 @@ import { dateKey, formatSchedule, isRoutineScheduled, mondayOf } from "@/lib/tra
 import { track, trackOncePerSession } from "@/lib/analytics";
 import { Badge, Button, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { HabitGoalDetail } from "@/components/habits/HabitGoalDetail";
 
 export function GoalLoopDetail({ goalId }: { goalId: string }) {
   const profile = useProfile((state) => state.profile);
@@ -40,6 +41,8 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
     );
   }
 
+  if (loop.metric === "custom") return <HabitGoalDetail key={loop.id} goal={loop} />;
+
   const progress = getLoopProgress(
     loop,
     profile.snapshot,
@@ -47,7 +50,7 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
     profile.tracking.routines,
   );
   const routines = profile.tracking.routines
-    .filter((routine) => routine.loopId === loop.id)
+    .filter((routine) => routine.loopId === loop.id && !routine.archivedAt)
     .sort((a, b) => a.position - b.position);
   const today = dateKey();
   const weekStart = mondayOf(today);
@@ -106,7 +109,7 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
             <Button><Icon name="engine" size={14} /> 이 목표의 자산 설계 보기</Button>
           </Link>
           {!loop.completedAt && (
-            <Link href={`/tracking?loop=${encodeURIComponent(loop.id)}`}>
+            <Link href={`/routines/new?goal=${encodeURIComponent(loop.id)}`}>
               <Button variant="outline"><Icon name="plus" size={14} /> 이 목표의 루틴 추가</Button>
             </Link>
           )}
@@ -191,7 +194,7 @@ export function GoalLoopDetail({ goalId }: { goalId: string }) {
               점검 기록이 쌓이면 목표 진척과 루틴 실행을 함께 돌아볼 수 있어요.
             </div>
           )}
-          <Link href="/home#weekly-review" className="inline-block text-xs font-semibold text-sage-700 hover:underline">
+          <Link href="/tools/money#weekly-review" className="inline-block text-xs font-semibold text-sage-700 hover:underline">
             이번 주 현황 점검하기 →
           </Link>
         </Card>

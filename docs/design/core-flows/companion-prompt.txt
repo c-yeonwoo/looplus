@@ -1,0 +1,39 @@
+Use case: ui-mockup. Create a SEPARATE companion review board with THREE complete portrait mobile screens side by side for the Korean Loop+ habit app. The supplied image is STYLE REFERENCE ONLY: preserve its crisp ink #0B1220 text, light cool gray #F3F5F7 backgrounds, white native surfaces, teal #0F8B6B primary actions, Korean sans typography and understated dividers. Do not reproduce its four screen contents. No rebranding, mascots, decorative illustrations, financial dashboards on Today, or new top-level tabs. Show three flat digital portrait screens about 390:844 each on a large light landscape board. Full screens visible, no photoreal device or perspective. Board header small "Loop+ · 목표와 기록의 연결". Footer "검토용 화면 시안 · 예시 데이터". All text exact readable Hangul. Static design proposal, not a live app screenshot.
+
+SCREEN 1 caption "05 목표".
+Top navigation title "목표", plus control "+ 목표", standard status bar.
+Large goal title "올해 책 12권 읽기".
+Short reason "하루를 조금 더 넓게".
+One restrained factual progress block: label "실제 성과", big text "3 / 12권", small text "직접 기록 · 10월 18일". Thin teal progress line precisely one quarter filled, not an oversized ring.
+Secondary small text button "완독 기록하기".
+Next section "목표를 이어가는 루틴".
+White list row "책 읽기", subtext "잠자리 준비 후 · 10분", right outlined "기록".
+A quiet summary line "지난주 기준 채움 3일 · 작게 실천 1일".
+Small calm future-plan note with chevron "10월 26일부터 5분 · 주 3일".
+A secondary text link "지난주 돌아보기".
+Very small informative line "실천 일수와 완독 권수는 따로 기록해요."
+Bottom navigation EXACTLY "오늘" "목표" "기록", only 목표 selected teal. Keep comfortable whitespace.
+
+SCREEN 2 caption "06 기록".
+Top title "기록", small profile circle.
+Compact weekly review invitation "지난주를 돌아볼까요?" with subtitle "10월 12일–18일" and small outlined button "돌아보기".
+Next heading "10월", left/right chevrons.
+A legible compact 7-column October 2026 calendar with Korean day headers "월 화 수 목 금 토 일". October 1 2026 is THURSDAY: first row has blank Mon Tue Wed, 1 Thu,2 Fri,3 Sat,4 Sun. Subsequent rows 5 6 7 8 9 10 11; 12 13 14 15 16 17 18; 19 20 21 22 23 24 25; 26 27 28 29 30 31 blank. Highlight selected 23 with subtle teal outline. Subtle varied dots under a few past dates; dates after 23 visually subdued, no future completions. No fake positive/negative grades.
+Below calendar "10월 23일".
+Two compact rows: "책 읽기" right "2분 · 작게 실천"; "가볍게 스트레칭" right "완료".
+Tiny legend "기준 채움  ·  작게 실천  ·  쉼".
+Bottom navigation EXACTLY "오늘" "목표" "기록", 기록 selected teal.
+
+SCREEN 3 caption "07 선택형 도구".
+Top navigation back chevron and title "도구", no bottom tab bar because this is a focused settings subpage.
+Heading "필요할 때만 꺼내 쓰세요".
+Short explanation "루틴은 이 도구 없이도 이어갈 수 있어요."
+One native grouped list section titled "돈 관리".
+Row "자산 설계" with caption "내 자산과 계획 살펴보기" and chevron.
+Row "지출" with caption "생활비 기록과 예산 확인" and chevron.
+A quiet note beneath "기존 자산·지출 기록은 그대로 보관돼요."
+Lower subtle navigation explanation "프로필 › 도구 › 돈 관리".
+No upsell, no financial inputs required, no financial promotional cards, no fourth navigation tab.
+No bogus settings switches to enable unimplemented features. Make this a secondary utility page clearly separate from the habit core.
+
+The three screens must look like one product and continue the supplied reference's visual quality. Large readable labels, compact factual information, genuinely tappable controls with room around them, calm native app hierarchy. Do not invent extra text or features.

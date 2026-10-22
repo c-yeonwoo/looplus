@@ -1,0 +1,49 @@
+Use case: ui-mockup.
+Create one polished, high-fidelity mobile product design review board for the Korean habit app Loop+ (Looplus). This is a proposed interface, NOT a screenshot of a shipped product. Deliver a large landscape board with FOUR complete upright mobile screens side by side, each portrait approximately 390:844, with small exterior captions 01 시작, 02 오늘, 03 다시 시작, 04 다음 주. Keep every screen fully visible, not overlapping. The phone screens are flat digital UI, no photoreal devices, no hands, no perspective. Board header small: "Loop+ · 일상 실천". Tiny board footer: "검토용 화면 시안 · 예시 데이터". This is one coherent storyboard, not alternate visual brands.
+
+Existing visual authority: restrained Ink/Signal system: near-black ink #0B1220 typography, light cool gray #F3F5F7 page ground, white surfaces, teal #0F8B6B for primary actions and selected states, pale teal #DDF3EC only for focused small regions, hairline #E2E8F0 separators, 12px corner language. Crisp native Korean sans similar to Apple system Korean/Pretendard, large readable body labels, not fintech marketing. No hero graphs, no finance, no large colored headers, no ornamental illustration, no mascot, no gradients, no fake brand logo beyond typeset Loop+. Clean native mobile spacing, purposeful hierarchy, generous 44pt+ touch zones. Accent only where actionable. Subtle status bar at top, safe space at bottom. Main task is immediately visible. Use exactly the short Korean UI strings specified, accurate Hangul, no invented filler.
+
+SCREEN 1 — first habit creation. Full-height native task screen, no bottom tabs, back chevron and title "첫 루틴". Heading "어떤 실천을 이어갈까요?".
+Compact form with label "루틴 이름" and field "책 읽기".
+Segmented input mode "체크  수량  시간", 시간 selected.
+Quantity line "하루 10 분".
+Schedule segmented "매일  요일 선택  주 N일", 매일 selected.
+Optional row with chevron "작게 할 때 · 2분".
+Optional row with chevron "알림 · 사용 안 함".
+Optional row with chevron "목표 연결 · 나중에".
+Near bottom preview "오늘부터 · 매일 10분".
+One full-width teal button "루틴 만들기".
+Small footer note "이 기기에 저장돼요". No completion checkmark on creation.
+
+SCREEN 2 — Today, habitual normal use. Top title "오늘" with small profile circle right, subline "10월 23일 금요일". Right small text action "+ 루틴".
+Section title "오늘의 실천".
+Two restrained white list rows, not giant dashboard cards:
+row 1 "책 읽기", subtext "잠자리 준비 후 · 10분", secondary goal label "올해 책 12권", right outlined button "기록".
+row 2 "가볍게 스트레칭", subtext "아침 준비 후", right empty circular checkbox with generous touch zone.
+Next small section "이번 주 자유롭게".
+row "산책하기", subtext "이번 주 1 / 3일", right outlined button "기록".
+Small divider and collapsed row "완료한 실천 1개".
+Leave calm negative space below. Bottom navigation EXACTLY THREE items with simple familiar outline icons and labels "오늘" "목표" "기록"; 오늘 selected teal. No huge progress rings, no zero streak scoreboard.
+
+SCREEN 3 — return after interruption. Same Today top bar and date, 3-tab navigation with 오늘 selected. Below heading a single quiet pale teal invitation panel with headline "오늘 가능한 만큼만" and short body "지난 기록은 그대로 있어요.".
+Target habit "책 읽기".
+Normal target detail "평소에는 10분".
+Choices are actual action choices not completion states: primary large outlined/teal-tinted button "오늘은 2분부터", secondary row/button "횟수 줄이기", secondary row/button "더 쉬기".
+Small text "선택만으로 기록되지는 않아요".
+One unobtrusive text control "지금은 넘어가기".
+Below the invitation, normal white list row "가볍게 스트레칭" with an empty circle. No red missed days, no overdue debt, no confetti, no guilt copy. This is an optional inline recovery invitation, not an unavoidable popup.
+
+SCREEN 4 — weekly plan change confirmation. Full-height focused native task screen without bottom tabs, back chevron and title "변경 내용 확인".
+Small overline "책 읽기".
+Heading "다음 주는 조금 가볍게".
+A legible comparison block with column headings "현재" and "변경 후".
+Row label "한 번에", values "10분 → 5분".
+Row label "일정", values "매일 → 주 3일".
+Small explanatory text "아무 요일에나 3일".
+Date row "적용 시작  10월 26일 월요일".
+Quiet reassurance box "지난 기록은 바뀌지 않아요." and "알림은 계속 꺼져 있어요.".
+Bottom primary full-width teal "다음 주 계획 적용".
+Secondary text button "돌아가서 수정".
+No success checkmark before the apply action.
+
+Visual care: align rows precisely, do not crowd Korean labels, preserve clear single primary action per task. Show legible content at actual mobile UI scale. All sample data is illustrative. This is a design review board, not code and not a marketing advertisement.

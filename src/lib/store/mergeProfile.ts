@@ -1,4 +1,59 @@
-import type { Bucket, Profile } from "../types";
+import type { Bucket, Profile, Tracking } from "../types";
+
+/** 새 일상 루틴이 있는 기기는 계정 로드로 자동 덮어쓰지 않는다. */
+export function needsHabitMergeChoice(
+  remote: Tracking,
+  local: Tracking,
+): boolean {
+  if (!local.routines.some((r) => r.habit)) return false;
+  const canonical = (value: unknown): string => {
+    if (Array.isArray(value))
+      return `[${value.map(canonical).sort().join(",")}]`;
+    if (value && typeof value === "object")
+      return `{${Object.entries(value)
+        .filter(([, v]) => v !== undefined)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`)
+        .join(",")}}`;
+    return JSON.stringify(value);
+  };
+  return (
+    canonical([remote.routines, remote.logs, remote.goalLoops]) !==
+    canonical([local.routines, local.logs, local.goalLoops])
+  );
+}
+
+/** 사용자가 합치기를 선택한 경우만 호출. 같은 루틴·날짜의 충돌은 기기 값 우선. */
+export function mergeTrackingByChoice(
+  remote: Tracking,
+  local: Tracking,
+): Tracking {
+  const routines = new Map(remote.routines.map((r) => [r.id, r]));
+  local.routines.forEach((r) => routines.set(r.id, r));
+  const goals = new Map(remote.goalLoops.map((g) => [g.id, g]));
+  local.goalLoops.forEach((g) => goals.set(g.id, g));
+  const logs = new Map(remote.logs.map((log) => [log.date, log]));
+  local.logs.forEach((log) => {
+    const other = logs.get(log.date);
+    const values = { ...other?.values, ...log.values };
+    // 명시적인 기록 취소(false)를 원격 값으로 되살리지 않는다.
+    Object.keys(log.done).forEach((id) => {
+      if (!log.done[id] && !log.values?.[id]) delete values[id];
+    });
+    logs.set(log.date, {
+      ...other,
+      ...log,
+      done: { ...other?.done, ...log.done },
+      values,
+    });
+  });
+  return {
+    ...remote,
+    routines: [...routines.values()],
+    goalLoops: [...goals.values()],
+    logs: [...logs.values()].sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
 
 /**
  * 원격 프로필을 로컬에 병합한다.
@@ -41,13 +96,18 @@ function withLocalCanvas(remote: Bucket[], local: Bucket[]): Bucket[] {
   });
 }
 
-export function mergeRemoteIntoLocal(loaded: LoadedProfile, local: Profile): Profile {
+export function mergeRemoteIntoLocal(
+  loaded: LoadedProfile,
+  local: Profile,
+): Profile {
   const { profile: remote, stored } = loaded;
 
   return {
     ...remote,
     spending: stored.spending ? remote.spending : local.spending,
-    uiPrefs: stored.uiPrefs ? remote.uiPrefs : (local.uiPrefs ?? remote.uiPrefs),
+    uiPrefs: stored.uiPrefs
+      ? remote.uiPrefs
+      : (local.uiPrefs ?? remote.uiPrefs),
     engine: {
       ...(stored.engineLayout
         ? remote.engine

@@ -1,0 +1,75 @@
+Use case: ui-mockup
+Asset type: high-fidelity Korean mobile app review storyboard for Looplus (Loop+), static design only.
+Primary request: concretize the approved representative-routine selection flow, with a softer rounded Korean headline direction inspired by Sandoll GothicNeoRound. This is NOT an exact licensed-font specimen. The actual font file is unavailable; do not claim exact typeface rendering.
+Input image 1: visual reference for existing Loop+ ink/teal palette, restrained layout and consistent mobile UI. Create a new sibling board, do not modify or reproduce its four existing screens.
+
+Composition: landscape canvas, four generously sized upright app screens, all equal height, flat front-on, no physical phone hardware. Three principal flow screens from left to right, and one clearly labeled optional library screen on the right. White app surfaces on very pale gray board. Leave clear margins for board title, screen captions and readable footer. Pixel-sharp, readable Korean. Minimal light separation, no heavy shadows, no gradients, no extraneous illustrations.
+Palette: near-black navy #0B1220, muted secondary text #475569, white, pale gray #F3F5F7, teal #0F8B6B for actions, selected states and a restrained success message.
+Type: modestly rounded Korean sans headline, confident SemiBold, comfortable spacing, noticeably softer and less compressed than the reference. Headline is the only expressive type role. Body, controls, digits and labels use a restrained highly readable Korean UI sans. No cartoon letters, handwriting, ultra-heavy black, condensed tracking or serif. Plain consistent outline icons. Keep text legible; never shrink essential text to fit.
+Board title: "Loop+ · 골라서 시작하는 나의 루틴"
+Small board subtitle: "고르기 → 설정 확인 → 오늘의 실천"
+Footer: "검토용 시안 · 예시 데이터 · 실제 NeoRound 렌더링 전"
+
+SCREEN 1 caption "01 대표 루틴 고르기".
+Top status bar 9:41; top back chevron and compact centered label "루틴 고르기".
+Main headline on two lines "하나 골라," / "나답게 시작해요."
+Supporting text "시간과 횟수는 바꿀 수 있어요."
+Search field with magnifier, placeholder "독서, 산책, 정리..."
+Section label "처음 시작하기 좋은 루틴"
+Six single-column compact rows with meaningful outline icons, title, smaller criteria, chevron. No completion circles or switches in the library.
+1 "책 읽기" — "10분 · 매일"
+2 "가볍게 스트레칭" — "2분 · 매일"
+3 "하루 한 줄 남기기" — "체크 · 매일"
+4 "가볍게 산책하기" — "5분 · 주 3일"
+5 "한 곳 정리하기" — "3분 · 매일"
+6 "내일 할 일 하나 정하기" — "체크 · 매일" (allow wrapping if needed)
+At bottom, two clearly tappable secondary actions: "모든 루틴 보기 · 24개" and "+ 직접 만들기".
+No bottom tabs on this focused creation screen. No giant primary CTA; choosing a row is the primary action.
+
+SCREEN 2 caption "02 내 생활에 맞추기".
+Top status bar 9:41; back chevron and centered label "루틴 설정".
+Main rounded heading "내 생활에 맞춰요."
+Simple book icon, title "책 읽기", quiet text action "바꾸기".
+Read-only description "시간으로 기록하는 루틴"
+Label "한 번에 얼마나 할까요?" followed by one editable field containing "10" and unit "분".
+Label "언제 반복할까요?" then native-like segmented options "매일" selected teal tint, "요일 선택", "주 N일".
+Optional settings as neat grouped rows with chevrons:
+"작게 할 때" — "2분"
+"떠올릴 계기" — "나중에"
+"알림" — "사용 안 함"
+"목표 연결" — "나중에"
+Quiet schedule preview "오늘부터 · 매일 10분"
+One solid teal full-width bottom primary button "내 루틴에 추가".
+Below button "추가만으로 실천이 기록되지는 않아요."
+No tabs. Show no completion or congratulation on this configuration screen.
+
+SCREEN 3 caption "03 오늘부터 이어가기".
+Top status bar 9:41, screen title "오늘" in rounded brand heading, profile outline icon to right.
+Date "10월 23일 금요일"; text action "+ 루틴".
+Slim low-key feedback "책 읽기 루틴을 추가했어요."
+Section label "오늘의 실천"
+One clean routine row/card: outline book icon, title "책 읽기", sublabel "10분 · 매일", and outlined teal button "기록". No filled checkmark or completed count; newly created routine is uncompleted.
+Below the row, calm guidance "실제로 읽은 뒤 기록해 주세요." and "바쁜 날에는 2분부터 해도 좋아요."
+Plenty of white space; do not invent additional routines, charts, goals, confetti, zero streak or finance.
+Bottom navigation ONLY on this Today screen: "오늘", "목표", "기록" with appropriate outline icons; Today selected teal. Home indicator and safe area.
+
+SCREEN 4 caption "+ 전체 목록 · 선택 경로".
+Top status bar 9:41, back chevron and centered label "모든 루틴".
+Main rounded headline "나에게 맞는 실천"
+Search field placeholder "루틴 검색"
+Small metadata "6개 분야 · 24개 루틴"
+Accessible vertically stacked accordion groups, four entries per group:
+Collapsed "몸 움직이기" with count "4"
+Collapsed "마음 돌보기" with count "4"
+Expanded "배우기" with count "4" and down chevron:
+"책 읽기" — "10분 · 매일"
+"외국어 표현 익히기" — "3개 · 주 3일"
+"강의 이어 보기" — "10분 · 주 3일"
+"배운 내용 메모하기" — "3줄 · 주 3일"
+Collapsed "집중하기" count "4"
+Collapsed "생활 정돈" count "4"
+Collapsed "관계·취미" count "4"
+Bottom secondary action "+ 직접 만들기"
+No tabs, no required interest survey, no horizontal-only categories, no paywalls or popularity badges.
+
+Constraints: Korean strings verbatim, coherent reusable typography and consistent white surfaces. Setup button is explicitly "내 루틴에 추가", not a completed-action button. Numeric defaults must agree across screens. No finance surfaces. Fourth screen is optional browsing, not a required step after Today. Do not add annotations inside phone UI or create fake native screenshots/certification. Make the board polished and feasible for a mobile product, not an advertising concept.

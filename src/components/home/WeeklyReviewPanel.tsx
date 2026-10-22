@@ -210,7 +210,7 @@ export function WeeklyReviewPanel() {
           {planDecision === "pause" && (
             <p className="mt-2 text-xs text-ink-400">
               연결된 루틴 일정도 쉬려면 <Link
-                href={focusLoop ? `/tracking?loop=${encodeURIComponent(focusLoop.id)}` : "/tracking"}
+                href={focusLoop ? `/tools/routines?loop=${encodeURIComponent(focusLoop.id)}#legacy-routines` : "/tools/routines#legacy-routines"}
                 className="font-semibold text-gold-700 hover:underline"
               >루틴 화면에서 조정해 주세요</Link>.
             </p>
@@ -274,7 +274,7 @@ function trackingReviewHref(review: { weekStart: string; nextStepLoopId?: string
   const params = new URLSearchParams({ review: review.weekStart });
   const loopId = review.nextStepLoopId ?? review.focusLoopId;
   if (loopId) params.set("loop", loopId);
-  return `/tracking?${params.toString()}`;
+  return `/tools/routines?${params.toString()}#legacy-routines`;
 }
 
 function ReviewMetric({ label, value, previous }: { label: string; value: string; previous?: string }) {
