@@ -9,6 +9,8 @@ import { HabitIcon } from "./HabitIcon";
 import { HabitRecordDialog } from "./HabitRecordDialog";
 import { addDays, parseDateKey } from "@/lib/tracking";
 import { Icon } from "../Icon";
+import { GrowthDialog } from "../companion/GrowthDialog";
+import type { CompanionReward } from "@/lib/companion";
 
 export function RecordsPanel() {
   const tracking = useProfile((s) => s.profile.tracking);
@@ -17,6 +19,7 @@ export function RecordsPanel() {
   const date = selected ?? today;
   const [record, setRecord] = useState<RoutineItem | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [growth, setGrowth] = useState<CompanionReward[] | null>(null);
   const log = tracking.logs.find((l) => l.date === date);
   const recorded = tracking.routines.filter((r) => Boolean(entryFor(r, log)));
   const missed = tracking.routines.filter(
@@ -155,7 +158,17 @@ export function RecordsPanel() {
           date={date}
           entry={entryFor(record, log)}
           onClose={() => setRecord(null)}
-          onSaved={() => setFeedback(`${date} 기록을 저장했어요.`)}
+          onSaved={(rewards) => {
+            setFeedback(`${date} 기록을 저장했어요.`);
+            if (rewards.length) setGrowth(rewards);
+          }}
+        />
+      )}
+      {growth && (
+        <GrowthDialog
+          rewards={growth}
+          returnLabel="기록으로 돌아가기"
+          onClose={() => setGrowth(null)}
         />
       )}
     </div>

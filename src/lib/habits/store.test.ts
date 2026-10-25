@@ -27,6 +27,31 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 describe("기기 저장의 성공과 실패", () => {
+  it("성장 원장은 실제 기록과 함께 저장되고 실패 시 둘 다 발행하지 않는다", () => {
+    const id = useProfile
+      .getState()
+      .addHabit(draftFromTemplate(HABIT_TEMPLATES[0]));
+    storage.setItem.mockImplementationOnce(() => {
+      throw new Error("quota");
+    });
+    expect(() =>
+      useProfile.getState().setHabitValue(dateKey(), id, 1),
+    ).toThrow();
+    expect(useProfile.getState().profile.tracking.logs).toEqual([]);
+    expect(useProfile.getState().profile.tracking.companion).toBeUndefined();
+    expect(
+      useProfile
+        .getState()
+        .setHabitValue(dateKey(), id, 1)
+        .map((r) => r.id),
+    ).toEqual(["first-step"]);
+    const saved = JSON.parse(memory.get("looplus-profile-v2")!).state.profile
+      .tracking;
+    expect(saved.companion.rewards).toHaveLength(1);
+    expect(saved.logs[0].values[id].value).toBe(1);
+    useProfile.getState().setHabitValue(dateKey(), id, 0);
+    expect(useProfile.getState().setHabitValue(dateKey(), id, 1)).toEqual([]);
+  });
   it("중복 제출은 같은 루틴 하나, 생성 후 기록은 비어 있다", () => {
     const draft = draftFromTemplate(HABIT_TEMPLATES[0]);
     const id = useProfile.getState().addHabit(draft);

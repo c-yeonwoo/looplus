@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-dvh w-full bg-white">
+    <div className="app-shell flex min-h-dvh w-full">
       <aside
         className={clsx(
           "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-ink-200 bg-white py-5 transition-[width] duration-200 md:flex",
@@ -165,7 +165,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="app-main min-w-0 flex-1 px-5 pt-5 md:px-6 lg:px-8 xl:px-10">
         {!focused && (
           <div className="mb-5 flex items-center justify-between gap-2 md:hidden">
-            <SaveStatusChip />
+            <Link href="/home" aria-label="Looplus 오늘"><Logo withDescriptor={false} size={24} /></Link>
             <Link
               href="/profile"
               className="habit-icon-button ml-auto"
@@ -176,6 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div className="mx-auto w-full max-w-[1680px]">{children}</div>
+        <div className="app-save-status md:hidden"><SaveStatusChip /></div>
       </main>
 
       {!focused && (

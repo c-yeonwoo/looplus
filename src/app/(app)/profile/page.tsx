@@ -41,8 +41,8 @@ export default function ProfilePage() {
           <Link href="/legal/privacy" className="habit-text-button">
             개인정보 처리방침
           </Link>
-          <a href="/licenses/Pretendard-OFL.txt" className="habit-text-button">
-            폰트 라이선스
+          <a href="/licenses/LINE-Seed-OFL.txt" className="habit-text-button">
+            LINE Seed 폰트 라이선스
           </a>
         </div>
       </section>

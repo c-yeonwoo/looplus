@@ -4,6 +4,7 @@ import type { HabitEntry, RoutineItem } from "@/lib/types";
 import { habitConfig } from "@/lib/habits";
 import { useProfile } from "@/lib/store/useProfile";
 import { Icon } from "../Icon";
+import type { CompanionReward } from "@/lib/companion";
 
 export function HabitRecordDialog({
   routine,
@@ -16,7 +17,7 @@ export function HabitRecordDialog({
   date: string;
   entry?: HabitEntry;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (rewards: CompanionReward[]) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -39,8 +40,8 @@ export function HabitRecordDialog({
   }, []);
   const save = (amount: number) => {
     try {
-      saveValue(date, routine.id, amount);
-      onSaved();
+      const rewards = saveValue(date, routine.id, amount);
+      onSaved(rewards);
       onClose();
     } catch {
       setError(
