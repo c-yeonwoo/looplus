@@ -1,0 +1,36 @@
+LINE Seed KR — design preview assets
+
+Official font website: https://seed.line.me/index_kr.html
+Official download: https://seed.line.me/src/images/fonts/LINE_Seed_Sans_KR.zip
+Archive directory/release label: LINE_SeedKR_2023.09.06
+Downloaded: 2026-10-25
+
+Files copied unchanged from the official archive:
+- LINESeedKR-Rg.woff2 (523808 bytes)
+  Archive path: LINE_SeedKR_2023.09.06/Web/woff2/LINESeedKR-Rg.woff2
+  SHA-256: 709275188a8ef23040274490cd1fa048a02e9c441a238a4252837258cf8a43df
+- LINESeedKR-Bd.woff2 (463480 bytes)
+  Archive path: LINE_SeedKR_2023.09.06/Web/woff2/LINESeedKR-Bd.woff2
+  SHA-256: 57f95a6c2ce2ff6fa84e28f96bc5d29dcf5a7e308c9a25ed9541eacff3edfa56
+
+Use CSS font-weight 400 for Regular and 700 for Bold. These weights were
+verified against the OS/2 tables of the corresponding TTF files in the
+same archive. The font name table reports Version 1.000 and © LY Corporation.
+The family also supplies Thin; only Regular and Bold are bundled here.
+
+License: SIL Open Font License, Version 1.1.
+The archive's font metadata states this license and © LY Corporation.
+OFL.txt reproduces the official repository license from:
+https://raw.githubusercontent.com/line/seed/main/OFL.txt
+Repository: https://github.com/line/seed
+Keep OFL.txt with redistributed font copies.
+
+CDN verification (not used by this local preview):
+https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Rg.woff2
+https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Bd.woff2
+Both URLs return valid WOFF2 files, but they are older binaries and do not
+match the current official ZIP. They exactly match the official website's
+own https://seed.line.me/src/fonts/LINESeedSansKR-Rg.woff2 and
+https://seed.line.me/src/fonts/LINESeedSansKR-Bd.woff2, respectively.
+Older Regular SHA-256: e2b336d83ecd3beb88404a70a10c42cfa550cf8be707f2c672b089677a10218e
+Older Bold SHA-256: 1e011314c73dc50c423c6eee5fb1418a11ec3cd391978e883f70309558bf58ec

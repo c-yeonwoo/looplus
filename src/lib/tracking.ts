@@ -3,6 +3,7 @@
  */
 
 import type { DayLog, GoalLoop, RoutineItem, Tracking, WeeklyReview } from "./types";
+import { normalizeCompanion } from "./companion";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -324,6 +325,7 @@ export function normalizeTracking(raw: Partial<Tracking> | null | undefined): Tr
         ? t.focusLoopId
         : undefined,
     weeklyReviews,
+    companion: t.companion ? normalizeCompanion(t.companion) : undefined,
   };
 }
 

@@ -29,6 +29,7 @@ import { collectDescendantIds } from "../engine/tree";
 import { normalizeIncomeSources } from "../income";
 import type { RoutineItem } from "../types";
 import { recordHabit, routineFromDraft, type HabitDraft } from "../habits";
+import { awardCompanion, type CompanionReward } from "../companion";
 
 /** 새 실천 흐름은 저장소 쓰기 성공 후에만 화면에 성공 상태를 발행한다. */
 function persistHabitProfile(profile: Profile) {
@@ -128,7 +129,7 @@ interface ProfileState {
   reorderRoutinesInDay: (date: string, orderedIds: string[]) => void;
   toggleRoutineDay: (date: string, routineId: string) => void;
   addHabit: (draft: HabitDraft) => string;
-  setHabitValue: (date: string, routineId: string, value: number) => void;
+  setHabitValue: (date: string, routineId: string, value: number) => CompanionReward[];
   dismissNextStepNudge: (stage: number) => void;
   addGoalLoop: (input: Omit<GoalLoop, "id" | "createdAt" | "completedAt">) => void;
   setFocusLoop: (id: string | null) => void;
@@ -312,9 +313,12 @@ export const useProfile = create<ProfileState>()(
 
       setHabitValue: (date, id, value) => {
         const profile = get().profile;
-        const next = touch({ ...profile, tracking: recordHabit(ensureTracking(profile), id, date, value) });
+        const recorded = recordHabit(ensureTracking(profile), id, date, value);
+        const { tracking, granted } = value > 0 ? awardCompanion(recorded, dateKey()) : { tracking: recorded, granted: [] };
+        const next = touch({ ...profile, tracking });
         persistHabitProfile(next);
         try { set({ profile: next }); } catch { /* 위 선행 쓰기가 같은 프로필을 보관한다. */ }
+        return granted;
       },
 
       removeRoutine: (id) => {

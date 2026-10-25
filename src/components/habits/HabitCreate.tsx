@@ -24,6 +24,7 @@ import { dateKey, WEEKDAY_LABEL, WEEKDAY_ORDER } from "@/lib/tracking";
 import { useProfile } from "@/lib/store/useProfile";
 import { Icon } from "../Icon";
 import { HabitIcon } from "./HabitIcon";
+import { Character } from "../companion/Character";
 
 const DRAFT_KEY = "looplus-habit-draft-v1";
 function restoreDraft(): HabitDraft | null {
@@ -65,8 +66,11 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [duplicate, setDuplicate] = useState<HabitTemplate | null>(null);
+  const [selected, setSelected] = useState<HabitTemplate | null>(null);
   const busy = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const duplicateRef = useRef<HTMLDivElement>(null);
   const goals = profile.tracking.goalLoops.filter((g) => !g.completedAt);
 
   useEffect(() => {
@@ -80,6 +84,12 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, [screen]);
+  useEffect(() => {
+    if (duplicate) duplicateRef.current?.focus();
+  }, [duplicate]);
 
   const choose = (template?: HabitTemplate, force = false) => {
     if (
@@ -146,8 +156,26 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
         );
         return (
           <li key={t.id}>
-            <button className="habit-choice" onClick={() => choose(t)}>
-              <HabitIcon templateId={t.id} />
+            <button
+              className="habit-choice"
+              aria-pressed={selected?.id === t.id}
+              onClick={() => {
+                setSelected(t);
+                setDuplicate(null);
+              }}
+            >
+              <span
+                className="habit-icon-tile"
+                data-tone={
+                  t.category === "몸 움직이기"
+                    ? "yellow"
+                    : t.category === "생활 정돈"
+                      ? "coral"
+                      : "blue"
+                }
+              >
+                <HabitIcon templateId={t.id} />
+              </span>
               <span className="min-w-0 flex-1 text-left">
                 <span className="block font-semibold">{t.title}</span>
                 <span className="mt-1 block text-sm text-ink-600">
@@ -156,7 +184,12 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
                   {existing ? " · 이미 사용 중" : ""}
                 </span>
               </span>
-              <Icon name="chevron-right" size={18} />
+              <span
+                className={`habit-choice-indicator ${selected?.id === t.id ? "is-selected" : ""}`}
+                aria-hidden="true"
+              >
+                {selected?.id === t.id && <Icon name="check" size={16} />}
+              </span>
             </button>
           </li>
         );
@@ -215,18 +248,23 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
       </header>
       {screen !== "setup" ? (
         <>
-          <h1 className="habit-title">
-            {screen === "library" ? (
-              "나에게 맞는 실천"
-            ) : (
-              <>
-                하나 골라,
-                <br />
-                나답게 시작해요.
-              </>
-            )}
-          </h1>
-          <p className="mt-3 text-ink-600">시간과 횟수는 바꿀 수 있어요.</p>
+          <div className="habit-picker-intro">
+            <div>
+              <h1 ref={headingRef} tabIndex={-1} className="habit-title">
+                {screen === "library" ? (
+                  "나에게 맞는 실천"
+                ) : (
+                  <>
+                    어떤 하루를
+                    <br />
+                    만들어 볼까요?
+                  </>
+                )}
+              </h1>
+              <p className="mt-3">마음에 드는 하나부터.</p>
+            </div>
+            <Character stage="first-book" activity="reading" />
+          </div>
           {draft && (
             <div className="habit-notice mt-5">
               <p>작성 중인 루틴이 있어요.</p>
@@ -263,7 +301,12 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
             />
           </label>
           {duplicate && (
-            <div className="habit-notice mb-5" role="status">
+            <div
+              ref={duplicateRef}
+              tabIndex={-1}
+              className="habit-notice mb-5"
+              role="status"
+            >
               <p>‘{duplicate.title}’는 이미 사용 중이에요.</p>
               <Link className="habit-text-button" href="/home">
                 내 루틴 보기
@@ -333,11 +376,29 @@ export function HabitCreate({ goalId = "" }: { goalId?: string }) {
               직접 만들기
             </button>
           </div>
+          <div className="habit-selection-footer" aria-live="polite">
+            <p>
+              {selected
+                ? `${selected.title} · 내 생활에 맞게 설정해요`
+                : "시간과 횟수는 다음 단계에서 바꿀 수 있어요."}
+            </p>
+            <button
+              className="habit-primary w-full"
+              disabled={!selected}
+              onClick={() => {
+                if (selected) choose(selected);
+              }}
+            >
+              {selected ? "이 루틴으로 시작하기" : "하나를 골라 주세요"}
+            </button>
+          </div>
         </>
       ) : (
         draft && (
           <form onSubmit={save}>
-            <h1 className="habit-title">내 생활에 맞춰요.</h1>
+            <h1 ref={headingRef} tabIndex={-1} className="habit-title">
+              내 생활에 맞춰요.
+            </h1>
             <details
               className="habit-category mt-6"
               open={!draft.templateId || undefined}

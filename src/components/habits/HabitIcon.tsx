@@ -22,7 +22,7 @@ export function HabitIcon({
     <Icon
       name={icons[templateId ?? ""] ?? "loop"}
       size={size}
-      className="shrink-0 text-gold-600"
+      className="shrink-0 habit-routine-icon"
     />
   );
 }

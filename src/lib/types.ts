@@ -277,6 +277,7 @@ export interface DayLog {
 }
 
 export interface Tracking {
+  companion?: import("./companion").CompanionState;
   /** @deprecated 루틴으로 이전. 하위호환 보관 */
   actions: ActionItem[];
   /** @deprecated 일 스트릭·잔디로 대체. 하위호환 보관 */

@@ -1,11 +1,12 @@
 import type { Bucket, Profile, Tracking } from "../types";
+import { mergeCompanion } from "../companion";
 
 /** 새 일상 루틴이 있는 기기는 계정 로드로 자동 덮어쓰지 않는다. */
 export function needsHabitMergeChoice(
   remote: Tracking,
   local: Tracking,
 ): boolean {
-  if (!local.routines.some((r) => r.habit)) return false;
+  if (!local.routines.some((r) => r.habit) && !local.companion?.rewards.length) return false;
   const canonical = (value: unknown): string => {
     if (Array.isArray(value))
       return `[${value.map(canonical).sort().join(",")}]`;
@@ -18,8 +19,8 @@ export function needsHabitMergeChoice(
     return JSON.stringify(value);
   };
   return (
-    canonical([remote.routines, remote.logs, remote.goalLoops]) !==
-    canonical([local.routines, local.logs, local.goalLoops])
+    canonical([remote.routines, remote.logs, remote.goalLoops, remote.companion?.rewards ?? []]) !==
+    canonical([local.routines, local.logs, local.goalLoops, local.companion?.rewards ?? []])
   );
 }
 
@@ -49,6 +50,7 @@ export function mergeTrackingByChoice(
   });
   return {
     ...remote,
+    companion: remote.companion || local.companion ? mergeCompanion(remote.companion, local.companion) : undefined,
     routines: [...routines.values()],
     goalLoops: [...goals.values()],
     logs: [...logs.values()].sort((a, b) => a.date.localeCompare(b.date)),

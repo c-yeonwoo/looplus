@@ -38,6 +38,7 @@ export function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       goalLoops?: GoalLoop[];
       focusLoopId?: string;
       weeklyReviews?: WeeklyReview[];
+      companion?: Tracking["companion"];
     };
     return normalizeTracking({
       routines: o.routines ?? [],
@@ -48,6 +49,7 @@ export function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
       goalLoops: o.goalLoops ?? [],
       focusLoopId: o.focusLoopId,
       weeklyReviews: o.weeklyReviews ?? [],
+      companion: o.companion,
     });
   }
   return normalizeTracking({
@@ -61,7 +63,7 @@ export function trackingFromDb(raw: unknown, checkIns: string[]): Tracking {
 export function trackingToDb(t: Tracking | undefined) {
   const n = normalizeTracking(t);
   return {
-    v: 5 as const,
+    v: 6 as const,
     routines: n.routines,
     logs: n.logs,
     actions: n.actions,
@@ -69,6 +71,7 @@ export function trackingToDb(t: Tracking | undefined) {
     goalLoops: n.goalLoops,
     focusLoopId: n.focusLoopId,
     weeklyReviews: n.weeklyReviews,
+    companion: n.companion,
   };
 }
 
@@ -392,7 +395,7 @@ export function profileHasData(p: Profile): boolean {
   );
   const t = p.tracking;
   const hasTracking = Boolean(
-    t && (t.routines?.length > 0 || t.logs?.length > 0 || t.goalLoops?.length > 0 || t.weeklyReviews?.length > 0),
+    t && (t.routines?.length > 0 || t.logs?.length > 0 || t.goalLoops?.length > 0 || t.weeklyReviews?.length > 0 || (t.companion?.rewards.length ?? 0) > 0),
   );
   return Boolean(
     p.snapshot || p.vision || p.engine.buckets.length > 0 || hasSpending || hasTracking,
