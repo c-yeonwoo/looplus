@@ -1,0 +1,6 @@
+MODE: built-in image_gen; precise-object-edit; transparent_background=false
+INPUT: first generated roo-motion-study-v1 board
+OUTPUT: concepts-v1/roo-motion-study-v1.png
+CORRECTION: preserve curl handedness in STRETCH 03
+
+Use case: precise-object-edit. Input image is the edit target: the completed ROO / SMALL MOVEMENTS eight-panel storyboard. Make ONE targeted correction only: in the LOWER ROW, THIRD panel (STRETCH 03), Roo's head curl is accidentally mirrored. Redraw ONLY that panel's top curl so it arches and curls toward the VIEWER'S RIGHT, matching the identical character's curl in the other seven panels. Keep the third-panel torso's leftward bend and raised right-side arm as they are. The top curl is part of the character, not a mirror transform; it should still point right even while the torso bends. Preserve ALL other pixels/design elements as closely as possible: all eight characters' bodies, faces, limbs, all books/pages, 2x4 layout, labels and exact text, spacing, background, style, shadows, colours and resolution. No additional changes.
